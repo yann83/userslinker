@@ -1,0 +1,721 @@
+<!-- templates/reports/by_user.html -->
+{% extends "base.html" %}
+
+{% block title %}Rapport par utilisateur{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mt-4 mb-4">
+        <h2><i class="fas fa-user"></i> Rapport par utilisateur</h2>
+        <div>
+            {% if user_data %}
+            <button class="btn btn-success" onclick="exportToPDF()">
+                <i class="fas fa-file-pdf"></i> Exporter en PDF
+            </button>
+            <button class="btn btn-info" onclick="printReport()">
+                <i class="fas fa-print"></i> Imprimer
+            </button>
+            {% endif %}
+            <a href="{{ url_for('reports') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Retour aux rapports
+            </a>
+        </div>
+    </div>
+
+    <!-- Formulaire de sélection d'utilisateur -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5><i class="fas fa-search"></i> Rechercher un utilisateur</h5>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('reports_by_user') }}" id="userReportForm">
+                <!-- Champ de recherche d'utilisateur -->
+                <div class="mb-3">
+                    <label for="user_search" class="form-label">Rechercher un utilisateur</label>
+                    <div class="position-relative">
+                        <input type="text" class="form-control" id="user_search"
+                               placeholder="Tapez au moins 4 caractères (nom, prénom ou identifiant)..."
+                               autocomplete="off">
+                        <div class="position-absolute top-100 start-0 w-100" style="z-index: 1050;">
+                            <div id="user_search_results" class="list-group" style="display: none; max-height: 400px; overflow-y: auto;">
+                                <!-- Les résultats de recherche apparaîtront ici -->
+                            </div>
+                        </div>
+                    </div>
+                    <small class="form-text text-muted">
+                        La recherche se déclenche automatiquement après 4 caractères. Maximum 10 résultats affichés.
+                    </small>
+                </div>
+
+                <!-- Champ caché pour l'ID utilisateur sélectionné -->
+                <input type="hidden" id="user_id" name="user_id" required>
+
+                <!-- Affichage de l'utilisateur sélectionné -->
+                <div id="selected_user_display" class="mb-3" style="display: none;">
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <h6 class="card-title">
+                                <i class="fas fa-user text-success"></i> Utilisateur sélectionné
+                            </h6>
+                            <div id="selected_user_info">
+                                <!-- Les informations de l'utilisateur sélectionné apparaîtront ici -->
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-secondary mt-2" id="change_user_btn">
+                                <i class="fas fa-edit"></i> Changer d'utilisateur
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Zone d'état de recherche -->
+                <div id="search_status" class="mb-3">
+                    <div class="text-center text-muted py-3">
+                        <i class="fas fa-search fa-2x mb-2"></i>
+                        <p>Commencez à taper pour rechercher un utilisateur</p>
+                    </div>
+                </div>
+
+                <!-- Zone de chargement -->
+                <div id="loading_spinner" class="text-center py-3" style="display: none;">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Recherche en cours...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Recherche en cours...</p>
+                </div>
+
+                <!-- Boutons d'action -->
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary" id="submit_btn" disabled>
+                        <i class="fas fa-chart-line"></i> Générer le rapport
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Résultats du rapport -->
+    {% if user_data %}
+    <div id="report-content">
+        <!-- En-tête du rapport -->
+        <div class="card mb-4 d-print-block">
+            <div class="card-body text-center">
+                <h3>
+                    <i class="fas fa-user text-primary"></i>
+                    Rapport pour {{ user_data.user.GivenName }} {{ user_data.user.Surname }}
+                </h3>
+                <div class="row mt-3">
+                    <div class="col-md-4">
+                        <small class="text-muted">
+                            <strong>Date de génération :</strong><br>
+                            {{ generation_date.strftime('%d/%m/%Y à %H:%M') }}
+                        </small>
+                    </div>
+                    <div class="col-md-4">
+                        <small class="text-muted">
+                            <strong>Identifiant :</strong><br>
+                            {{ user_data.user.Username }}
+                        </small>
+                    </div>
+                    <div class="col-md-4">
+                        <small class="text-muted">
+                            <strong>Service :</strong><br>
+                            {{ user_data.user.Department or 'Non renseigné' }}
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistiques générales -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="fas fa-desktop fa-2x text-success mb-2"></i>
+                        <h4>{{ user_data.statistics.total_materials }}</h4>
+                        <small class="text-muted">Matériel(s) lié(s)</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="fas fa-history fa-2x text-info mb-2"></i>
+                        <h4>{{ user_data.statistics.total_movements }}</h4>
+                        <small class="text-muted">Mouvement(s) total</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="fas fa-clock fa-2x text-warning mb-2"></i>
+                        <h4>
+                            {% if user_data.statistics.last_activity %}
+                                {{ user_data.statistics.last_activity.strftime('%d/%m/%Y') }}
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </h4>
+                        <small class="text-muted">Dernière activité</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="fas fa-calendar fa-2x text-primary mb-2"></i>
+                        <h4>
+                            {% if user_data.statistics.first_activity %}
+                                {{ user_data.statistics.first_activity.strftime('%d/%m/%Y') }}
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </h4>
+                        <small class="text-muted">Première activité</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Informations utilisateur et matériel lié -->
+        <div class="row mb-4">
+            <!-- Informations utilisateur -->
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5><i class="fas fa-id-card text-primary"></i> Informations personnelles</h5>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-borderless table-sm">
+                            <tr>
+                                <td><strong>Nom :</strong></td>
+                                <td>{{ user_data.user.Surname }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Prénom :</strong></td>
+                                <td>{{ user_data.user.GivenName }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Identifiant :</strong></td>
+                                <td>{{ user_data.user.Username }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Fonction :</strong></td>
+                                <td>{{ user_data.user.Title or 'Non renseigné' }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Service :</strong></td>
+                                <td>{{ user_data.user.Department or 'Non renseigné' }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Site :</strong></td>
+                                <td>{{ user_data.user.Site or 'Non renseigné' }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Matériel lié -->
+            <div class="col-md-8">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5><i class="fas fa-link text-success"></i> Matériel actuellement lié</h5>
+                    </div>
+                    <div class="card-body">
+                        {% set has_material = false %}
+
+                        <!-- Ordinateurs -->
+                        {% if user_data.materials.computers %}
+                            {% set has_material = true %}
+                            <div class="mb-3">
+                                <h6><i class="fas fa-laptop text-primary"></i> Ordinateurs ({{ user_data.materials.computers|length }})</h6>
+                                <ul class="list-group list-group-flush">
+                                    {% for computer in user_data.materials.computers %}
+                                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                        <div>
+                                            <strong>{{ computer.name }}</strong><br>
+                                            <small class="text-muted">
+                                                {% if computer.serial %}S/N: {{ computer.serial }}{% endif %}
+                                                {% if computer.otherserial %}• Inv: {{ computer.otherserial }}{% endif %}
+                                            </small>
+                                        </div>
+                                        <span class="badge bg-success">Lié</span>
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        {% endif %}
+
+                        <!-- Moniteurs -->
+                        {% if user_data.materials.monitors %}
+                            {% set has_material = true %}
+                            <div class="mb-3">
+                                <h6><i class="fas fa-desktop text-primary"></i> Moniteurs ({{ user_data.materials.monitors|length }})</h6>
+                                <ul class="list-group list-group-flush">
+                                    {% for monitor in user_data.materials.monitors %}
+                                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                        <div>
+                                            <strong>{{ monitor.name }}</strong><br>
+                                            <small class="text-muted">
+                                                {% if monitor.serial %}S/N: {{ monitor.serial }}{% endif %}
+                                                {% if monitor.otherserial %}• Inv: {{ monitor.otherserial }}{% endif %}
+                                            </small>
+                                        </div>
+                                        <span class="badge bg-success">Lié</span>
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        {% endif %}
+
+                        <!-- Périphériques -->
+                        {% if user_data.materials.peripherals %}
+                            {% set has_material = true %}
+                            <div class="mb-3">
+                                <h6><i class="fas fa-keyboard text-primary"></i> Périphériques ({{ user_data.materials.peripherals|length }})</h6>
+                                <ul class="list-group list-group-flush">
+                                    {% for peripheral in user_data.materials.peripherals %}
+                                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                        <div>
+                                            <strong>{{ peripheral.name }}</strong><br>
+                                            <small class="text-muted">
+                                                {% if peripheral.serial %}S/N: {{ peripheral.serial }}{% endif %}
+                                                {% if peripheral.otherserial %}• Inv: {{ peripheral.otherserial }}{% endif %}
+                                            </small>
+                                        </div>
+                                        <span class="badge bg-success">Lié</span>
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        {% endif %}
+
+                        <!-- Téléphones -->
+                        {% if user_data.materials.phones %}
+                            {% set has_material = true %}
+                            <div class="mb-3">
+                                <h6><i class="fas fa-mobile-alt text-primary"></i> Téléphones ({{ user_data.materials.phones|length }})</h6>
+                                <ul class="list-group list-group-flush">
+                                    {% for phone in user_data.materials.phones %}
+                                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                        <div>
+                                            <strong>{{ phone.name }}</strong><br>
+                                            <small class="text-muted">
+                                                {% if phone.serial %}S/N: {{ phone.serial }}{% endif %}
+                                                {% if phone.otherserial %}• Inv: {{ phone.otherserial }}{% endif %}
+                                            </small>
+                                        </div>
+                                        <span class="badge bg-success">Lié</span>
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        {% endif %}
+
+                        {% if not has_material %}
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle"></i> Aucun matériel actuellement lié à cet utilisateur.
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Historique complet -->
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-history text-info"></i> Historique complet des mouvements</h5>
+            </div>
+            <div class="card-body">
+                {% if user_data.history %}
+                    <div class="timeline-container" style="max-height: 600px; overflow-y: auto;">
+                        {% for history_item in user_data.history %}
+                        <div class="timeline-item d-flex align-items-start mb-3 p-3 {% if loop.index % 2 == 0 %}bg-light{% endif %} rounded">
+                            <div class="flex-shrink-0 me-3">
+                                {% if history_item.entry.is_linked %}
+                                    <span class="badge bg-success fs-6">
+                                        <i class="fas fa-link"></i> Lié
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-danger fs-6">
+                                        <i class="fas fa-unlink"></i> Délié
+                                    </span>
+                                {% endif %}
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="mb-1">
+                                            <i class="{{ history_item.material_icon }} text-primary me-2"></i>
+                                            {{ history_item.material_type }}
+                                            {% if history_item.material_info %}
+                                                : {{ history_item.material_info.name }}
+                                            {% endif %}
+                                        </h6>
+                                        {% if history_item.material_info %}
+                                        <div class="small text-muted mb-2">
+                                            {% if history_item.material_info.serial %}
+                                                <strong>N° série :</strong> {{ history_item.material_info.serial }}
+                                            {% endif %}
+                                            {% if history_item.material_info.otherserial %}
+                                                • <strong>N° inventaire :</strong> {{ history_item.material_info.otherserial }}
+                                            {% endif %}
+                                            {% if history_item.material_info.is_deleted %}
+                                                <span class="badge bg-warning ms-2">Matériel supprimé</span>
+                                            {% endif %}
+                                        </div>
+                                        {% endif %}
+                                        <div class="small text-muted">
+                                            <i class="fas fa-calendar me-1"></i>
+                                            {{ history_item.entry.date_mod.strftime('%d/%m/%Y à %H:%M') }}
+                                            <i class="fas fa-user ms-3 me-1"></i>
+                                            {{ history_item.entry.app_management_user }}
+                                        </div>
+                                    </div>
+                                    <div class="text-muted small">
+                                        #{{ history_item.entry.id }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> Aucun mouvement enregistré dans l'historique pour cet utilisateur.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .timeline-container {
+        border-left: 3px solid #e9ecef;
+        padding-left: 1rem;
+        margin-left: 1rem;
+    }
+
+    .timeline-item {
+        position: relative;
+        border: 1px solid #dee2e6;
+    }
+
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: -1.5rem;
+        top: 1rem;
+        width: 10px;
+        height: 10px;
+        background-color: #007bff;
+        border-radius: 50%;
+        border: 2px solid white;
+    }
+
+    .timeline-item:nth-child(odd)::before {
+        background-color: #28a745;
+    }
+
+    .timeline-item:nth-child(even)::before {
+        background-color: #dc3545;
+    }
+
+    /* Styles pour l'impression */
+    @media print {
+        .btn, .card-header {
+            -webkit-print-color-adjust: exact;
+            color-adjust: exact;
+        }
+
+        .d-print-none {
+            display: none !important;
+        }
+
+        .d-print-block {
+            display: block !important;
+        }
+
+        .container {
+            max-width: none !important;
+        }
+
+        .card {
+            break-inside: avoid;
+            page-break-inside: avoid;
+        }
+
+        .timeline-container {
+            max-height: none !important;
+            overflow: visible !important;
+        }
+    }
+
+    .list-group-item {
+        border-left: none;
+        border-right: none;
+    }
+
+    .list-group-item:first-child {
+        border-top: none;
+    }
+
+    .list-group-item:last-child {
+        border-bottom: none;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Éléments du DOM
+    const userSearch = document.getElementById('user_search');
+    const userSearchResults = document.getElementById('user_search_results');
+    const userIdInput = document.getElementById('user_id');
+    const selectedUserDisplay = document.getElementById('selected_user_display');
+    const selectedUserInfo = document.getElementById('selected_user_info');
+    const changeUserBtn = document.getElementById('change_user_btn');
+    const searchStatus = document.getElementById('search_status');
+    const loadingSpinner = document.getElementById('loading_spinner');
+    const submitBtn = document.getElementById('submit_btn');
+
+    // Variables de contrôle
+    let searchTimeout;
+    let selectedUser = null;
+
+    // Fonction pour afficher l'état de chargement
+    function showLoading() {
+        loadingSpinner.style.display = 'block';
+        searchStatus.style.display = 'none';
+        userSearchResults.style.display = 'none';
+    }
+
+    // Fonction pour masquer le chargement
+    function hideLoading() {
+        loadingSpinner.style.display = 'none';
+    }
+
+    // Fonction pour afficher l'état de démarrage
+    function showStartState() {
+        searchStatus.style.display = 'block';
+        userSearchResults.style.display = 'none';
+        hideLoading();
+    }
+
+    // Fonction pour échapper le HTML (sécurité)
+    function escapeHtml(unsafe) {
+        if (typeof unsafe !== 'string') return '';
+        return unsafe
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // Fonction pour afficher les résultats de recherche
+    function displaySearchResults(users) {
+        hideLoading();
+
+        if (users.length === 0) {
+            userSearchResults.innerHTML = `
+                <div class="list-group-item text-muted text-center">
+                    <i class="fas fa-search-minus"></i> Aucun utilisateur trouvé
+                </div>
+            `;
+        } else {
+            userSearchResults.innerHTML = '';
+
+            users.forEach(user => {
+                const resultItem = document.createElement('div');
+                resultItem.className = 'list-group-item list-group-item-action';
+                resultItem.style.cursor = 'pointer';
+
+                resultItem.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">
+                                <i class="fas fa-user text-primary me-2"></i>
+                                ${escapeHtml(user.Surname)} ${escapeHtml(user.GivenName)}
+                            </h6>
+                            <p class="mb-1 text-muted">
+                                <strong>Identifiant:</strong> ${escapeHtml(user.Username)}
+                                ${user.Title ? '• <strong>Fonction:</strong> ' + escapeHtml(user.Title) : ''}
+                            </p>
+                            <small class="text-muted">
+                                ${user.Department ? escapeHtml(user.Department) : 'Service non renseigné'}
+                                • <span class="badge bg-info">${user.total_materials} matériel(s)</span>
+                                • <span class="badge bg-secondary">${user.total_history} mouvement(s)</span>
+                            </small>
+                        </div>
+                        <div>
+                            <i class="fas fa-chevron-right text-muted"></i>
+                        </div>
+                    </div>
+                `;
+
+                // Ajouter l'événement de clic
+                resultItem.addEventListener('click', function() {
+                    selectUser(user);
+                });
+
+                userSearchResults.appendChild(resultItem);
+            });
+        }
+
+        userSearchResults.style.display = 'block';
+        searchStatus.style.display = 'none';
+    }
+
+    // Fonction pour sélectionner un utilisateur
+    function selectUser(user) {
+        selectedUser = user;
+        userIdInput.value = user.id;
+
+        // Effacer le champ de recherche et masquer les résultats
+        userSearch.value = '';
+        userSearchResults.style.display = 'none';
+
+        // Afficher les informations de l'utilisateur sélectionné
+        selectedUserInfo.innerHTML = `
+            <div class="row">
+                <div class="col-md-6">
+                    <p class="mb-2">
+                        <strong>${escapeHtml(user.Surname)} ${escapeHtml(user.GivenName)}</strong>
+                    </p>
+                    <p class="mb-1">
+                        <small class="text-muted">
+                            <strong>Identifiant:</strong> ${escapeHtml(user.Username)}<br>
+                            ${user.Title ? '<strong>Fonction:</strong> ' + escapeHtml(user.Title) + '<br>' : ''}
+                            ${user.Department ? '<strong>Service:</strong> ' + escapeHtml(user.Department) : 'Service non renseigné'}
+                        </small>
+                    </p>
+                </div>
+                <div class="col-md-6">
+                    <div class="text-end">
+                        <span class="badge bg-success fs-6">${user.total_materials} matériel(s) lié(s)</span><br>
+                        <span class="badge bg-info fs-6 mt-1">${user.total_history} mouvement(s) total</span>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        selectedUserDisplay.style.display = 'block';
+        submitBtn.disabled = false;
+
+        // Masquer l'état de démarrage
+        searchStatus.style.display = 'none';
+    }
+
+    // Fonction pour effectuer la recherche
+    function performSearch(searchTerm) {
+        if (searchTerm.length < 4) {
+            showStartState();
+            return;
+        }
+
+        showLoading();
+
+        // Requête AJAX pour rechercher les utilisateurs
+        fetch(`{{ url_for('api_reports_search_users') }}?q=${encodeURIComponent(searchTerm)}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Erreur de recherche');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.status === 'success') {
+                displaySearchResults(data.users);
+            } else {
+                throw new Error(data.message || 'Erreur de recherche');
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            hideLoading();
+            userSearchResults.innerHTML = `
+                <div class="list-group-item text-danger text-center">
+                    <i class="fas fa-exclamation-triangle"></i> Erreur lors de la recherche
+                </div>
+            `;
+            userSearchResults.style.display = 'block';
+        });
+    }
+
+    // Gestionnaire d'événements pour la recherche en temps réel
+    userSearch.addEventListener('input', function() {
+        const searchTerm = this.value.trim();
+
+        // Annuler le timeout précédent
+        clearTimeout(searchTimeout);
+
+        // Définir un nouveau timeout pour éviter trop de requêtes
+        searchTimeout = setTimeout(() => {
+            performSearch(searchTerm);
+        }, 300);
+    });
+
+    // Gestionnaire pour le bouton "Changer d'utilisateur"
+    changeUserBtn.addEventListener('click', function() {
+        selectedUser = null;
+        userIdInput.value = '';
+        selectedUserDisplay.style.display = 'none';
+        submitBtn.disabled = true;
+        showStartState();
+        userSearch.focus();
+    });
+
+    // Masquer les résultats quand on clique ailleurs
+    document.addEventListener('click', function(event) {
+        if (!userSearch.contains(event.target) && !userSearchResults.contains(event.target)) {
+            if (!selectedUser) {
+                showStartState();
+            }
+        }
+    });
+
+    // Focus sur le champ de recherche quand on clique dessus
+    userSearch.addEventListener('focus', function() {
+        if (this.value.length >= 4) {
+            performSearch(this.value);
+        }
+    });
+
+    // Validation du formulaire
+    document.getElementById('userReportForm').addEventListener('submit', function(e) {
+        if (!selectedUser || !userIdInput.value) {
+            e.preventDefault();
+            alert('Veuillez sélectionner un utilisateur');
+            return false;
+        }
+    });
+
+    // Initialiser l'état de démarrage
+    showStartState();
+});
+
+// Fonction pour imprimer le rapport
+function printReport() {
+    window.print();
+}
+
+// Fonction pour exporter en PDF
+function exportToPDF() {
+    window.print();
+}
+</script>
+{% endblock %}

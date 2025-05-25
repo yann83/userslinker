@@ -1,0 +1,320 @@
+<!-- templates/profile.html -->
+{% extends "base.html" %}
+
+{% block title %}Mon profil{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 class="mt-4 mb-4">
+        <i class="fas fa-user-edit"></i> Mon profil
+    </h2>
+
+    <div class="row">
+        <!-- Informations personnelles (lecture seule) -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-id-card text-primary"></i> Informations personnelles</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless">
+                        <tr>
+                            <td><strong>Nom :</strong></td>
+                            <td>{{ current_user.Surname }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Prénom :</strong></td>
+                            <td>{{ current_user.GivenName }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Email :</strong></td>
+                            <td>{{ current_user.email }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Nom d'utilisateur :</strong></td>
+                            <td>{{ current_user.user }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Rôles actuels :</strong></td>
+                            <td>
+                                {% for role in current_user.roles %}
+                                    {% if role.name == 'administrateur' %}
+                                        <span class="badge bg-warning">{{ role.name.upper() }}</span>
+                                    {% elif role.name == 'gestionnaire' %}
+                                        <span class="badge bg-primary">{{ role.name.upper() }}</span>
+                                    {% else %}
+                                        <span class="badge bg-info">{{ role.name.upper() }}</span>
+                                    {% endif %}
+                                {% endfor %}
+                            </td>
+                        </tr>
+                    </table>
+
+                    <div class="alert alert-info mt-3">
+                        <i class="fas fa-info-circle"></i>
+                        <small>
+                            Ces informations ne peuvent être modifiées que par un administrateur.
+                            Contactez votre administrateur système si des modifications sont nécessaires.
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Changement de mot de passe -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-key text-warning"></i> Changer mon mot de passe</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('change_password') }}" id="passwordForm">
+                        <!-- Token CSRF pour la sécurité -->
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+
+                        <div class="mb-3">
+                            <label for="current_password" class="form-label">
+                                Mot de passe actuel <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="current_password"
+                                       name="current_password" required>
+                                <button class="btn btn-outline-secondary" type="button" id="toggleCurrent">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="new_password" class="form-label">
+                                Nouveau mot de passe <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="new_password"
+                                       name="new_password" required minlength="6">
+                                <button class="btn btn-outline-secondary" type="button" id="toggleNew">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            <small class="form-text text-muted">
+                                Le mot de passe doit contenir au moins 6 caractères
+                            </small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="confirm_password" class="form-label">
+                                Confirmer le nouveau mot de passe <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="confirm_password"
+                                       name="confirm_password" required minlength="6">
+                                <button class="btn btn-outline-secondary" type="button" id="toggleConfirm">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Indicateur de force du mot de passe -->
+                        <div class="mb-3">
+                            <label class="form-label">Force du mot de passe :</label>
+                            <div class="progress" style="height: 10px;">
+                                <div id="passwordStrength" class="progress-bar" role="progressbar"
+                                     style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                                </div>
+                            </div>
+                            <small id="passwordStrengthText" class="form-text text-muted">
+                                Tapez votre nouveau mot de passe pour voir sa force
+                            </small>
+                        </div>
+
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-warning">
+                                <i class="fas fa-key"></i> Changer le mot de passe
+                            </button>
+                            <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Retour
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Conseils de sécurité -->
+            <div class="card bg-light">
+                <div class="card-header">
+                    <h6><i class="fas fa-shield-alt text-success"></i> Conseils de sécurité</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="small mb-0">
+                        <li>Utilisez un mot de passe d'au moins 8 caractères</li>
+                        <li>Mélangez lettres majuscules, minuscules, chiffres et symboles</li>
+                        <li>Évitez les mots du dictionnaire ou les informations personnelles</li>
+                        <li>Ne réutilisez pas ce mot de passe sur d'autres sites</li>
+                        <li>Changez votre mot de passe régulièrement</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Fonctionnalité pour afficher/masquer les mots de passe
+    function setupPasswordToggle(toggleId, inputId) {
+        const toggle = document.getElementById(toggleId);
+        const input = document.getElementById(inputId);
+
+        toggle.addEventListener('click', function() {
+            const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
+            input.setAttribute('type', type);
+
+            // Changer l'icône
+            const icon = toggle.querySelector('i');
+            if (type === 'password') {
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            } else {
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            }
+        });
+    }
+
+    // Configuration des boutons d'affichage des mots de passe
+    setupPasswordToggle('toggleCurrent', 'current_password');
+    setupPasswordToggle('toggleNew', 'new_password');
+    setupPasswordToggle('toggleConfirm', 'confirm_password');
+
+    // Vérification de la force du mot de passe
+    const newPasswordInput = document.getElementById('new_password');
+    const strengthBar = document.getElementById('passwordStrength');
+    const strengthText = document.getElementById('passwordStrengthText');
+
+    newPasswordInput.addEventListener('input', function() {
+        const password = this.value;
+        const strength = calculatePasswordStrength(password);
+
+        // Mettre à jour la barre de progression
+        strengthBar.style.width = strength.percentage + '%';
+        strengthBar.setAttribute('aria-valuenow', strength.percentage);
+
+        // Mettre à jour la couleur et le texte
+        strengthBar.className = 'progress-bar ' + strength.colorClass;
+        strengthText.textContent = strength.text;
+        strengthText.className = 'form-text ' + strength.textClass;
+    });
+
+    // Fonction pour calculer la force du mot de passe
+    function calculatePasswordStrength(password) {
+        let score = 0;
+        let feedback = [];
+
+        if (password.length === 0) {
+            return {
+                percentage: 0,
+                colorClass: '',
+                textClass: 'text-muted',
+                text: 'Tapez votre nouveau mot de passe pour voir sa force'
+            };
+        }
+
+        // Longueur
+        if (password.length >= 8) score += 25;
+        else feedback.push('au moins 8 caractères');
+
+        // Lettres minuscules
+        if (/[a-z]/.test(password)) score += 25;
+        else feedback.push('lettres minuscules');
+
+        // Lettres majuscules
+        if (/[A-Z]/.test(password)) score += 25;
+        else feedback.push('lettres majuscules');
+
+        // Chiffres et caractères spéciaux
+        if (/[0-9]/.test(password) && /[^A-Za-z0-9]/.test(password)) score += 25;
+        else if (/[0-9]/.test(password) || /[^A-Za-z0-9]/.test(password)) score += 12;
+        else feedback.push('chiffres et symboles');
+
+        // Déterminer la couleur et le message
+        let result = {};
+
+        if (score < 25) {
+            result = {
+                percentage: score,
+                colorClass: 'bg-danger',
+                textClass: 'text-danger',
+                text: 'Très faible - Ajoutez: ' + feedback.join(', ')
+            };
+        } else if (score < 50) {
+            result = {
+                percentage: score,
+                colorClass: 'bg-warning',
+                textClass: 'text-warning',
+                text: 'Faible - Améliorez: ' + feedback.join(', ')
+            };
+        } else if (score < 75) {
+            result = {
+                percentage: score,
+                colorClass: 'bg-info',
+                textClass: 'text-info',
+                text: 'Moyen - Peut être amélioré'
+            };
+        } else {
+            result = {
+                percentage: score,
+                colorClass: 'bg-success',
+                textClass: 'text-success',
+                text: 'Fort - Excellent choix !'
+            };
+        }
+
+        return result;
+    }
+
+    // Validation de la confirmation du mot de passe
+    const confirmInput = document.getElementById('confirm_password');
+
+    function validatePasswordMatch() {
+        const newPassword = newPasswordInput.value;
+        const confirmPassword = confirmInput.value;
+
+        if (confirmPassword && newPassword !== confirmPassword) {
+            confirmInput.setCustomValidity('Les mots de passe ne correspondent pas');
+            confirmInput.classList.add('is-invalid');
+        } else {
+            confirmInput.setCustomValidity('');
+            confirmInput.classList.remove('is-invalid');
+            if (confirmPassword) {
+                confirmInput.classList.add('is-valid');
+            }
+        }
+    }
+
+    newPasswordInput.addEventListener('input', validatePasswordMatch);
+    confirmInput.addEventListener('input', validatePasswordMatch);
+
+    // Validation du formulaire
+    document.getElementById('passwordForm').addEventListener('submit', function(e) {
+        const newPassword = newPasswordInput.value;
+        const confirmPassword = confirmInput.value;
+
+        if (newPassword !== confirmPassword) {
+            e.preventDefault();
+            alert('Les mots de passe ne correspondent pas. Veuillez vérifier.');
+            confirmInput.focus();
+            return false;
+        }
+
+        if (newPassword.length < 6) {
+            e.preventDefault();
+            alert('Le nouveau mot de passe doit contenir au moins 6 caractères.');
+            newPasswordInput.focus();
+            return false;
+        }
+    });
+});
+</script>
+{% endblock %}

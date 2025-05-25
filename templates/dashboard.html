@@ -1,0 +1,584 @@
+<!-- templates/dashboard.html -->
+{% extends "base.html" %}
+
+{% block title %}Tableau de bord{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="welcome-header">
+        <h1>Bienvenue</h1>
+        <p class="lead">Bonjour {{ current_user.GivenName }}, bienvenue dans UsersLinker</p>
+    </div>
+
+    <div class="row mt-5">
+        <!-- Carte pour les gestionnaires seulement -->
+        {% if current_user.has_role('gestionnaire') %}
+        <div class="col-md-4">
+            <div class="card mb-4 card-hover">
+                <div class="card-body text-center">
+                    <i class="fas fa-plus-circle fa-3x text-primary mb-3"></i>
+                    <h5 class="card-title">Créer un événement</h5>
+                    <p class="card-text">Gérer les liens entre utilisateurs et matériel.</p>
+                    <a href="{{ url_for('create_event') }}" class="btn btn-primary">Commencer</a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Carte pour les gestionnaires et lecteurs -->
+        {% if current_user.has_role('gestionnaire') or current_user.has_role('lecteur') %}
+        <div class="col-md-4">
+            <div class="card mb-4 card-hover">
+                <div class="card-body text-center">
+                    <i class="fas fa-list fa-3x text-success mb-3"></i>
+                    <h5 class="card-title">Listes</h5>
+                    <p class="card-text">Consulter les utilisateurs et le matériel.</p>
+                    <a href="{{ url_for('lists') }}" class="btn btn-success">Accéder</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card mb-4 card-hover">
+                <div class="card-body text-center">
+                    <i class="fas fa-chart-pie fa-3x text-info mb-3"></i>
+                    <h5 class="card-title">Rapports</h5>
+                    <p class="card-text">Générer des rapports et statistiques.</p>
+                    <a href="{{ url_for('reports') }}" class="btn btn-info">Consulter</a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Carte pour les administrateurs seulement -->
+        {% if current_user.has_role('administrateur') %}
+        <div class="col-md-4">
+            <div class="card mb-4 card-hover">
+                <div class="card-body text-center">
+                    <i class="fas fa-users-cog fa-3x text-warning mb-3"></i>
+                    <h5 class="card-title">Administration</h5>
+                    <p class="card-text">Gérer les utilisateurs de l'application.</p>
+                    <a href="{{ url_for('admin_users') }}" class="btn btn-warning">Administrer</a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Affichage des rôles de l'utilisateur -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-user-tag"></i> Vos rôles</h5>
+                </div>
+                <div class="card-body">
+                    {% for role in user_roles %}
+                        <span class="badge bg-primary me-2">{{ role.upper() }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Carte de statut des connexions externes -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-database"></i> Statut des connexions externes</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <h6><i class="fas fa-users"></i> Base des utilisateurs</h6>
+                                <div class="status-indicator loading">
+                                    <i class="fas fa-circle-notch fa-spin"></i> Vérification...
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <h6><i class="fas fa-desktop"></i> GLPI / Matériel</h6>
+                                <div class="status-indicator loading">
+                                    <i class="fas fa-circle-notch fa-spin"></i> Vérification...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <a href="{{ url_for('db_check') }}" class="btn btn-primary mt-2">
+                        <i class="fas fa-search"></i> Vérifier les connexions détaillées
+                    </a>
+                    <!-- Boutons de synchronisation pour les administrateurs -->
+                    {% if current_user.has_role('administrateur') %}
+                    <div class="mt-3">
+                        <button id="syncTablesBtn" class="btn btn-primary me-2">
+                            <i class="fas fa-sync"></i> Mettre à jour les tables
+                        </button>
+                        <button id="importTablesBtn" class="btn btn-success">
+                            <i class="fas fa-file-import"></i> Importer les tables
+                        </button>
+                        <div id="syncProgress" class="progress mt-2" style="display: none;">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                        </div>
+                        <div id="syncResult" class="mt-2" style="display: none;"></div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Fonction pour mettre à jour les indicateurs de statut
+    function updateConnectionStatus() {
+        const statusElements = document.querySelectorAll('.status-indicator');
+
+        // Effectuer une requête fetch pour obtenir le statut des connexions
+        fetch("{{ url_for('check_connection_status') }}")
+            .then(response => response.json())
+            .then(data => {
+                // Mettre à jour l'indicateur pour la base des utilisateurs
+                const usersStatus = statusElements[0];
+                if (data.users && data.users.status) {
+                    usersStatus.className = 'status-indicator success';
+                    usersStatus.innerHTML = '<i class="fas fa-check-circle"></i> Connecté';
+                } else {
+                    usersStatus.className = 'status-indicator error';
+                    usersStatus.innerHTML = '<i class="fas fa-times-circle"></i> Non connecté';
+                }
+
+                // Mettre à jour l'indicateur pour GLPI / Matériel
+                const glpiStatus = statusElements[1];
+                // On considère que c'est connecté si au moins une des bases de matériel est connectée
+                const materialConnected = data.computers && data.computers.status ||
+                                         data.monitors && data.monitors.status ||
+                                         data.peripherals && data.peripherals.status ||
+                                         data.phones && data.phones.status;
+
+                if (materialConnected) {
+                    glpiStatus.className = 'status-indicator success';
+                    glpiStatus.innerHTML = '<i class="fas fa-check-circle"></i> Connecté';
+                } else {
+                    glpiStatus.className = 'status-indicator error';
+                    glpiStatus.innerHTML = '<i class="fas fa-times-circle"></i> Non connecté';
+                }
+            })
+            .catch(error => {
+                console.error('Erreur lors de la vérification des connexions:', error);
+                // En cas d'erreur, mettre à jour les indicateurs
+                statusElements.forEach(element => {
+                    element.className = 'status-indicator error';
+                    element.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Erreur de vérification';
+                });
+            });
+    }
+
+    // Appeler la fonction immédiatement
+    updateConnectionStatus();
+});
+// Gestion de la synchronisation des tables pour les administrateurs
+document.addEventListener('DOMContentLoaded', function() {
+    const syncBtn = document.getElementById('syncTablesBtn');
+    if (syncBtn) {
+        syncBtn.addEventListener('click', function() {
+            // Confirmer l'action
+            if (!confirm("Vous êtes sur le point de synchroniser les données depuis les bases externes et d'exécuter les commandes post-import (s'il y en a). Cette opération peut prendre plusieurs minutes. Voulez-vous continuer?")) {
+                return;
+            }
+
+            // Éléments de l'interface
+            const progressBar = document.querySelector('#syncProgress');
+            const progressIndicator = document.querySelector('#syncProgress .progress-bar');
+            const resultDiv = document.getElementById('syncResult');
+            const importBtn = document.getElementById('importTablesBtn');
+
+            // Désactiver les boutons et afficher la barre de progression
+            syncBtn.disabled = true;
+            if (importBtn) importBtn.disabled = true;
+            syncBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Synchronisation en cours...';
+            progressBar.style.display = 'block';
+            resultDiv.style.display = 'none';
+            resultDiv.innerHTML = '';
+
+            // Animation de la barre de progression
+            let progress = 0;
+            const progressInterval = setInterval(function() {
+                progress += 2;
+                if (progress > 90) {
+                    clearInterval(progressInterval);
+                }
+                progressIndicator.style.width = progress + '%';
+                progressIndicator.setAttribute('aria-valuenow', progress);
+            }, 300);
+
+            // Requête AJAX pour la synchronisation
+            fetch("{{ url_for('sync_tables') }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token() }}'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Arrêter l'animation et remplir la barre
+                clearInterval(progressInterval);
+                progressIndicator.style.width = '100%';
+                progressIndicator.setAttribute('aria-valuenow', 100);
+
+                // Afficher le résultat
+                setTimeout(function() {
+                    let resultHTML = '';
+
+                    if (data.status === 'success') {
+                        // Création d'un résumé des opérations
+                        resultHTML = '<div class="alert alert-success mb-3"><i class="fas fa-check-circle"></i> Synchronisation réussie!</div>';
+
+                        if (data.message && data.message.includes('Attention')) {
+                            resultHTML = `<div class="alert alert-warning mb-3"><i class="fas fa-exclamation-triangle"></i> ${data.message}</div>`;
+                        }
+
+                        resultHTML += '<table class="table table-sm table-bordered sync-result-table">';
+                        resultHTML += '<thead class="table-light"><tr><th>Type</th><th>Créés</th><th>Mis à jour</th><th>Total</th></tr></thead>';
+                        resultHTML += '<tbody>';
+
+                        // Détails des utilisateurs
+                        if (data.details.users) {
+                            const users = data.details.users;
+                            resultHTML += `<tr>
+                                <td><i class="fas fa-users"></i> Utilisateurs</td>
+                                <td>${users.created || 0}</td>
+                                <td>${users.updated || 0}</td>
+                                <td>${users.total || 0}</td>
+                            </tr>`;
+                        }
+
+                        // Détails du matériel
+                        const materialIcons = {
+                            'computers': 'fas fa-laptop',
+                            'monitors': 'fas fa-desktop',
+                            'peripherals': 'fas fa-keyboard',
+                            'phones': 'fas fa-mobile-alt'
+                        };
+
+                        const materialNames = {
+                            'computers': 'Ordinateurs',
+                            'monitors': 'Moniteurs',
+                            'peripherals': 'Périphériques',
+                            'phones': 'Téléphones'
+                        };
+
+                        for (const type in materialNames) {
+                            if (data.details[type]) {
+                                const stats = data.details[type];
+                                resultHTML += `<tr>
+                                    <td><i class="${materialIcons[type]}"></i> ${materialNames[type]}</td>
+                                    <td>${stats.created || 0}</td>
+                                    <td>${stats.updated || 0}</td>
+                                    <td>${stats.total || 0}</td>
+                                </tr>`;
+                            }
+                        }
+
+                        resultHTML += '</tbody></table>';
+
+                        // Informations sur l'exécution des commandes SQL post-import
+                        if (data.post_sql) {
+                            const postSql = data.post_sql;
+                            let alertClass = 'alert-success';
+                            let icon = 'fas fa-check-circle';
+
+                            if (postSql.status === 'warning') {
+                                alertClass = 'alert-warning';
+                                icon = 'fas fa-exclamation-triangle';
+                            } else if (postSql.status === 'error') {
+                                alertClass = 'alert-danger';
+                                icon = 'fas fa-times-circle';
+                            }
+
+                            resultHTML += `<div class="alert ${alertClass} mt-3">`;
+                            resultHTML += `<i class="${icon}"></i> <strong>Post-import SQL:</strong> ${postSql.message}`;
+                            resultHTML += '</div>';
+                        }
+
+                        // Ajouter un bouton pour rafraîchir la page
+                        resultHTML += '<button onclick="window.location.reload();" class="btn btn-outline-primary btn-sm mt-2">';
+                        resultHTML += '<i class="fas fa-sync"></i> Rafraîchir la page</button>';
+                    } else {
+                        // Affichage de l'erreur
+                        resultHTML = `<div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i> Erreur: ${data.message}</div>`;
+                    }
+
+                    resultDiv.innerHTML = resultHTML;
+                    resultDiv.style.display = 'block';
+                    syncBtn.disabled = false;
+                    if (importBtn) importBtn.disabled = false;
+                    syncBtn.innerHTML = '<i class="fas fa-sync"></i> Mettre à jour les tables';
+
+                    // Mettre à jour les indicateurs de connexion
+                    updateConnectionStatus();
+                }, 500);
+            })
+            .catch(error => {
+                // Gestion des erreurs
+                clearInterval(progressInterval);
+                progressIndicator.style.width = '100%';
+                progressIndicator.classList.remove('bg-primary');
+                progressIndicator.classList.add('bg-danger');
+
+                resultDiv.innerHTML = `<div class="alert alert-danger"><i class="fas fa-exclamation-triangle"></i> Erreur lors de la synchronisation: ${error.message}</div>`;
+                resultDiv.style.display = 'block';
+                syncBtn.disabled = false;
+                if (importBtn) importBtn.disabled = false;
+                syncBtn.innerHTML = '<i class="fas fa-sync"></i> Mettre à jour les tables';
+            });
+        });
+    }
+});
+// Gestion de l'importation des tables pour les administrateurs
+document.addEventListener('DOMContentLoaded', function() {
+    const importBtn = document.getElementById('importTablesBtn');
+    if (importBtn) {
+        importBtn.addEventListener('click', function() {
+            // Confirmer l'action
+            if (!confirm("Vous êtes sur le point d'importer les données depuis les bases externes et d'exécuter les commandes post-import (s'il y en a). Cette opération peut prendre plusieurs minutes. Voulez-vous continuer?")) {
+                return;
+            }
+
+            // Éléments de l'interface
+            const progressBar = document.querySelector('#syncProgress');
+            const progressIndicator = document.querySelector('#syncProgress .progress-bar');
+            const resultDiv = document.getElementById('syncResult');
+            const syncBtn = document.getElementById('syncTablesBtn');
+
+            // Désactiver les boutons et afficher la barre de progression
+            importBtn.disabled = true;
+            syncBtn.disabled = true;
+            importBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Importation en cours...';
+            progressBar.style.display = 'block';
+            resultDiv.style.display = 'none';
+            resultDiv.innerHTML = '';
+
+            // Animation de la barre de progression
+            let progress = 0;
+            const progressInterval = setInterval(function() {
+                progress += 2;
+                if (progress > 90) {
+                    clearInterval(progressInterval);
+                }
+                progressIndicator.style.width = progress + '%';
+                progressIndicator.setAttribute('aria-valuenow', progress);
+            }, 300);
+
+            // Requête AJAX pour l'importation
+            fetch("{{ url_for('import_tables') }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token() }}'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Arrêter l'animation et remplir la barre
+                clearInterval(progressInterval);
+                progressIndicator.style.width = '100%';
+                progressIndicator.setAttribute('aria-valuenow', 100);
+
+                // Afficher le résultat
+                setTimeout(function() {
+                    let resultHTML = '';
+
+                    if (data.status === 'success') {
+                        // Création d'un résumé des opérations
+                        resultHTML = '<div class="alert alert-success mb-3"><i class="fas fa-check-circle"></i> Importation réussie!</div>';
+
+                        if (data.message && data.message.includes('Attention')) {
+                            resultHTML = `<div class="alert alert-warning mb-3"><i class="fas fa-exclamation-triangle"></i> ${data.message}</div>`;
+                        }
+
+                        resultHTML += '<table class="table table-sm table-bordered sync-result-table">';
+                        resultHTML += '<thead class="table-light"><tr><th>Type</th><th>Créés</th><th>Mis à jour</th><th>Total</th></tr></thead>';
+                        resultHTML += '<tbody>';
+
+                        // Détails des utilisateurs
+                        if (data.details.users) {
+                            const users = data.details.users;
+                            resultHTML += `<tr>
+                                <td><i class="fas fa-users"></i> Utilisateurs</td>
+                                <td>${users.created || 0}</td>
+                                <td>${users.updated || 0}</td>
+                                <td>${users.total || 0}</td>
+                            </tr>`;
+                        }
+
+                        // Détails du matériel
+                        const materialIcons = {
+                            'computers': 'fas fa-laptop',
+                            'monitors': 'fas fa-desktop',
+                            'peripherals': 'fas fa-keyboard',
+                            'phones': 'fas fa-mobile-alt'
+                        };
+
+                        const materialNames = {
+                            'computers': 'Ordinateurs',
+                            'monitors': 'Moniteurs',
+                            'peripherals': 'Périphériques',
+                            'phones': 'Téléphones'
+                        };
+
+                        for (const type in materialNames) {
+                            if (data.details[type]) {
+                                const stats = data.details[type];
+                                resultHTML += `<tr>
+                                    <td><i class="${materialIcons[type]}"></i> ${materialNames[type]}</td>
+                                    <td>${stats.created || 0}</td>
+                                    <td>${stats.updated || 0}</td>
+                                    <td>${stats.total || 0}</td>
+                                </tr>`;
+                            }
+                        }
+
+                        resultHTML += '</tbody></table>';
+
+                        // Informations sur l'exécution des commandes SQL post-import
+                        if (data.post_sql) {
+                            const postSql = data.post_sql;
+                            let alertClass = 'alert-success';
+                            let icon = 'fas fa-check-circle';
+
+                            if (postSql.status === 'warning') {
+                                alertClass = 'alert-warning';
+                                icon = 'fas fa-exclamation-triangle';
+                            } else if (postSql.status === 'error') {
+                                alertClass = 'alert-danger';
+                                icon = 'fas fa-times-circle';
+                            }
+
+                            resultHTML += `<div class="alert ${alertClass} mt-3">`;
+                            resultHTML += `<i class="${icon}"></i> <strong>Post-import SQL:</strong> ${postSql.message}`;
+                            resultHTML += '</div>';
+                        }
+
+                        // Ajouter un bouton pour rafraîchir la page
+                        resultHTML += '<button onclick="window.location.reload();" class="btn btn-outline-primary btn-sm mt-2">';
+                        resultHTML += '<i class="fas fa-sync"></i> Rafraîchir la page</button>';
+                    } else {
+                        // Affichage de l'erreur
+                        resultHTML = `<div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i> Erreur: ${data.message}</div>`;
+                    }
+
+                    resultDiv.innerHTML = resultHTML;
+                    resultDiv.style.display = 'block';
+                    importBtn.disabled = false;
+                    syncBtn.disabled = false;
+                    importBtn.innerHTML = '<i class="fas fa-file-import"></i> Importer les tables';
+
+                    // Mettre à jour les indicateurs de connexion
+                    updateConnectionStatus();
+                }, 500);
+            })
+            .catch(error => {
+                // Gestion des erreurs
+                clearInterval(progressInterval);
+                progressIndicator.style.width = '100%';
+                progressIndicator.classList.remove('bg-primary');
+                progressIndicator.classList.add('bg-danger');
+
+                resultDiv.innerHTML = `<div class="alert alert-danger"><i class="fas fa-exclamation-triangle"></i> Erreur lors de l'importation: ${error.message}</div>`;
+                resultDiv.style.display = 'block';
+                importBtn.disabled = false;
+                syncBtn.disabled = false;
+                importBtn.innerHTML = '<i class="fas fa-file-import"></i> Importer les tables';
+            });
+        });
+    }
+});
+</script>
+
+<style>
+.status-indicator {
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-weight: 500;
+    display: inline-block;
+}
+.status-indicator.loading {
+    background-color: #f8f9fa;
+    color: #6c757d;
+}
+.status-indicator.success {
+    background-color: #d4edda;
+    color: #155724;
+}
+.status-indicator.error {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+.status-indicator.warning {
+    background-color: #fff3cd;
+    color: #856404;
+}
+/* Styles pour la synchronisation */
+.sync-result-table {
+    font-size: 0.9rem;
+}
+
+.sync-result-table th,
+.sync-result-table td {
+    padding: 0.5rem;
+    text-align: center;
+}
+
+.sync-result-table td:first-child {
+    text-align: left;
+}
+
+.sync-badge {
+    font-size: 0.8rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    margin-left: 0.25rem;
+}
+
+.sync-badge-success {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.sync-badge-warning {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.sync-badge-danger {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+</style>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .card {
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    .welcome-header {
+        animation: fadeIn 0.8s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+{% endblock %}

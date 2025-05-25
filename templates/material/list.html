@@ -1,0 +1,508 @@
+<!-- templates/material/list.html - Version complète et fonctionnelle -->
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mt-4 mb-4">
+        <h2>
+            {% if material_type == 'computers' %}
+                <i class="fas fa-laptop"></i>
+            {% elif material_type == 'monitors' %}
+                <i class="fas fa-desktop"></i>
+            {% elif material_type == 'peripherals' %}
+                <i class="fas fa-keyboard"></i>
+            {% elif material_type == 'phones' %}
+                <i class="fas fa-mobile-alt"></i>
+            {% endif %}
+            {{ title }}
+        </h2>
+        <div>
+            {% if current_user.has_role('gestionnaire') %}
+            <a href="{{ url_for('material_create', material_type=material_type) }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Nouveau {{ title|lower|replace('s', '') }}
+            </a>
+            {% endif %}
+            <a href="{{ url_for('material_trash', material_type=material_type) }}" class="btn btn-secondary">
+                <i class="fas fa-trash"></i> Corbeille
+            </a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <!-- Barre de recherche améliorée -->
+            <div class="row mb-4">
+                <div class="col-md-5">
+                    <div class="input-group">
+                        <input type="text" id="searchInput" class="form-control"
+                               placeholder="Tapez au moins 4 caractères pour rechercher..."
+                               autocomplete="off">
+                        <button class="btn btn-outline-secondary" type="button" id="clearSearch">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <small class="text-muted">
+                        Recherche dans : nom, numéro de série, numéro d'inventaire, utilisateur
+                    </small>
+                </div>
+                <div class="col-md-2">
+                    <select id="statusFilter" class="form-select">
+                        <option value="">Tous les statuts</option>
+                        <option value="linked">Lié</option>
+                        <option value="unlinked">Non lié</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select id="userFilter" class="form-select">
+                        <option value="">Tous les utilisateurs</option>
+                        <!-- Les options seront chargées dynamiquement -->
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <div class="d-flex align-items-center">
+                        <span class="badge bg-info me-2" id="resultCount">
+                            Tapez pour rechercher
+                        </span>
+                        <button class="btn btn-sm btn-outline-primary" id="showAllBtn" style="display: none;">
+                            <i class="fas fa-list"></i> Tout afficher
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Zone de chargement -->
+            <div id="loadingSpinner" class="text-center py-4" style="display: none;">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Recherche en cours...</span>
+                </div>
+                <p class="mt-2 text-muted">Recherche en cours...</p>
+            </div>
+
+            <!-- Message d'accueil -->
+            <div id="welcomeMessage" class="text-center py-5">
+                <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">Recherche de {{ title|lower }}</h5>
+                <p class="text-muted">
+                    Utilisez la barre de recherche ci-dessus pour trouver du matériel.<br>
+                    Tapez au moins 4 caractères pour commencer la recherche.
+                </p>
+                <div class="mt-3">
+                    <small class="text-muted">
+                        <i class="fas fa-lightbulb"></i>
+                        <strong>Astuce :</strong> Vous pouvez aussi filtrer par statut ou utilisateur
+                    </small>
+                </div>
+            </div>
+
+            <!-- Message aucun résultat -->
+            <div id="noResultsMessage" class="text-center py-5" style="display: none;">
+                <i class="fas fa-search-minus fa-3x text-warning mb-3"></i>
+                <h5 class="text-warning">Aucun résultat trouvé</h5>
+                <p class="text-muted">
+                    Aucun matériel ne correspond à votre recherche.<br>
+                    Essayez avec d'autres mots-clés ou modifiez les filtres.
+                </p>
+            </div>
+
+            <!-- Tableau des résultats -->
+            <div id="resultsContainer" style="display: none;">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover" id="materialsTable">
+                        <thead>
+                            <tr>
+                                <th><i class="fas fa-tag"></i> Nom</th>
+                                <th><i class="fas fa-barcode"></i> N° de série</th>
+                                <th><i class="fas fa-qrcode"></i> N° d'inventaire</th>
+                                <th><i class="fas fa-user"></i> Utilisateur</th>
+                                <th><i class="fas fa-link"></i> Statut</th>
+                                <th><i class="fas fa-calendar"></i> Dernière modif.</th>
+                                <th><i class="fas fa-cogs"></i> Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="materialsTableBody">
+                            <!-- Les résultats seront insérés ici -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Statistiques rapides -->
+                <div id="quickStats" class="row mt-3">
+                    <div class="col-md-3">
+                        <div class="card bg-light">
+                            <div class="card-body text-center py-2">
+                                <small class="text-muted">Total</small>
+                                <h6 class="mb-0" id="statTotal">0</h6>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-success bg-opacity-10">
+                            <div class="card-body text-center py-2">
+                                <small class="text-success">Liés</small>
+                                <h6 class="mb-0 text-success" id="statLinked">0</h6>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-secondary bg-opacity-10">
+                            <div class="card-body text-center py-2">
+                                <small class="text-secondary">Non liés</small>
+                                <h6 class="mb-0 text-secondary" id="statUnlinked">0</h6>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-info bg-opacity-10">
+                            <div class="card-body text-center py-2">
+                                <small class="text-info">Utilisateurs uniques</small>
+                                <h6 class="mb-0 text-info" id="statUsers">0</h6>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <a href="{{ url_for('lists') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Retour aux listes
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Éléments du DOM
+    const searchInput = document.getElementById('searchInput');
+    const clearSearch = document.getElementById('clearSearch');
+    const statusFilter = document.getElementById('statusFilter');
+    const userFilter = document.getElementById('userFilter');
+    const showAllBtn = document.getElementById('showAllBtn');
+    const loadingSpinner = document.getElementById('loadingSpinner');
+    const welcomeMessage = document.getElementById('welcomeMessage');
+    const noResultsMessage = document.getElementById('noResultsMessage');
+    const resultsContainer = document.getElementById('resultsContainer');
+    const materialsTableBody = document.getElementById('materialsTableBody');
+    const resultCount = document.getElementById('resultCount');
+
+    // Éléments des statistiques
+    const statTotal = document.getElementById('statTotal');
+    const statLinked = document.getElementById('statLinked');
+    const statUnlinked = document.getElementById('statUnlinked');
+    const statUsers = document.getElementById('statUsers');
+
+    // Variables de contrôle
+    let searchTimeout;
+    let currentSearch = '';
+    let userOptions = new Set(); // Pour stocker les utilisateurs uniques
+    const materialType = '{{ material_type }}'; // Type de matériel depuis le template
+
+    // Configuration des icônes par type de matériel
+    const materialIcons = {
+        'computers': 'fas fa-laptop',
+        'monitors': 'fas fa-desktop',
+        'peripherals': 'fas fa-keyboard',
+        'phones': 'fas fa-mobile-alt'
+    };
+
+    // Fonction pour afficher l'état de chargement
+    function showLoading() {
+        loadingSpinner.style.display = 'block';
+        welcomeMessage.style.display = 'none';
+        noResultsMessage.style.display = 'none';
+        resultsContainer.style.display = 'none';
+    }
+
+    // Fonction pour afficher le message d'accueil
+    function showWelcome() {
+        loadingSpinner.style.display = 'none';
+        welcomeMessage.style.display = 'block';
+        noResultsMessage.style.display = 'none';
+        resultsContainer.style.display = 'none';
+        resultCount.textContent = 'Tapez pour rechercher';
+        resultCount.className = 'badge bg-info me-2';
+    }
+
+    // Fonction pour afficher "aucun résultat"
+    function showNoResults() {
+        loadingSpinner.style.display = 'none';
+        welcomeMessage.style.display = 'none';
+        noResultsMessage.style.display = 'block';
+        resultsContainer.style.display = 'none';
+        resultCount.textContent = 'Aucun résultat';
+        resultCount.className = 'badge bg-warning me-2';
+    }
+
+    // Fonction pour formater une date
+    function formatDate(dateString) {
+        if (!dateString) return 'N/A';
+        try {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('fr-FR');
+        } catch (e) {
+            return 'N/A';
+        }
+    }
+
+    // Fonction pour calculer et afficher les statistiques
+    function updateStatistics(materials) {
+        const total = materials.length;
+        const linked = materials.filter(m => m.is_linked).length;
+        const unlinked = total - linked;
+        const uniqueUsers = new Set(materials.filter(m => m.Username).map(m => m.Username)).size;
+
+        statTotal.textContent = total;
+        statLinked.textContent = linked;
+        statUnlinked.textContent = unlinked;
+        statUsers.textContent = uniqueUsers;
+    }
+
+    // Fonction pour afficher les résultats
+    function showResults(materials) {
+        loadingSpinner.style.display = 'none';
+        welcomeMessage.style.display = 'none';
+        noResultsMessage.style.display = 'none';
+        resultsContainer.style.display = 'block';
+
+        // Mettre à jour le compteur
+        const count = materials.length;
+        resultCount.textContent = `${count} résultat${count > 1 ? 's' : ''}`;
+        resultCount.className = count > 0 ? 'badge bg-success me-2' : 'badge bg-warning me-2';
+
+        // Vider le tableau
+        materialsTableBody.innerHTML = '';
+
+        // Collecter les utilisateurs pour le filtre
+        materials.forEach(material => {
+            if (material.Username && material.Username.trim()) {
+                userOptions.add(material.Username.trim());
+            }
+        });
+
+        // Appliquer les filtres
+        let filteredMaterials = [...materials];
+
+        // Filtre par statut
+        const selectedStatus = statusFilter.value;
+        if (selectedStatus === 'linked') {
+            filteredMaterials = filteredMaterials.filter(m => m.is_linked);
+        } else if (selectedStatus === 'unlinked') {
+            filteredMaterials = filteredMaterials.filter(m => !m.is_linked);
+        }
+
+        // Filtre par utilisateur
+        const selectedUser = userFilter.value.trim();
+        if (selectedUser) {
+            filteredMaterials = filteredMaterials.filter(m =>
+                m.Username && m.Username.toLowerCase().includes(selectedUser.toLowerCase())
+            );
+        }
+
+        // Remplir le tableau avec le matériel filtré
+        filteredMaterials.forEach(material => {
+            const row = document.createElement('tr');
+
+            // Définir la classe de ligne selon le statut
+            if (material.is_linked) {
+                row.classList.add('table-success');
+            }
+
+            row.innerHTML = `
+                <td>
+                    <i class="${materialIcons[materialType]} me-2"></i>
+                    <strong>${escapeHtml(material.name || '')}</strong>
+                </td>
+                <td>
+                    <code class="small">${escapeHtml(material.serial || 'N/A')}</code>
+                </td>
+                <td>
+                    <span class="badge bg-secondary">${escapeHtml(material.otherserial || 'N/A')}</span>
+                </td>
+                <td>
+                    ${material.Username ?
+                        `<i class="fas fa-user text-success me-1"></i>${escapeHtml(material.Username)}` :
+                        '<i class="fas fa-user-slash text-muted me-1"></i><em class="text-muted">Non attribué</em>'
+                    }
+                </td>
+                <td>
+                    ${material.is_linked ?
+                        '<span class="badge bg-success"><i class="fas fa-link"></i> Lié</span>' :
+                        '<span class="badge bg-secondary"><i class="fas fa-unlink"></i> Libre</span>'
+                    }
+                </td>
+                <td>
+                    <small class="text-muted">${formatDate(material.date_mod)}</small>
+                </td>
+                <td>
+                    {% if current_user.has_role('gestionnaire') %}
+                    <a href="/material/${materialType}/edit/${material.id}" class="btn btn-sm btn-warning" title="Modifier">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                    <form action="/material/${materialType}/delete/${material.id}" method="POST" style="display: inline;"
+                          onsubmit="return confirm('Êtes-vous sûr de vouloir mettre ce matériel dans la corbeille ?');">
+                        <button type="submit" class="btn btn-sm btn-danger" title="Mettre dans la corbeille">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </form>
+                    {% endif %}
+                </td>
+            `;
+            materialsTableBody.appendChild(row);
+        });
+
+        // Mettre à jour le filtre des utilisateurs
+        updateUserFilter();
+
+        // Mettre à jour les statistiques
+        updateStatistics(filteredMaterials);
+    }
+
+    // Fonction pour échapper le HTML (sécurité)
+    function escapeHtml(unsafe) {
+        if (typeof unsafe !== 'string') return '';
+        return unsafe
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // Fonction pour mettre à jour le filtre des utilisateurs
+    function updateUserFilter() {
+        // Sauvegarder la valeur actuelle
+        const currentValue = userFilter.value;
+
+        // Vider les options existantes (sauf la première)
+        while (userFilter.children.length > 1) {
+            userFilter.removeChild(userFilter.lastChild);
+        }
+
+        // Ajouter les nouveaux utilisateurs
+        Array.from(userOptions).sort().forEach(user => {
+            const option = document.createElement('option');
+            option.value = user;
+            option.textContent = user;
+            userFilter.appendChild(option);
+        });
+
+        // Restaurer la valeur si elle existe encore
+        if (currentValue && Array.from(userOptions).includes(currentValue)) {
+            userFilter.value = currentValue;
+        }
+    }
+
+    // Fonction de recherche
+    function performSearch(searchTerm, forceSearch = false) {
+        // Nettoyer le terme de recherche
+        searchTerm = searchTerm.trim();
+
+        // Si la recherche est vide, retourner à l'état d'accueil
+        if (!searchTerm) {
+            showWelcome();
+            showAllBtn.style.display = 'none';
+            return;
+        }
+
+        // Vérifier la longueur minimale (4 caractères pour le matériel)
+        if (!forceSearch && searchTerm.length < 4) {
+            showWelcome();
+            return;
+        }
+
+        // Éviter les recherches répétées
+        if (searchTerm === currentSearch) {
+            return;
+        }
+
+        currentSearch = searchTerm;
+        showLoading();
+
+        // Requête AJAX vers le serveur
+        fetch(`{{ url_for('api_search_materials') }}?material_type=${materialType}&q=${encodeURIComponent(searchTerm)}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Erreur de recherche');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.materials && data.materials.length > 0) {
+                showResults(data.materials);
+                showAllBtn.style.display = 'inline-block';
+            } else {
+                showNoResults();
+                showAllBtn.style.display = 'inline-block';
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            showNoResults();
+        });
+    }
+
+    // Gestionnaire d'événements pour la recherche en temps réel
+    searchInput.addEventListener('input', function() {
+        const searchTerm = this.value;
+
+        // Annuler le timeout précédent
+        clearTimeout(searchTimeout);
+
+        // Définir un nouveau timeout pour éviter trop de requêtes
+        searchTimeout = setTimeout(() => {
+            performSearch(searchTerm);
+        }, 400); // Attendre 400ms pour le matériel (plus long que les utilisateurs)
+    });
+
+    // Gestionnaire pour effacer la recherche
+    clearSearch.addEventListener('click', function() {
+        searchInput.value = '';
+        currentSearch = '';
+        showWelcome();
+        statusFilter.value = '';
+        userFilter.value = '';
+        showAllBtn.style.display = 'none';
+    });
+
+    // Gestionnaires pour les filtres
+    statusFilter.addEventListener('change', function() {
+        if (currentSearch) {
+            performSearch(currentSearch, true);
+        }
+    });
+
+    userFilter.addEventListener('change', function() {
+        if (currentSearch) {
+            performSearch(currentSearch, true);
+        }
+    });
+
+    // Gestionnaire pour "Tout afficher"
+    showAllBtn.addEventListener('click', function() {
+        searchInput.value = '';
+        performSearch('', true); // Forcer la recherche pour tout afficher
+    });
+
+    // Gestionnaire pour la touche Entrée
+    searchInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            performSearch(this.value, true);
+        }
+    });
+
+    // Initialiser l'état d'accueil
+    showWelcome();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,170 @@
+<!-- templates/db_check.html (modifié) -->
+{% extends "base.html" %}
+
+{% block title %}Vérification des bases de données{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 class="mt-4 mb-4">Vérification des connexions aux bases de données externes</h2>
+
+    {% if error %}
+    <div class="alert alert-danger" role="alert">
+        <i class="fas fa-exclamation-circle"></i> Une erreur est survenue: {{ error }}
+    </div>
+    {% endif %}
+
+    {% if not config_exists %}
+    <div class="alert alert-warning" role="alert">
+        <i class="fas fa-exclamation-triangle"></i> Le fichier de configuration bdd.json est introuvable.
+        Veuillez le créer dans le répertoire de l'application.
+    </div>
+    {% endif %}
+
+    <div class="row">
+        <!-- Utilisateurs -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-users"></i> Base des utilisateurs</h5>
+                </div>
+                <div class="card-body">
+                    {% if connection_status and 'users' in connection_status %}
+                        {% if connection_status['users']['status'] %}
+                            <div class="alert alert-success">
+                                <i class="fas fa-check-circle"></i> Statut : Connecté
+                            </div>
+                            <p>La connexion à la base de données des utilisateurs est fonctionnelle.</p>
+                        {% else %}
+                            <div class="alert alert-danger">
+                                <i class="fas fa-times-circle"></i> Statut : Erreur de connexion
+                            </div>
+                            <p>Détails : {{ connection_status['users']['message'] }}</p>
+                        {% endif %}
+                    {% else %}
+                        <div class="alert alert-secondary">
+                            <i class="fas fa-clock"></i> Statut : Non configuré
+                        </div>
+                        <p>Configuration nécessaire dans le fichier bdd.json</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- GLPI / Matériel -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-desktop"></i> GLPI / Matériel</h5>
+                </div>
+                <div class="card-body">
+                    {% if connection_status %}
+                        <!-- Computers -->
+                        <h6 class="mb-2">Ordinateurs:</h6>
+                        {% if connection_status['computers']['status'] %}
+                            <div class="alert alert-success mb-3">
+                                <i class="fas fa-check-circle"></i> Connecté
+                            </div>
+                        {% else %}
+                            <div class="alert alert-danger mb-3">
+                                <i class="fas fa-times-circle"></i> {{ connection_status['computers']['message'] }}
+                            </div>
+                        {% endif %}
+
+                        <!-- Moniteurs -->
+                        <h6 class="mb-2">Moniteurs:</h6>
+                        {% if connection_status['monitors']['status'] %}
+                            <div class="alert alert-success mb-3">
+                                <i class="fas fa-check-circle"></i> Connecté
+                            </div>
+                        {% else %}
+                            <div class="alert alert-danger mb-3">
+                                <i class="fas fa-times-circle"></i> {{ connection_status['monitors']['message'] }}
+                            </div>
+                        {% endif %}
+
+                        <!-- Périphériques -->
+                        <h6 class="mb-2">Périphériques:</h6>
+                        {% if connection_status['peripherals']['status'] %}
+                            <div class="alert alert-success mb-3">
+                                <i class="fas fa-check-circle"></i> Connecté
+                            </div>
+                        {% else %}
+                            <div class="alert alert-danger mb-3">
+                                <i class="fas fa-times-circle"></i> {{ connection_status['peripherals']['message'] }}
+                            </div>
+                        {% endif %}
+
+                        <!-- Téléphones -->
+                        <h6 class="mb-2">Téléphones:</h6>
+                        {% if connection_status['phones']['status'] %}
+                            <div class="alert alert-success mb-3">
+                                <i class="fas fa-check-circle"></i> Connecté
+                            </div>
+                        {% else %}
+                            <div class="alert alert-danger mb-3">
+                                <i class="fas fa-times-circle"></i> {{ connection_status['phones']['message'] }}
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="alert alert-secondary">
+                            <i class="fas fa-clock"></i> Statut : Non configuré
+                        </div>
+                        <p>Configuration nécessaire dans le fichier bdd.json</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section de résumé et d'aide -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5><i class="fas fa-info-circle"></i> Informations et aide</h5>
+        </div>
+        <div class="card-body">
+            <h6>Configuration du fichier bdd.json</h6>
+            <p>Le fichier bdd.json doit être placé dans le répertoire de l'application et contenir la structure suivante :</p>
+            <pre class="bg-light p-3">
+{
+  "users": {
+    "connect": {
+      "host": "localhost",
+      "user": "utilisateur_mysql",
+      "password": "mot_de_passe",
+      "db": "nom_base_donnees",
+      "table": "nom_table"
+    },
+    "fields": {
+      "GivenName": "champ_prenom",
+      "Surname": "champ_nom",
+      "Username": "champ_identifiant",
+      ...
+    }
+  },
+  "computers": { ... },
+  "monitors": { ... },
+  "peripherals": { ... },
+  "phones": { ... }
+}</pre>
+            <p class="mt-3">
+                Si une connexion échoue, vérifiez les points suivants :
+            </p>
+            <ul>
+                <li>Les informations de connexion (host, utilisateur, mot de passe) sont correctes</li>
+                <li>La base de données et la table existent</li>
+                <li>L'utilisateur MySQL a les droits nécessaires pour accéder à la table</li>
+                <li>Les noms des champs dans la section "fields" correspondent aux colonnes de la table</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <a href="{{ url_for('dashboard') }}" class="btn btn-primary">
+            <i class="fas fa-arrow-left"></i> Retour au tableau de bord
+        </a>
+        <button onclick="window.location.reload();" class="btn btn-success">
+            <i class="fas fa-sync-alt"></i> Tester à nouveau
+        </button>
+    </div>
+</div>
+{% endblock %}

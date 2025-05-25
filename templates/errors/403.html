@@ -1,0 +1,36 @@
+<!-- templates/errors/403.html -->
+{% extends "base.html" %}
+
+{% block title %}Accès non autorisé{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mt-5">
+        <div class="col-md-6 offset-md-3 text-center">
+            <div class="card">
+                <div class="card-body">
+                    <i class="fas fa-lock fa-5x text-danger mb-4"></i>
+                    <h2 class="text-danger">Accès non autorisé</h2>
+                    <p class="lead">Vous n'avez pas les permissions nécessaires pour accéder à cette page.</p>
+
+                    <div class="alert alert-warning">
+                        <i class="fas fa-info-circle"></i> Cette page nécessite le rôle :
+                        <strong>{{ required_role | default('spécifique') }}</strong>
+                    </div>
+
+                    <p>Vos rôles actuels :</p>
+                    {% for role in current_user.roles %}
+                        <span class="badge bg-primary">{{ role.name.upper() }}</span>
+                    {% endfor %}
+
+                    <div class="mt-4">
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-primary">
+                            <i class="fas fa-home"></i> Retour à l'accueil
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

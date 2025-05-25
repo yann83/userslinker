@@ -1,0 +1,87 @@
+<!-- templates/material/edit.html -->
+{% extends "base.html" %}
+
+{% block title %}Modifier {{ title|lower|replace('Modifier ', '') }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 class="mt-4 mb-4">
+        <i class="fas fa-edit"></i> {{ title }}
+    </h2>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('material_edit', material_type=material_type, item_id=item.id) }}">
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Nom <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="name" name="name" value="{{ item.name }}" required>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="serial" class="form-label">Numéro de série</label>
+                                    <input type="text" class="form-control" id="serial" name="serial" value="{{ item.serial }}">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="otherserial" class="form-label">Numéro d'inventaire</label>
+                                    <input type="text" class="form-control" id="otherserial" name="otherserial" value="{{ item.otherserial }}">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Utilisateur</label>
+                            <input type="text" class="form-control" id="username" name="username" value="{{ item.Username }}" placeholder="Non attribué">
+                            <small class="form-text text-muted">
+                                Si vous modifiez l'utilisateur, il est préférable d'utiliser le workflow d'événements.
+                            </small>
+                        </div>
+
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Enregistrer les modifications
+                            </button>
+                            <a href="{{ url_for('material_list', material_type=material_type) }}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Annuler
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card bg-light">
+                <div class="card-body">
+                    <h5 class="card-title">Informations sur le matériel</h5>
+                    <p class="card-text">
+                        <small>
+                            <strong>ID :</strong> {{ item.id }}<br>
+                            <strong>Lié :</strong> {% if item.is_linked %}Oui{% else %}Non{% endif %}<br>
+                            <strong>Créé le :</strong> {{ item.date_create.strftime('%d/%m/%Y %H:%M') if item.date_create else 'N/A' }}<br>
+                            <strong>Dernière modification :</strong> {{ item.date_mod.strftime('%d/%m/%Y %H:%M') if item.date_mod else 'N/A' }}<br>
+                            <strong>Par :</strong> {{ item.app_management_user }}
+                        </small>
+                    </p>
+
+                    <hr>
+
+                    <h6>Notes</h6>
+                    <p class="card-text">
+                        <small>
+                            • Les modifications seront effectives immédiatement.<br>
+                            • Les champs marqués d'un <span class="text-danger">*</span> sont obligatoires.<br>
+                            • L'historique des modifications est conservé.
+                        </small>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

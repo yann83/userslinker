@@ -1,0 +1,126 @@
+<!-- templates/material/create.html -->
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 class="mt-4 mb-4">
+        <i class="fas fa-plus-circle"></i> {{ title }}
+    </h2>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('material_create', material_type=material_type) }}">
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Nom <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="name" name="name" required>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="serial" class="form-label">Numéro de série</label>
+                                    <input type="text" class="form-control" id="serial" name="serial">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="otherserial" class="form-label">Numéro d'inventaire</label>
+                                    <input type="text" class="form-control" id="otherserial" name="otherserial">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Utilisateur</label>
+                            <input type="text" class="form-control" id="username" name="username" placeholder="Non attribué">
+                            <small class="form-text text-muted">
+                                Si vous connaissez déjà l'utilisateur qui aura ce matériel, vous pouvez l'indiquer ici.
+                            </small>
+                        </div>
+
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Créer
+                            </button>
+                            <a href="{{ url_for('material_list', material_type=material_type) }}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Annuler
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card bg-light">
+                <div class="card-body">
+                    <h5 class="card-title">Informations</h5>
+                    <p class="card-text">
+                        <small>
+                            • Les champs marqués d'un <span class="text-danger">*</span> sont obligatoires.<br>
+                            • Le numéro de série doit être unique.<br>
+                            • Si vous ne connaissez pas le numéro de série, vous pouvez laisser le champ vide.<br>
+                            • Si vous attribuez un utilisateur, le matériel sera automatiquement marqué comme "lié".
+                        </small>
+                    </p>
+                </div>
+            </div>
+            
+            {% if material_type == 'computers' %}
+            <div class="card bg-light mt-3">
+                <div class="card-body">
+                    <h5 class="card-title">Aide - Ordinateurs</h5>
+                    <p class="card-text">
+                        <small>
+                            • Le nom recommandé est le nom du modèle (ex: "HP EliteBook 840 G5").<br>
+                            • Le numéro de série se trouve généralement sous l'appareil ou dans les informations système.
+                        </small>
+                    </p>
+                </div>
+            </div>
+            {% elif material_type == 'monitors' %}
+            <div class="card bg-light mt-3">
+                <div class="card-body">
+                    <h5 class="card-title">Aide - Moniteurs</h5>
+                    <p class="card-text">
+                        <small>
+                            • Le nom recommandé est le nom du modèle (ex: "Dell P2419H").<br>
+                            • Le numéro de série se trouve généralement à l'arrière de l'écran.
+                        </small>
+                    </p>
+                </div>
+            </div>
+            {% elif material_type == 'peripherals' %}
+            <div class="card bg-light mt-3">
+                <div class="card-body">
+                    <h5 class="card-title">Aide - Périphériques</h5>
+                    <p class="card-text">
+                        <small>
+                            • Le nom devrait inclure le type de périphérique (ex: "Clavier Logitech K120").<br>
+                            • Les périphériques sans numéro de série peuvent être identifiés par un numéro d'inventaire interne.
+                        </small>
+                    </p>
+                </div>
+            </div>
+            {% elif material_type == 'phones' %}
+            <div class="card bg-light mt-3">
+                <div class="card-body">
+                    <h5 class="card-title">Aide - Téléphones</h5>
+                    <p class="card-text">
+                        <small>
+                            • Le nom recommandé est le nom du modèle (ex: "iPhone 12 Pro").<br>
+                            • Pour les téléphones mobiles, l'IMEI peut être utilisé comme numéro de série.<br>
+                            • Pour les téléphones fixes, le numéro de poste peut être utilisé comme identifiant.
+                        </small>
+                    </p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

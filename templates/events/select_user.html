@@ -1,0 +1,349 @@
+<!-- templates/events/select_user.html - Version avec recherche dynamique -->
+{% extends "base.html" %}
+
+{% block title %}Sélectionner un utilisateur{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 class="mt-4 mb-4">
+        <i class="fas fa-user-check"></i> Sélectionner un utilisateur
+    </h2>
+
+    <div class="progress mb-4">
+        <div class="progress-bar bg-primary" role="progressbar" style="width: 25%;" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">
+            Étape 1/4
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>Étape 1 : Sélection de l'utilisateur et de l'action</h5>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i> Recherchez et sélectionnez un utilisateur, puis choisissez l'action à effectuer.
+            </div>
+
+            <form method="POST" action="{{ url_for('select_user') }}" id="userSelectionForm">
+                <!-- Champ de recherche d'utilisateur -->
+                <div class="mb-3">
+                    <label for="user_search" class="form-label">Rechercher un utilisateur</label>
+                    <div class="position-relative">
+                        <input type="text" class="form-control" id="user_search"
+                               placeholder="Tapez au moins 4 caractères (nom, prénom ou identifiant)..."
+                               autocomplete="off">
+                        <div class="position-absolute top-100 start-0 w-100" style="z-index: 1050;">
+                            <div id="user_search_results" class="list-group" style="display: none; max-height: 300px; overflow-y: auto;">
+                                <!-- Les résultats de recherche apparaîtront ici -->
+                            </div>
+                        </div>
+                    </div>
+                    <small class="form-text text-muted">
+                        La recherche se déclenche automatiquement après 4 caractères
+                    </small>
+                </div>
+
+                <!-- Champ caché pour l'ID utilisateur sélectionné -->
+                <input type="hidden" id="user_id" name="user_id" required>
+
+                <!-- Affichage de l'utilisateur sélectionné -->
+                <div id="selected_user_display" class="mb-3" style="display: none;">
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <h6 class="card-title">
+                                <i class="fas fa-user text-success"></i> Utilisateur sélectionné
+                            </h6>
+                            <div id="selected_user_info">
+                                <!-- Les informations de l'utilisateur sélectionné apparaîtront ici -->
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-secondary mt-2" id="change_user_btn">
+                                <i class="fas fa-edit"></i> Changer d'utilisateur
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Choix de l'action -->
+                <div class="mb-3" id="action_selection" style="display: none;">
+                    <label class="form-label">Action à effectuer</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="action" id="link" value="link" checked>
+                        <label class="form-check-label" for="link">
+                            <i class="fas fa-link text-success"></i> Lier du matériel à cet utilisateur
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="action" id="unlink" value="unlink">
+                        <label class="form-check-label" for="unlink">
+                            <i class="fas fa-unlink text-danger"></i> Délier du matériel de cet utilisateur
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Zone d'état de recherche -->
+                <div id="search_status" class="mb-3">
+                    <div class="text-center text-muted py-3">
+                        <i class="fas fa-search fa-2x mb-2"></i>
+                        <p>Commencez à taper pour rechercher un utilisateur</p>
+                    </div>
+                </div>
+
+                <!-- Zone de chargement -->
+                <div id="loading_spinner" class="text-center py-3" style="display: none;">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Recherche en cours...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Recherche en cours...</p>
+                </div>
+
+                <!-- Boutons d'action -->
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary" id="submit_btn" disabled>
+                        <i class="fas fa-arrow-right"></i> Suivant
+                    </button>
+                    <a href="{{ url_for('create_event') }}" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> Annuler
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Retour au tableau de bord
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Éléments du DOM
+    const userSearch = document.getElementById('user_search');
+    const userSearchResults = document.getElementById('user_search_results');
+    const userIdInput = document.getElementById('user_id');
+    const selectedUserDisplay = document.getElementById('selected_user_display');
+    const selectedUserInfo = document.getElementById('selected_user_info');
+    const changeUserBtn = document.getElementById('change_user_btn');
+    const actionSelection = document.getElementById('action_selection');
+    const searchStatus = document.getElementById('search_status');
+    const loadingSpinner = document.getElementById('loading_spinner');
+    const submitBtn = document.getElementById('submit_btn');
+
+    // Variables de contrôle
+    let searchTimeout;
+    let selectedUser = null;
+
+    // Fonction pour afficher l'état de chargement
+    function showLoading() {
+        loadingSpinner.style.display = 'block';
+        searchStatus.style.display = 'none';
+        userSearchResults.style.display = 'none';
+    }
+
+    // Fonction pour masquer le chargement
+    function hideLoading() {
+        loadingSpinner.style.display = 'none';
+    }
+
+    // Fonction pour afficher l'état de démarrage
+    function showStartState() {
+        searchStatus.style.display = 'block';
+        userSearchResults.style.display = 'none';
+        hideLoading();
+    }
+
+    // Fonction pour échapper le HTML (sécurité)
+    function escapeHtml(unsafe) {
+        if (typeof unsafe !== 'string') return '';
+        return unsafe
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // Fonction pour afficher les résultats de recherche
+    function displaySearchResults(users) {
+        hideLoading();
+
+        if (users.length === 0) {
+            userSearchResults.innerHTML = `
+                <div class="list-group-item text-muted text-center">
+                    <i class="fas fa-search-minus"></i> Aucun utilisateur trouvé
+                </div>
+            `;
+        } else {
+            userSearchResults.innerHTML = '';
+
+            users.forEach(user => {
+                const resultItem = document.createElement('div');
+                resultItem.className = 'list-group-item list-group-item-action';
+                resultItem.style.cursor = 'pointer';
+
+                resultItem.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">
+                                <i class="fas fa-user text-primary me-2"></i>
+                                ${escapeHtml(user.Surname)} ${escapeHtml(user.GivenName)}
+                            </h6>
+                            <p class="mb-1 text-muted">
+                                <strong>Identifiant:</strong> ${escapeHtml(user.Username)}
+                            </p>
+                            <small class="text-muted">
+                                ${user.Title ? escapeHtml(user.Title) : ''}
+                                ${user.Department ? '• ' + escapeHtml(user.Department) : ''}
+                            </small>
+                        </div>
+                        <div>
+                            <i class="fas fa-chevron-right text-muted"></i>
+                        </div>
+                    </div>
+                `;
+
+                // Ajouter l'événement de clic
+                resultItem.addEventListener('click', function() {
+                    selectUser(user);
+                });
+
+                userSearchResults.appendChild(resultItem);
+            });
+        }
+
+        userSearchResults.style.display = 'block';
+        searchStatus.style.display = 'none';
+    }
+
+    // Fonction pour sélectionner un utilisateur
+    function selectUser(user) {
+        selectedUser = user;
+        userIdInput.value = user.id;
+
+        // Effacer le champ de recherche et masquer les résultats
+        userSearch.value = '';
+        userSearchResults.style.display = 'none';
+
+        // Afficher les informations de l'utilisateur sélectionné
+        selectedUserInfo.innerHTML = `
+            <p class="mb-2">
+                <strong>${escapeHtml(user.Surname)} ${escapeHtml(user.GivenName)}</strong>
+            </p>
+            <p class="mb-2">
+                <small class="text-muted">
+                    <strong>Identifiant:</strong> ${escapeHtml(user.Username)}<br>
+                    ${user.Title ? '<strong>Fonction:</strong> ' + escapeHtml(user.Title) + '<br>' : ''}
+                    ${user.Department ? '<strong>Service:</strong> ' + escapeHtml(user.Department) + '<br>' : ''}
+                    ${user.Site ? '<strong>Site:</strong> ' + escapeHtml(user.Site) : ''}
+                </small>
+            </p>
+        `;
+
+        selectedUserDisplay.style.display = 'block';
+        actionSelection.style.display = 'block';
+        submitBtn.disabled = false;
+
+        // Masquer l'état de démarrage
+        searchStatus.style.display = 'none';
+    }
+
+    // Fonction pour effectuer la recherche
+    function performSearch(searchTerm) {
+        if (searchTerm.length < 4) {
+            showStartState();
+            return;
+        }
+
+        showLoading();
+
+        // Requête AJAX pour rechercher les utilisateurs
+        fetch(`{{ url_for('api_workflow_search_users') }}?q=${encodeURIComponent(searchTerm)}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Erreur de recherche');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.status === 'success') {
+                // Limiter à 10 résultats maximum
+                const limitedUsers = data.users.slice(0, 10);
+                displaySearchResults(limitedUsers);
+            } else {
+                throw new Error(data.message || 'Erreur de recherche');
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            hideLoading();
+            userSearchResults.innerHTML = `
+                <div class="list-group-item text-danger text-center">
+                    <i class="fas fa-exclamation-triangle"></i> Erreur lors de la recherche
+                </div>
+            `;
+            userSearchResults.style.display = 'block';
+        });
+    }
+
+    // Gestionnaire d'événements pour la recherche en temps réel
+    userSearch.addEventListener('input', function() {
+        const searchTerm = this.value.trim();
+
+        // Annuler le timeout précédent
+        clearTimeout(searchTimeout);
+
+        // Définir un nouveau timeout pour éviter trop de requêtes
+        searchTimeout = setTimeout(() => {
+            performSearch(searchTerm);
+        }, 300);
+    });
+
+    // Gestionnaire pour le bouton "Changer d'utilisateur"
+    changeUserBtn.addEventListener('click', function() {
+        selectedUser = null;
+        userIdInput.value = '';
+        selectedUserDisplay.style.display = 'none';
+        actionSelection.style.display = 'none';
+        submitBtn.disabled = true;
+        showStartState();
+        userSearch.focus();
+    });
+
+    // Masquer les résultats quand on clique ailleurs
+    document.addEventListener('click', function(event) {
+        if (!userSearch.contains(event.target) && !userSearchResults.contains(event.target)) {
+            if (!selectedUser) {
+                showStartState();
+            }
+        }
+    });
+
+    // Focus sur le champ de recherche quand on clique dessus
+    userSearch.addEventListener('focus', function() {
+        if (this.value.length >= 4) {
+            performSearch(this.value);
+        }
+    });
+
+    // Validation du formulaire
+    document.getElementById('userSelectionForm').addEventListener('submit', function(e) {
+        if (!selectedUser || !userIdInput.value) {
+            e.preventDefault();
+            alert('Veuillez sélectionner un utilisateur');
+            return false;
+        }
+    });
+
+    // Initialiser l'état de démarrage
+    showStartState();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,159 @@
+<!-- templates/admin/users.html -->
+{% extends "base.html" %}
+
+{% block title %}Gestion des utilisateurs{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mt-4 mb-4">
+        <h2><i class="fas fa-users-cog"></i> Gestion des utilisateurs</h2>
+        <div>
+            <a href="{{ url_for('export_users') }}" class="btn btn-success">
+                <i class="fas fa-file-export"></i> Exporter
+            </a>
+            <a href="{{ url_for('import_users') }}" class="btn btn-warning">
+                <i class="fas fa-file-import"></i> Importer
+            </a>
+            <a href="{{ url_for('users_stats') }}" class="btn btn-info">
+                <i class="fas fa-chart-bar"></i> Statistiques
+            </a>
+            <a href="{{ url_for('create_user') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Nouvel utilisateur
+            </a>
+        </div>
+    </div>
+
+    {% if users %}
+    <!-- Barre de recherche et filtres -->
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <input type="text" id="searchInput" class="form-control" placeholder="Rechercher un utilisateur...">
+        </div>
+        <div class="col-md-3">
+            <select id="roleFilter" class="form-select">
+                <option value="">Tous les rôles</option>
+                <option value="administrateur">Administrateur</option>
+                <option value="gestionnaire">Gestionnaire</option>
+                <option value="lecteur">Lecteur</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <select id="statusFilter" class="form-select">
+                <option value="">Tous les statuts</option>
+                <option value="active">Actifs uniquement</option>
+                <option value="inactive">Inactifs uniquement</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-striped" id="usersTable">
+            <thead>
+                <tr>
+                    <th>Nom</th>
+                    <th>Email</th>
+                    <th>Nom d'utilisateur</th>
+                    <th>Rôles</th>
+                    <th>Statut</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>{{ user.GivenName }} {{ user.Surname }}</td>
+                    <td>{{ user.email }}</td>
+                    <td>{{ user.user }}</td>
+                    <td>
+                        {% for role in user.roles %}
+                            {% if role.name == 'administrateur' %}
+                                <span class="badge bg-warning">{{ role.name }}</span>
+                            {% elif role.name == 'gestionnaire' %}
+                                <span class="badge bg-primary">{{ role.name }}</span>
+                            {% else %}
+                                <span class="badge bg-info">{{ role.name }}</span>
+                            {% endif %}
+                        {% endfor %}
+                    </td>
+                    <td>
+                        {% if user.active %}
+                            <span class="badge bg-success">
+                                <i class="fas fa-check-circle"></i> Actif
+                            </span>
+                        {% else %}
+                            <span class="badge bg-danger">
+                                <i class="fas fa-times-circle"></i> Inactif
+                            </span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{{ url_for('edit_user', user_id=user.id) }}" class="btn btn-sm btn-warning">
+                            <i class="fas fa-edit"></i>
+                        </a>
+
+                        <!-- Empêcher la suppression de soi-même -->
+                        {% if user.id != current_user.id %}
+                        <form action="{{ url_for('delete_user', user_id=user.id) }}" method="POST" style="display: inline;"
+                              onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?');">
+                            <button type="submit" class="btn btn-sm btn-danger">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i> Aucun utilisateur trouvé.
+    </div>
+    {% endif %}
+
+    <div class="mt-4">
+        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Retour au tableau de bord
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Fonction de recherche et filtrage
+    function filterTable() {
+        const searchInput = document.getElementById('searchInput').value.toLowerCase();
+        const roleFilter = document.getElementById('roleFilter').value.toLowerCase();
+        const statusFilter = document.getElementById('statusFilter').value;
+        const table = document.getElementById('usersTable');
+        const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+
+        for (let i = 0; i < rows.length; i++) {
+            const nameCell = rows[i].cells[0].textContent.toLowerCase();
+            const emailCell = rows[i].cells[1].textContent.toLowerCase();
+            const usernameCell = rows[i].cells[2].textContent.toLowerCase();
+            const rolesCell = rows[i].cells[3].textContent.toLowerCase();
+            const statusCell = rows[i].cells[4].textContent.toLowerCase();
+
+            const matchesSearch = nameCell.includes(searchInput) ||
+                                emailCell.includes(searchInput) ||
+                                usernameCell.includes(searchInput);
+
+            const matchesRole = !roleFilter || rolesCell.includes(roleFilter);
+
+            const matchesStatus = !statusFilter ||
+                                (statusFilter === 'active' && statusCell.includes('actif')) ||
+                                (statusFilter === 'inactive' && statusCell.includes('inactif'));
+
+            rows[i].style.display = matchesSearch && matchesRole && matchesStatus ? '' : 'none';
+        }
+    }
+
+    // Ajouter les événements
+    document.getElementById('searchInput').addEventListener('keyup', filterTable);
+    document.getElementById('roleFilter').addEventListener('change', filterTable);
+    document.getElementById('statusFilter').addEventListener('change', filterTable);
+</script>
+{% endblock %}

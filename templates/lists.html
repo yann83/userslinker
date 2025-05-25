@@ -1,0 +1,84 @@
+<!-- templates/lists.html -->
+{% extends "base.html" %}
+
+{% block title %}Listes{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 class="mt-4 mb-4">
+        <i class="fas fa-list"></i> Listes
+    </h2>
+
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i> Cette page est accessible aux gestionnaires et aux lecteurs.
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4 card-hover">
+                <div class="card-header">
+                    <h5><i class="fas fa-users"></i> Utilisateurs</h5>
+                </div>
+                <div class="card-body">
+                    <p>Liste des utilisateurs de l'organisation</p>
+                    <a href="{{ url_for('users_list') }}" class="btn btn-primary">
+                        <i class="fas fa-list"></i> Afficher la liste
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card mb-4 card-hover">
+                <div class="card-header">
+                    <h5><i class="fas fa-desktop"></i> Matériel</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group mb-3">
+                        <a href="{{ url_for('material_list', material_type='computers') }}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-laptop"></i> Ordinateurs
+                        </a>
+                        <a href="{{ url_for('material_list', material_type='monitors') }}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-desktop"></i> Moniteurs
+                        </a>
+                        <a href="{{ url_for('material_list', material_type='peripherals') }}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-keyboard"></i> Périphériques
+                        </a>
+                        <a href="{{ url_for('material_list', material_type='phones') }}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-mobile-alt"></i> Téléphones
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <a href="{{ url_for('dashboard') }}" class="btn btn-primary">
+            <i class="fas fa-arrow-left"></i> Retour au tableau de bord
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .list-group-item {
+        transition: all 0.2s;
+    }
+
+    .list-group-item:hover {
+        transform: translateX(5px);
+        background-color: #f8f9fa;
+    }
+
+    .card-hover {
+        transition: all 0.3s ease;
+    }
+
+    .card-hover:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+</style>
+{% endblock %}
