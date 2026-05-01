@@ -1,0 +1,304 @@
+<!-- templates/events/summary.html -->
+{% extends "base.html" %}
+
+{% block title %}Résumé de l'événement{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 class="mt-4 mb-4">
+        <i class="fas fa-clipboard-check"></i> Résumé de l'événement
+    </h2>
+
+    <div class="progress mb-4">
+        <div class="progress-bar bg-primary" role="progressbar" style="width: 100%;" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100">
+            Étape 4/4
+        </div>
+    </div>
+
+    <div class="alert alert-success">
+        <i class="fas fa-check-circle"></i> L'événement a été traité avec succès.
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>Informations sur l'utilisateur</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Nom :</strong> {{ user.Surname }}</p>
+                    <p><strong>Prénom :</strong> {{ user.GivenName }}</p>
+                    <p><strong>Identifiant :</strong> {{ user.Username }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Fonction :</strong> {{ user.Title }}</p>
+                    <p><strong>Service :</strong> {{ user.Department }}</p>
+                    <p><strong>Site :</strong> {{ user.Site }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>Matériel actuellement lié à cet utilisateur</h5>
+        </div>
+        <div class="card-body">
+            <ul class="nav nav-tabs" id="materialTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="computers-tab" data-bs-toggle="tab" data-bs-target="#computers" type="button" role="tab">
+                        <i class="fas fa-laptop"></i> Ordinateurs ({{ computers|length }})
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="monitors-tab" data-bs-toggle="tab" data-bs-target="#monitors" type="button" role="tab">
+                        <i class="fas fa-desktop"></i> Moniteurs ({{ monitors|length }})
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="peripherals-tab" data-bs-toggle="tab" data-bs-target="#peripherals" type="button" role="tab">
+                        <i class="fas fa-keyboard"></i> Périphériques ({{ peripherals|length }})
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="phones-tab" data-bs-toggle="tab" data-bs-target="#phones" type="button" role="tab">
+                        <i class="fas fa-mobile-alt"></i> Téléphones ({{ phones|length }})
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content" id="materialTabContent">
+                <!-- Onglet Ordinateurs -->
+                <div class="tab-pane fade show active" id="computers" role="tabpanel">
+                    <div class="p-3">
+                        {% if computers %}
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Nom</th>
+                                        <th>Numéro de série</th>
+                                        <th>Numéro d'inventaire</th>
+                                        <th>Date de modification</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for computer in computers %}
+                                    <tr>
+                                        <td>{{ computer.name }}</td>
+                                        <td>{{ computer.serial }}</td>
+                                        <td>{{ computer.otherserial }}</td>
+                                        <td>{{ computer.date_mod.strftime('%d/%m/%Y %H:%M') if computer.date_mod else 'N/A' }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="alert alert-info mt-3">
+                            <i class="fas fa-info-circle"></i> Aucun ordinateur lié à cet utilisateur.
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Onglet Moniteurs -->
+                <div class="tab-pane fade" id="monitors" role="tabpanel">
+                    <div class="p-3">
+                        {% if monitors %}
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Nom</th>
+                                        <th>Numéro de série</th>
+                                        <th>Numéro d'inventaire</th>
+                                        <th>Date de modification</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for monitor in monitors %}
+                                    <tr>
+                                        <td>{{ monitor.name }}</td>
+                                        <td>{{ monitor.serial }}</td>
+                                        <td>{{ monitor.otherserial }}</td>
+                                        <td>{{ monitor.date_mod.strftime('%d/%m/%Y %H:%M') if monitor.date_mod else 'N/A' }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="alert alert-info mt-3">
+                            <i class="fas fa-info-circle"></i> Aucun moniteur lié à cet utilisateur.
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Onglet Périphériques -->
+                <div class="tab-pane fade" id="peripherals" role="tabpanel">
+                    <div class="p-3">
+                        {% if peripherals %}
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Nom</th>
+                                        <th>Numéro de série</th>
+                                        <th>Numéro d'inventaire</th>
+                                        <th>Date de modification</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for peripheral in peripherals %}
+                                    <tr>
+                                        <td>{{ peripheral.name }}</td>
+                                        <td>{{ peripheral.serial }}</td>
+                                        <td>{{ peripheral.otherserial }}</td>
+                                        <td>{{ peripheral.date_mod.strftime('%d/%m/%Y %H:%M') if peripheral.date_mod else 'N/A' }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="alert alert-info mt-3">
+                            <i class="fas fa-info-circle"></i> Aucun périphérique lié à cet utilisateur.
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Onglet Téléphones -->
+                <div class="tab-pane fade" id="phones" role="tabpanel">
+                    <div class="p-3">
+                        {% if phones %}
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Nom</th>
+                                        <th>Numéro de série</th>
+                                        <th>Numéro d'inventaire</th>
+                                        <th>Date de modification</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for phone in phones %}
+                                    <tr>
+                                        <td>{{ phone.name }}</td>
+                                        <td>{{ phone.serial }}</td>
+                                        <td>{{ phone.otherserial }}</td>
+                                        <td>{{ phone.date_mod.strftime('%d/%m/%Y %H:%M') if phone.date_mod else 'N/A' }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="alert alert-info mt-3">
+                            <i class="fas fa-info-circle"></i> Aucun téléphone lié à cet utilisateur.
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>Historique récent des événements</h5>
+        </div>
+        <div class="card-body">
+            {% if history %}
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Matériel</th>
+                            <th>Type</th>
+                            <th>Action</th>
+                            <th>Effectuée par</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for entry in history %}
+                        <tr>
+                            <td>{{ entry.date_mod.strftime('%d/%m/%Y %H:%M') }}</td>
+                            <td>
+                                {% if entry.computers_id %}
+                                    {% set material = Computers.query.get(entry.computers_id) %}
+                                    {{ material.name if material else 'N/A' }} (Ordinateur)
+                                {% elif entry.monitors_id %}
+                                    {% set material = Monitors.query.get(entry.monitors_id) %}
+                                    {{ material.name if material else 'N/A' }} (Moniteur)
+                                {% elif entry.peripherals_id %}
+                                    {% set material = Peripherals.query.get(entry.peripherals_id) %}
+                                    {{ material.name if material else 'N/A' }} (Périphérique)
+                                {% elif entry.phones_id %}
+                                    {% set material = Phones.query.get(entry.phones_id) %}
+                                    {{ material.name if material else 'N/A' }} (Téléphone)
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if entry.computers_id %}
+                                    Ordinateur
+                                {% elif entry.monitors_id %}
+                                    Moniteur
+                                {% elif entry.peripherals_id %}
+                                    Périphérique
+                                {% elif entry.phones_id %}
+                                    Téléphone
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if entry.is_linked %}
+                                    <span class="badge bg-success">Liaison</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Déliaison</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ entry.app_management_user }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i> Aucun historique récent pour cet utilisateur.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between mt-4">
+        <div>
+            <a href="{{ url_for('create_event') }}" class="btn btn-secondary">
+                <i class="fas fa-redo"></i> Nouveau workflow
+            </a>
+        </div>
+        <div>
+            <a href="{{ url_for('select_material_to_link', user_id=user.id) }}" class="btn btn-success me-2">
+                <i class="fas fa-link"></i> Lier plus de matériel
+            </a>
+            <a href="{{ url_for('select_material_to_unlink', user_id=user.id) }}" class="btn btn-danger">
+                <i class="fas fa-unlink"></i> Délier du matériel
+            </a>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <a href="{{ url_for('dashboard') }}" class="btn btn-primary">
+            <i class="fas fa-home"></i> Retour au tableau de bord
+        </a>
+    </div>
+</div>
+{% endblock %}

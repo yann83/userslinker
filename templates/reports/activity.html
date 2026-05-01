@@ -1,0 +1,635 @@
+<!-- templates/reports/activity.html -->
+{% extends "base.html" %}
+
+{% block title %}Rapport d'activité{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mt-4 mb-4">
+        <h2><i class="fas fa-history"></i> Rapport d'activité</h2>
+        <div>
+            {% if activity_data %}
+            <button class="btn btn-success" onclick="exportToPDF()">
+                <i class="fas fa-file-pdf"></i> Exporter en PDF
+            </button>
+            <button class="btn btn-info" onclick="printReport()">
+                <i class="fas fa-print"></i> Imprimer
+            </button>
+            {% endif %}
+            <a href="{{ url_for('reports') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Retour aux rapports
+            </a>
+        </div>
+    </div>
+
+    <!-- Formulaire de sélection -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5><i class="fas fa-filter"></i> Filtres du rapport</h5>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('reports_activity') }}">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label for="date_from" class="form-label">Date de début <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="date_from" name="date_from"
+                                   value="{{ date_from if date_from else '' }}" required>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label for="date_to" class="form-label">Date de fin <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="date_to" name="date_to"
+                                   value="{{ date_to if date_to else '' }}" required>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label for="gestionnaire_filter" class="form-label">Gestionnaire (optionnel)</label>
+                            <select class="form-select" id="gestionnaire_filter" name="gestionnaire_filter">
+                                <option value="">-- Tous les gestionnaires --</option>
+                                {% for gestionnaire in gestionnaires %}
+                                <option value="{{ gestionnaire }}"
+                                        {% if gestionnaire == selected_gestionnaire %}selected{% endif %}>
+                                    {{ gestionnaire }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label for="action_filter" class="form-label">Type d'action (optionnel)</label>
+                            <select class="form-select" id="action_filter" name="action_filter">
+                                <option value="">-- Toutes les actions --</option>
+                                <option value="link" {% if action_filter == 'link' %}selected{% endif %}>Liaisons</option>
+                                <option value="unlink" {% if action_filter == 'unlink' %}selected{% endif %}>Déliasons</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-chart-line"></i> Générer le rapport d'activité
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Résultats du rapport -->
+    {% if activity_data %}
+    <div id="report-content">
+        <!-- En-tête du rapport -->
+        <div class="card mb-4 d-print-block">
+            <div class="card-body text-center">
+                <h3><i class="fas fa-history text-primary"></i> Rapport d'activité</h3>
+                <div class="row mt-3">
+                    <div class="col-md-4">
+                        <small class="text-muted">
+                            <strong>Période :</strong><br>
+                            Du {{ date_from }} au {{ date_to }}
+                        </small>
+                    </div>
+                    <div class="col-md-4">
+                        <small class="text-muted">
+                            <strong>Date de génération :</strong><br>
+                            {{ generation_date.strftime('%d/%m/%Y à %H:%M') }}
+                        </small>
+                    </div>
+                    <div class="col-md-4">
+                        <small class="text-muted">
+                            <strong>Filtres appliqués :</strong><br>
+                            {% if selected_gestionnaire %}
+                                Gestionnaire: {{ selected_gestionnaire }}<br>
+                            {% endif %}
+                            {% if action_filter %}
+                                Actions: {{ 'Liaisons' if action_filter == 'link' else 'Déliasons' }}
+                            {% else %}
+                                Toutes les actions
+                            {% endif %}
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistiques générales -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="fas fa-chart-line fa-2x text-primary mb-2"></i>
+                        <h4>{{ activity_data.statistics.total_activities }}</h4>
+                        <small class="text-muted">Activité(s) totale(s)</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="fas fa-link fa-2x text-success mb-2"></i>
+                        <h4>{{ activity_data.statistics.total_links }}</h4>
+                        <small class="text-muted">Liaison(s)</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="fas fa-unlink fa-2x text-danger mb-2"></i>
+                        <h4>{{ activity_data.statistics.total_unlinks }}</h4>
+                        <small class="text-muted">Déliaison(s)</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="fas fa-users fa-2x text-info mb-2"></i>
+                        <h4>{{ activity_data.statistics.unique_users }}</h4>
+                        <small class="text-muted">Utilisateur(s) impacté(s)</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Graphiques -->
+        <div class="row mb-4">
+            <!-- Graphique des activités par jour -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-chart-area"></i> Évolution des activités par jour</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="dailyActivityChart" style="max-height: 300px;"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Graphique par type d'action -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-chart-pie"></i> Répartition par type d'action</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="actionTypeChart" style="max-height: 300px;"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Graphiques par type de matériel et gestionnaires -->
+        <div class="row mb-4">
+            <!-- Graphique par type de matériel -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-chart-doughnut"></i> Activités par type de matériel</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="materialTypeChart" style="max-height: 300px;"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Graphique par gestionnaire -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-chart-bar"></i> Activités par gestionnaire</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="managerChart" style="max-height: 300px;"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top des utilisateurs les plus actifs -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-trophy"></i> Top 10 des utilisateurs les plus impactés</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if activity_data.top_users %}
+                        <div class="table-responsive">
+                            <table class="table table-striped table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Rang</th>
+                                        <th>Utilisateur</th>
+                                        <th>Service</th>
+                                        <th>Activités</th>
+                                        <th>Liaisons</th>
+                                        <th>Déliasons</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for user_stat in activity_data.top_users %}
+                                    <tr>
+                                        <td>
+                                            {% if loop.index <= 3 %}
+                                                <span class="badge bg-warning">{{ loop.index }}</span>
+                                            {% else %}
+                                                {{ loop.index }}
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <strong>{{ user_stat.user_name }}</strong><br>
+                                            <small class="text-muted">{{ user_stat.username }}</small>
+                                        </td>
+                                        <td>{{ user_stat.department or 'N/A' }}</td>
+                                        <td><span class="badge bg-primary">{{ user_stat.total_activities }}</span></td>
+                                        <td><span class="badge bg-success">{{ user_stat.links }}</span></td>
+                                        <td><span class="badge bg-danger">{{ user_stat.unlinks }}</span></td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> Aucune donnée d'utilisateur disponible pour la période sélectionnée.
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistiques par gestionnaire -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-user-cog"></i> Statistiques par gestionnaire</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if activity_data.manager_stats %}
+                        <div class="table-responsive">
+                            <table class="table table-striped table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Gestionnaire</th>
+                                        <th>Total</th>
+                                        <th>Liaisons</th>
+                                        <th>Déliasons</th>
+                                        <th>Moyenne/jour</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for manager_stat in activity_data.manager_stats %}
+                                    <tr>
+                                        <td><strong>{{ manager_stat.manager }}</strong></td>
+                                        <td><span class="badge bg-primary">{{ manager_stat.total_activities }}</span></td>
+                                        <td><span class="badge bg-success">{{ manager_stat.links }}</span></td>
+                                        <td><span class="badge bg-danger">{{ manager_stat.unlinks }}</span></td>
+                                        <td>{{ "%.1f"|format(manager_stat.daily_average) }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> Aucune donnée de gestionnaire disponible.
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Timeline des activités (dernières activités) -->
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-stream"></i> Timeline des dernières activités (50 plus récentes)</h5>
+            </div>
+            <div class="card-body">
+                {% if activity_data.recent_activities %}
+                    <div class="timeline-container" style="max-height: 500px; overflow-y: auto;">
+                        {% for activity in activity_data.recent_activities %}
+                        <div class="timeline-item d-flex align-items-start mb-3 p-3 {% if loop.index % 2 == 0 %}bg-light{% endif %} rounded">
+                            <div class="flex-shrink-0 me-3">
+                                {% if activity.is_linked %}
+                                    <span class="badge bg-success fs-6">
+                                        <i class="fas fa-link"></i> Lié
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-danger fs-6">
+                                        <i class="fas fa-unlink"></i> Délié
+                                    </span>
+                                {% endif %}
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="mb-1">
+                                            <i class="{{ activity.material_icon }} text-primary me-2"></i>
+                                            {{ activity.material_type }}
+                                            {% if activity.material_info %}
+                                                : {{ activity.material_info.name }}
+                                            {% endif %}
+                                        </h6>
+                                        <div class="small text-muted mb-2">
+                                            <strong>Utilisateur :</strong>
+                                            {% if activity.user_info %}
+                                                {{ activity.user_info.GivenName }} {{ activity.user_info.Surname }} ({{ activity.user_info.Username }})
+                                            {% else %}
+                                                Utilisateur non trouvé
+                                            {% endif %}
+                                        </div>
+                                        {% if activity.material_info %}
+                                        <div class="small text-muted mb-2">
+                                            {% if activity.material_info.serial %}
+                                                <strong>N° série :</strong> {{ activity.material_info.serial }}
+                                            {% endif %}
+                                            {% if activity.material_info.otherserial %}
+                                                • <strong>N° inventaire :</strong> {{ activity.material_info.otherserial }}
+                                            {% endif %}
+                                        </div>
+                                        {% endif %}
+                                        <div class="small text-muted">
+                                            <i class="fas fa-calendar me-1"></i>
+                                            {{ activity.date_mod.strftime('%d/%m/%Y à %H:%M') }}
+                                            <i class="fas fa-user ms-3 me-1"></i>
+                                            {{ activity.app_management_user }}
+                                        </div>
+                                    </div>
+                                    <div class="text-muted small">
+                                        #{{ activity.id }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> Aucune activité trouvée pour la période sélectionnée.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% else %}
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i>
+            Utilisez le formulaire ci-dessus pour générer un rapport d'activité. Sélectionnez une période de dates pour commencer.
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .timeline-container {
+        border-left: 3px solid #e9ecef;
+        padding-left: 1rem;
+        margin-left: 1rem;
+    }
+
+    .timeline-item {
+        position: relative;
+        border: 1px solid #dee2e6;
+    }
+
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: -1.5rem;
+        top: 1rem;
+        width: 10px;
+        height: 10px;
+        background-color: #007bff;
+        border-radius: 50%;
+        border: 2px solid white;
+    }
+
+    .timeline-item:nth-child(odd)::before {
+        background-color: #28a745;
+    }
+
+    .timeline-item:nth-child(even)::before {
+        background-color: #dc3545;
+    }
+
+    /* Styles pour l'impression */
+    @media print {
+        .btn, .card-header {
+            -webkit-print-color-adjust: exact;
+            color-adjust: exact;
+        }
+
+        .d-print-none {
+            display: none !important;
+        }
+
+        .d-print-block {
+            display: block !important;
+        }
+
+        .container {
+            max-width: none !important;
+        }
+
+        .card {
+            break-inside: avoid;
+            page-break-inside: avoid;
+        }
+
+        .timeline-container {
+            max-height: none !important;
+            overflow: visible !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Fonction pour imprimer le rapport
+function printReport() {
+    window.print();
+}
+
+// Fonction pour exporter en PDF
+function exportToPDF() {
+    window.print();
+}
+
+// Validation des dates
+document.addEventListener('DOMContentLoaded', function() {
+    const dateFrom = document.getElementById('date_from');
+    const dateTo = document.getElementById('date_to');
+
+    // Définir une date par défaut (30 derniers jours)
+    if (!dateFrom.value) {
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        dateFrom.value = thirtyDaysAgo.toISOString().split('T')[0];
+    }
+
+    if (!dateTo.value) {
+        const today = new Date();
+        dateTo.value = today.toISOString().split('T')[0];
+    }
+
+    function validateDates() {
+        if (dateFrom.value && dateTo.value) {
+            if (new Date(dateFrom.value) > new Date(dateTo.value)) {
+                dateTo.setCustomValidity('La date de fin doit être postérieure à la date de début');
+            } else {
+                dateTo.setCustomValidity('');
+            }
+        } else {
+            dateTo.setCustomValidity('');
+        }
+    }
+
+    dateFrom.addEventListener('change', validateDates);
+    dateTo.addEventListener('change', validateDates);
+
+    // Générer les graphiques si des données sont disponibles
+    {% if activity_data %}
+    generateCharts();
+    {% endif %}
+});
+
+{% if activity_data %}
+function generateCharts() {
+    // Graphique des activités par jour
+    const dailyCtx = document.getElementById('dailyActivityChart').getContext('2d');
+    new Chart(dailyCtx, {
+        type: 'line',
+        data: {
+            labels: {{ activity_data.daily_data.dates | tojson }},
+            datasets: [{
+                label: 'Total activités',
+                data: {{ activity_data.daily_data.totals | tojson }},
+                borderColor: '#007bff',
+                backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                tension: 0.1,
+                fill: true
+            }, {
+                label: 'Liaisons',
+                data: {{ activity_data.daily_data.links | tojson }},
+                borderColor: '#28a745',
+                backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                tension: 0.1
+            }, {
+                label: 'Déliasons',
+                data: {{ activity_data.daily_data.unlinks | tojson }},
+                borderColor: '#dc3545',
+                backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    position: 'top'
+                }
+            }
+        }
+    });
+
+    // Graphique par type d'action
+    const actionCtx = document.getElementById('actionTypeChart').getContext('2d');
+    new Chart(actionCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Liaisons', 'Déliasons'],
+            datasets: [{
+                data: [{{ activity_data.statistics.total_links }}, {{ activity_data.statistics.total_unlinks }}],
+                backgroundColor: ['#28a745', '#dc3545']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+
+    // Graphique par type de matériel
+    const materialCtx = document.getElementById('materialTypeChart').getContext('2d');
+    new Chart(materialCtx, {
+        type: 'pie',
+        data: {
+            labels: {{ activity_data.material_stats.labels | tojson }},
+            datasets: [{
+                data: {{ activity_data.material_stats.data | tojson }},
+                backgroundColor: ['#007bff', '#28a745', '#ffc107', '#17a2b8']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+
+    // Graphique par gestionnaire
+    const managerCtx = document.getElementById('managerChart').getContext('2d');
+    new Chart(managerCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ activity_data.manager_chart.labels | tojson }},
+            datasets: [{
+                label: 'Liaisons',
+                data: {{ activity_data.manager_chart.links | tojson }},
+                backgroundColor: '#28a745'
+            }, {
+                label: 'Déliasons',
+                data: {{ activity_data.manager_chart.unlinks | tojson }},
+                backgroundColor: '#dc3545'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    position: 'top'
+                }
+            }
+        }
+    });
+}
+{% endif %}
+</script>
+{% endblock %}

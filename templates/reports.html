@@ -1,0 +1,124 @@
+<!-- templates/reports.html -->
+{% extends "base.html" %}
+
+{% block title %}Rapports{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 class="mt-4 mb-4">
+        <i class="fas fa-chart-pie"></i> Rapports
+    </h2>
+
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i> Cette page est accessible aux gestionnaires et aux lecteurs.
+    </div>
+
+    <div class="row">
+        <!-- Rapport par service -->
+        <div class="col-md-6">
+            <div class="card mb-4 card-hover">
+                <div class="card-header">
+                    <h5><i class="fas fa-building"></i> Rapport par service</h5>
+                </div>
+                <div class="card-body">
+                    <p>Génère un rapport détaillé des utilisateurs et de leur matériel par service.</p>
+                    <ul class="small text-muted">
+                        <li>Filtrage par service (obligatoire)</li>
+                        <li>Filtrage par période (optionnel)</li>
+                        <li>Affichage du matériel lié</li>
+                        <li>Historique des mouvements</li>
+                    </ul>
+                    <a href="{{ url_for('reports_by_service') }}" class="btn btn-primary">
+                        <i class="fas fa-file-alt"></i> Générer le rapport
+                    </a>
+                </div>
+            </div>
+        </div>
+
+         <!-- Rapport par utilisateur -->
+        <div class="col-md-6">
+            <div class="card mb-4 card-hover">
+                <div class="card-header">
+                    <h5><i class="fas fa-user"></i> Rapport par utilisateur</h5>
+                </div>
+                <div class="card-body">
+                    <p>Génère un rapport détaillé pour un utilisateur spécifique.</p>
+                    <ul class="small text-muted">
+                        <li>Recherche dynamique d'utilisateur</li>
+                        <li>Historique complet (toutes dates)</li>
+                        <li>Matériel actuellement lié</li>
+                        <li>Statistiques détaillées</li>
+                    </ul>
+                    <a href="{{ url_for('reports_by_user') }}" class="btn btn-primary">
+                        <i class="fas fa-file-alt"></i> Générer le rapport
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rapport par type de matériel -->
+        <div class="col-md-6">
+            <div class="card mb-4 card-hover">
+                <div class="card-header">
+                    <h5><i class="fas fa-desktop"></i> Rapport par type de matériel</h5>
+                </div>
+                <div class="card-body">
+                    <p>Analyse de la répartition et utilisation par type de matériel.</p>
+                    <ul class="small text-muted">
+                        <li>Graphiques en camembert</li>
+                        <li>Statistiques détaillées</li>
+                        <li>Taux d'utilisation</li>
+                        <li>Répartition par service</li>
+                    </ul>
+                    <a href="{{ url_for('reports_by_material_type') }}" class="btn btn-primary">
+                        <i class="fas fa-chart-pie"></i> Générer le rapport
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rapport d'activité -->
+        <div class="col-md-6">
+            <div class="card mb-4 card-hover">
+                <div class="card-header">
+                    <h5><i class="fas fa-history"></i> Rapport d'activité</h5>
+                </div>
+                <div class="card-body">
+                    <p>Analyse des mouvements et activités sur une période donnée.</p>
+                    <ul class="small text-muted">
+                        <li>Timeline des activités</li>
+                        <li>Statistiques par gestionnaire</li>
+                        <li>Graphiques de tendance</li>
+                        <li>Export détaillé</li>
+                    </ul>
+                    <a href="{{ url_for('reports_activity') }}" class="btn btn-primary">
+                        <i class="fas fa-file-alt"></i> Générer le rapport
+                    </a>
+                </div>
+            </div>
+        </div>
+
+    <div class="mt-4">
+        <a href="{{ url_for('dashboard') }}" class="btn btn-primary">
+            <i class="fas fa-arrow-left"></i> Retour au tableau de bord
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .card-hover {
+        transition: all 0.3s ease;
+    }
+
+    .card-hover:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    .card-hover .btn:disabled {
+        cursor: not-allowed;
+    }
+</style>
+{% endblock %}

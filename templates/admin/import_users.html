@@ -1,0 +1,70 @@
+<!-- templates/admin/import_users.html -->
+{% extends "base.html" %}
+
+{% block title %}Importer des utilisateurs{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 class="mt-4 mb-4">
+        <i class="fas fa-file-import"></i> Importer des utilisateurs
+    </h2>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data">
+
+                        <div class="mb-3">
+                            <label for="file" class="form-label">Fichier CSV</label>
+                            <input type="file" class="form-control" id="file" name="file" accept=".csv" required>
+                            <small class="form-text text-muted">
+                                Le fichier doit être au format CSV avec les colonnes : Prénom, Nom, Email, Nom d'utilisateur, Rôles, Statut
+                            </small>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <h5>Format du fichier CSV</h5>
+                            <p>Le fichier doit contenir les colonnes suivantes :</p>
+                            <ul>
+                                <li><strong>Prénom</strong> : Prénom de l'utilisateur</li>
+                                <li><strong>Nom</strong> : Nom de famille</li>
+                                <li><strong>Email</strong> : Adresse email (sera utilisée pour la connexion)</li>
+                                <li><strong>Nom d'utilisateur</strong> : Identifiant unique</li>
+                                <li><strong>Rôles</strong> : Rôles séparés par des virgules (ex: administrateur, gestionnaire)</li>
+                                <li><strong>Statut</strong> : Actif ou Inactif</li>
+                            </ul>
+                            <p><strong>Note :</strong> Le mot de passe par défaut sera "password123" pour tous les utilisateurs importés.</p>
+                        </div>
+
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-upload"></i> Importer
+                            </button>
+                            <a href="{{ url_for('admin_users') }}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Annuler
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card bg-light">
+                <div class="card-body">
+                    <h5 class="card-title">Exemple de fichier CSV</h5>
+                    <pre class="small">Prénom,Nom,Email,Nom d'utilisateur,Rôles,Statut
+Jean,Dupont,jean.dupont@example.com,jdupont,gestionnaire,Actif
+Marie,Martin,marie.martin@example.com,mmartin,"gestionnaire,lecteur",Actif
+Pierre,Bernard,pierre.bernard@example.com,pbernard,lecteur,Inactif</pre>
+
+                    <a href="{{ url_for('export_users') }}" class="btn btn-sm btn-info">
+                        <i class="fas fa-download"></i> Télécharger un exemple
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

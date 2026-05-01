@@ -1,0 +1,133 @@
+<!-- templates/admin/users_stats.html -->
+{% extends "base.html" %}
+
+{% block title %}Statistiques des utilisateurs{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 class="mt-4 mb-4">
+        <i class="fas fa-chart-bar"></i> Statistiques des utilisateurs
+    </h2>
+
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-users fa-3x text-primary mb-3"></i>
+                    <h3>{{ total_users }}</h3>
+                    <p class="text-muted">Total des utilisateurs</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-user-shield fa-3x text-warning mb-3"></i>
+                    <h3>{{ admin_count }}</h3>
+                    <p class="text-muted">Administrateurs</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-user-cog fa-3x text-success mb-3"></i>
+                    <h3>{{ gestionnaire_count }}</h3>
+                    <p class="text-muted">Gestionnaires</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-user fa-3x text-info mb-3"></i>
+                    <h3>{{ lecteur_count }}</h3>
+                    <p class="text-muted">Lecteurs</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Répartition par rôle</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="roleChart" style="max-height: 300px;"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Utilisateurs actifs vs inactifs</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="statusChart" style="max-height: 300px;"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <a href="{{ url_for('admin_users') }}" class="btn btn-primary">
+            <i class="fas fa-users"></i> Gestion des utilisateurs
+        </a>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Retour au tableau de bord
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Graphique en camembert pour les rôles
+    const roleCtx = document.getElementById('roleChart').getContext('2d');
+    new Chart(roleCtx, {
+        type: 'pie',
+        data: {
+            labels: ['Administrateurs', 'Gestionnaires', 'Lecteurs'],
+            datasets: [{
+                data: [{{ admin_count }}, {{ gestionnaire_count }}, {{ lecteur_count }}],
+                backgroundColor: [
+                    '#ffc107',
+                    '#28a745',
+                    '#17a2b8'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+
+    // Graphique en barre pour le statut
+    const statusCtx = document.getElementById('statusChart').getContext('2d');
+    new Chart(statusCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Actifs', 'Inactifs'],
+            datasets: [{
+                data: [{{ active_count }}, {{ inactive_count }}],
+                backgroundColor: [
+                    '#28a745',
+                    '#dc3545'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,90 @@
+<!-- templates/admin/create_user.html -->
+{% extends "base.html" %}
+
+{% block title %}Créer un utilisateur{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 class="mt-4 mb-4">
+        <i class="fas fa-user-plus"></i> Créer un nouvel utilisateur
+    </h2>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('create_user') }}">
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="given_name" class="form-label">Prénom <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="given_name" name="given_name" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="surname" class="form-label">Nom <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="surname" name="surname" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                            <small class="form-text text-muted">Sera utilisé pour la connexion</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Nom d'utilisateur <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="username" name="username" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Mot de passe <span class="text-danger">*</span></label>
+                            <input type="password" class="form-control" id="password" name="password" required minlength="6">
+                            <small class="form-text text-muted">Minimum 6 caractères</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="role_id" class="form-label">Rôle</label>
+                            <select class="form-select" id="role_id" name="role_id">
+                                <option value="">-- Sélectionnez un rôle --</option>
+                                {% for role in roles %}
+                                <option value="{{ role.id }}">{{ role.name }} - {{ role.description }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Créer l'utilisateur
+                            </button>
+                            <a href="{{ url_for('admin_users') }}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Annuler
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card bg-light">
+                <div class="card-body">
+                    <h5 class="card-title">Informations</h5>
+                    <p class="card-text">
+                        <small>
+                            • Les champs marqués d'un <span class="text-danger">*</span> sont obligatoires.<br>
+                            • L'email sera utilisé pour la connexion à l'application.<antml]
+                            • Le mot de passe doit contenir au moins 6 caractères.<br>
+                            • Vous pouvez attribuer un rôle immédiatement ou le faire plus tard.
+                        </small>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

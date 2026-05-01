@@ -1,0 +1,347 @@
+<!-- templates/reports/by_service.html -->
+{% extends "base.html" %}
+
+{% block title %}Rapport par service{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mt-4 mb-4">
+        <h2><i class="fas fa-building"></i> Rapport par service</h2>
+        <div>
+            {% if users_data %}
+            <button class="btn btn-success" onclick="exportToPDF()">
+                <i class="fas fa-file-pdf"></i> Exporter en PDF
+            </button>
+            <button class="btn btn-info" onclick="printReport()">
+                <i class="fas fa-print"></i> Imprimer
+            </button>
+            {% endif %}
+            <a href="{{ url_for('reports') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Retour aux rapports
+            </a>
+        </div>
+    </div>
+
+    <!-- Formulaire de sélection -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5><i class="fas fa-filter"></i> Filtres du rapport</h5>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('reports_by_service') }}">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="service" class="form-label">Service <span class="text-danger">*</span></label>
+                            <select class="form-select" id="service" name="service" required>
+                                <option value="">-- Sélectionnez un service --</option>
+                                {% for service in services %}
+                                <option value="{{ service }}"
+                                        {% if service == selected_service %}selected{% endif %}>
+                                    {{ service }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label for="date_from" class="form-label">Date de début (optionnel)</label>
+                            <input type="date" class="form-control" id="date_from" name="date_from"
+                                   value="{{ date_from if date_from else '' }}">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label for="date_to" class="form-label">Date de fin (optionnel)</label>
+                            <input type="date" class="form-control" id="date_to" name="date_to"
+                                   value="{{ date_to if date_to else '' }}">
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="mb-3">
+                            <label class="form-label">&nbsp;</label>
+                            <button type="submit" class="btn btn-primary d-block w-100">
+                                <i class="fas fa-search"></i> Générer
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Résultats du rapport -->
+    {% if users_data %}
+    <div id="report-content">
+        <!-- En-tête du rapport -->
+        <div class="card mb-4 d-print-block">
+            <div class="card-body text-center">
+                <h3><i class="fas fa-building text-primary"></i> Rapport du service : {{ selected_service }}</h3>
+                <div class="row mt-3">
+                    <div class="col-md-4">
+                        <small class="text-muted">
+                            <strong>Date de génération :</strong><br>
+                            {{ generation_date.strftime('%d/%m/%Y à %H:%M') }}
+                        </small>
+                    </div>
+                    <div class="col-md-4">
+                        <small class="text-muted">
+                            <strong>Nombre d'utilisateurs :</strong><br>
+                            {{ users_data|length }}
+                        </small>
+                    </div>
+                    <div class="col-md-4">
+                        <small class="text-muted">
+                            <strong>Période :</strong><br>
+                            {% if date_from and date_to %}
+                                Du {{ date_from }} au {{ date_to }}
+                            {% elif date_from %}
+                                Depuis le {{ date_from }}
+                            {% elif date_to %}
+                                Jusqu'au {{ date_to }}
+                            {% else %}
+                                Toutes les données
+                            {% endif %}
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistiques générales -->
+        <div class="row mb-4">
+            {% set total_materials = [] %}
+            {% for user_data in users_data %}
+                {% for material_type, materials in user_data.materials.items() %}
+                    {% set _ = total_materials.extend(materials) %}
+                {% endfor %}
+            {% endfor %}
+
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="fas fa-users fa-2x text-primary mb-2"></i>
+                        <h4>{{ users_data|length }}</h4>
+                        <small class="text-muted">Utilisateur(s)</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="fas fa-desktop fa-2x text-success mb-2"></i>
+                        <h4>{{ total_materials|length }}</h4>
+                        <small class="text-muted">Matériel(s) lié(s)</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="fas fa-history fa-2x text-info mb-2"></i>
+                        {% set total_history = [] %}
+                        {% for user_data in users_data %}
+                            {% set _ = total_history.extend(user_data.history) %}
+                        {% endfor %}
+                        <h4>{{ total_history|length }}</h4>
+                        <small class="text-muted">Mouvement(s)</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="fas fa-building fa-2x text-warning mb-2"></i>
+                        <h4>1</h4>
+                        <small class="text-muted">Service</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Données des utilisateurs -->
+        <div class="row">
+            {% for user_data in users_data %}
+            <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-user text-primary me-2"></i>
+                            {{ user_data.user.GivenName }} {{ user_data.user.Surname }}
+                        </h5>
+                        <small class="text-muted">
+                            <strong>Identifiant :</strong> {{ user_data.user.Username }}
+                            {% if user_data.user.Title %}
+                            • <strong>Fonction :</strong> {{ user_data.user.Title }}
+                            {% endif %}
+                        </small>
+                    </div>
+                    <div class="card-body">
+                        <!-- Matériel lié -->
+                        <div class="mb-3">
+                            <h6><i class="fas fa-link text-success"></i> Matériel actuellement lié</h6>
+                            {% set has_material = false %}
+                            {% for material_type, materials in user_data.materials.items() %}
+                                {% if materials %}
+                                    {% set has_material = true %}
+                                    <div class="mb-2">
+                                        <strong>
+                                            {% if material_type == 'computers' %}
+                                                <i class="fas fa-laptop"></i> Ordinateurs :
+                                            {% elif material_type == 'monitors' %}
+                                                <i class="fas fa-desktop"></i> Moniteurs :
+                                            {% elif material_type == 'peripherals' %}
+                                                <i class="fas fa-keyboard"></i> Périphériques :
+                                            {% elif material_type == 'phones' %}
+                                                <i class="fas fa-mobile-alt"></i> Téléphones :
+                                            {% endif %}
+                                        </strong>
+                                        <ul class="list-unstyled ms-3">
+                                            {% for material in materials %}
+                                            <li class="small">
+                                                • {{ material.name }}
+                                                {% if material.serial %}(S/N: {{ material.serial }}){% endif %}
+                                            </li>
+                                            {% endfor %}
+                                        </ul>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                            {% if not has_material %}
+                                <p class="text-muted small"><em>Aucun matériel actuellement lié</em></p>
+                            {% endif %}
+                        </div>
+
+                        <!-- Historique -->
+                        <div>
+                            <h6><i class="fas fa-history text-info"></i> Historique des mouvements</h6>
+                            {% if user_data.history %}
+                                <div class="timeline-container" style="max-height: 300px; overflow-y: auto;">
+                                    {% for history_item in user_data.history[:10] %}
+                                    <div class="d-flex align-items-start mb-2">
+                                        <div class="flex-shrink-0">
+                                            {% if history_item.entry.is_linked %}
+                                                <span class="badge bg-success">Lié</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">Délié</span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="flex-grow-1 ms-2">
+                                            <div class="small">
+                                                <strong>{{ history_item.material_type }}</strong>
+                                                {% if history_item.material_info %}
+                                                    : {{ history_item.material_info.name }}
+                                                    {% if history_item.material_info.serial %}
+                                                        ({{ history_item.material_info.serial }})
+                                                    {% endif %}
+                                                {% endif %}
+                                            </div>
+                                            <div class="text-muted very-small">
+                                                {{ history_item.entry.date_mod.strftime('%d/%m/%Y à %H:%M') }}
+                                                par {{ history_item.entry.app_management_user }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                    {% if user_data.history|length > 10 %}
+                                    <div class="text-center">
+                                        <small class="text-muted">... et {{ user_data.history|length - 10 }} autre(s) mouvement(s)</small>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            {% else %}
+                                <p class="text-muted small"><em>Aucun mouvement enregistré pour la période sélectionnée</em></p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% else %}
+        {% if selected_service %}
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i>
+            Utilisez le formulaire ci-dessus pour générer un rapport. Sélectionnez un service et optionnellement une période.
+        </div>
+        {% endif %}
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .very-small {
+        font-size: 0.75rem;
+    }
+
+    .timeline-container {
+        border-left: 2px solid #e9ecef;
+        padding-left: 1rem;
+    }
+
+    /* Styles pour l'impression */
+    @media print {
+        .btn, .card-header {
+            -webkit-print-color-adjust: exact;
+            color-adjust: exact;
+        }
+
+        .d-print-none {
+            display: none !important;
+        }
+
+        .d-print-block {
+            display: block !important;
+        }
+
+        .container {
+            max-width: none !important;
+        }
+
+        .card {
+            break-inside: avoid;
+            page-break-inside: avoid;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Fonction pour imprimer le rapport
+function printReport() {
+    window.print();
+}
+
+// Fonction pour exporter en PDF (nécessite une bibliothèque PDF ou utilise l'impression navigateur)
+function exportToPDF() {
+    // Pour l'instant, utilise la fonction d'impression du navigateur
+    // L'utilisateur peut choisir "Enregistrer en PDF" dans les options d'impression
+    window.print();
+}
+
+// Validation des dates
+document.addEventListener('DOMContentLoaded', function() {
+    const dateFrom = document.getElementById('date_from');
+    const dateTo = document.getElementById('date_to');
+
+    function validateDates() {
+        if (dateFrom.value && dateTo.value) {
+            if (new Date(dateFrom.value) > new Date(dateTo.value)) {
+                dateTo.setCustomValidity('La date de fin doit être postérieure à la date de début');
+            } else {
+                dateTo.setCustomValidity('');
+            }
+        } else {
+            dateTo.setCustomValidity('');
+        }
+    }
+
+    dateFrom.addEventListener('change', validateDates);
+    dateTo.addEventListener('change', validateDates);
+});
+</script>
+{% endblock %}

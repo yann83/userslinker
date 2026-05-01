@@ -1,0 +1,467 @@
+<!-- templates/reports/by_material_type.html -->
+{% extends "base.html" %}
+
+{% block title %}Rapport par type de matériel{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mt-4 mb-4">
+        <h2><i class="fas fa-chart-pie"></i> Rapport par type de matériel</h2>
+        <div>
+            {% if material_data %}
+            <button class="btn btn-success" onclick="exportToPDF()">
+                <i class="fas fa-file-pdf"></i> Exporter en PDF
+            </button>
+            <button class="btn btn-info" onclick="printReport()">
+                <i class="fas fa-print"></i> Imprimer
+            </button>
+            {% endif %}
+            <a href="{{ url_for('reports') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Retour aux rapports
+            </a>
+        </div>
+    </div>
+
+    <!-- Formulaire de sélection -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5><i class="fas fa-filter"></i> Sélection du type de matériel</h5>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('reports_by_material_type') }}">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="material_type" class="form-label">Type de matériel <span class="text-danger">*</span></label>
+                            <select class="form-select" id="material_type" name="material_type" required>
+                                <option value="">-- Sélectionnez un type de matériel --</option>
+                                {% for type_key, type_info in material_types.items() %}
+                                <option value="{{ type_key }}"
+                                        {% if type_key == selected_material_type %}selected{% endif %}>
+                                    {{ type_info.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">&nbsp;</label>
+                            <button type="submit" class="btn btn-primary d-block w-100">
+                                <i class="fas fa-chart-pie"></i> Générer le rapport
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Résultats du rapport -->
+    {% if material_data %}
+    <div id="report-content">
+        <!-- En-tête du rapport -->
+        <div class="card mb-4 d-print-block">
+            <div class="card-body text-center">
+                <h3>
+                    <i class="{{ material_data.icon }} text-primary"></i>
+                    Rapport d'analyse : {{ material_data.name }}
+                </h3>
+                <div class="row mt-3">
+                    <div class="col-md-4">
+                        <small class="text-muted">
+                            <strong>Date de génération :</strong><br>
+                            {{ generation_date.strftime('%d/%m/%Y à %H:%M') }}
+                        </small>
+                    </div>
+                    <div class="col-md-4">
+                        <small class="text-muted">
+                            <strong>Type analysé :</strong><br>
+                            {{ material_data.name }}
+                        </small>
+                    </div>
+                    <div class="col-md-4">
+                        <small class="text-muted">
+                            <strong>Total d'éléments :</strong><br>
+                            {{ material_data.statistics.total }}
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistiques générales -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="{{ material_data.icon }} fa-2x text-primary mb-2"></i>
+                        <h4>{{ material_data.statistics.total }}</h4>
+                        <small class="text-muted">Total</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="fas fa-link fa-2x text-success mb-2"></i>
+                        <h4>{{ material_data.statistics.linked }}</h4>
+                        <small class="text-muted">Liés ({{ "%.1f"|format((material_data.statistics.linked / material_data.statistics.total * 100) if material_data.statistics.total > 0 else 0) }}%)</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="fas fa-unlink fa-2x text-secondary mb-2"></i>
+                        <h4>{{ material_data.statistics.unlinked }}</h4>
+                        <small class="text-muted">Libres ({{ "%.1f"|format((material_data.statistics.unlinked / material_data.statistics.total * 100) if material_data.statistics.total > 0 else 0) }}%)</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="fas fa-users fa-2x text-info mb-2"></i>
+                        <h4>{{ material_data.statistics.unique_users }}</h4>
+                        <small class="text-muted">Utilisateurs</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Graphiques -->
+        <div class="row mb-4">
+            <!-- Graphique par statut -->
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5><i class="fas fa-chart-pie text-primary"></i> Répartition par statut</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="statusChart" style="max-height: 300px;"></canvas>
+                        <div class="mt-3">
+                            {% for status in material_data.by_status %}
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div>
+                                    <span class="badge" style="background-color: {{ status.color }};">{{ status.label }}</span>
+                                </div>
+                                <div>
+                                    <strong>{{ status.value }}</strong>
+                                    <small class="text-muted">
+                                        ({{ "%.1f"|format((status.value / material_data.statistics.total * 100) if material_data.statistics.total > 0 else 0) }}%)
+                                    </small>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Graphique par service -->
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5><i class="fas fa-building text-success"></i> Répartition par service</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if material_data.by_service %}
+                        <canvas id="serviceChart" style="max-height: 300px;"></canvas>
+                        <div class="mt-3" style="max-height: 200px; overflow-y: auto;">
+                            {% for service in material_data.by_service %}
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div>
+                                    <span class="badge" style="background-color: {{ service.color }};">{{ service.label }}</span>
+                                </div>
+                                <div>
+                                    <strong>{{ service.value }}</strong>
+                                    <small class="text-muted">matériel(s)</small>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> Aucun matériel lié à des utilisateurs avec service renseigné.
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top utilisateurs et mouvements récents -->
+        <div class="row mb-4">
+            <!-- Top 10 utilisateurs -->
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5><i class="fas fa-trophy text-warning"></i> Top 10 des utilisateurs</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if material_data.top_users %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Rang</th>
+                                        <th>Utilisateur</th>
+                                        <th>Service</th>
+                                        <th>Quantité</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for user in material_data.top_users %}
+                                    <tr>
+                                        <td>
+                                            {% if loop.index <= 3 %}
+                                                <span class="badge bg-warning">#{{ loop.index }}</span>
+                                            {% else %}
+                                                <span class="badge bg-light text-dark">#{{ loop.index }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <strong>{{ user.full_name }}</strong><br>
+                                            <small class="text-muted">{{ user.username }}</small>
+                                        </td>
+                                        <td>
+                                            <small>{{ user.department }}</small>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-primary">{{ user.count }}</span>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> Aucun utilisateur n'a de matériel lié.
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mouvements récents -->
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5><i class="fas fa-history text-info"></i> Mouvements récents</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if material_data.recent_movements %}
+                        <div style="max-height: 400px; overflow-y: auto;">
+                            {% for movement in material_data.recent_movements %}
+                            <div class="d-flex align-items-start mb-3 p-2 {% if loop.index % 2 == 0 %}bg-light{% endif %} rounded">
+                                <div class="flex-shrink-0 me-2">
+                                    {% if movement.action == 'Lié' %}
+                                        <span class="badge bg-success"><i class="fas fa-link"></i></span>
+                                    {% else %}
+                                        <span class="badge bg-danger"><i class="fas fa-unlink"></i></span>
+                                    {% endif %}
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="small">
+                                        <strong>{{ movement.action }}</strong>
+                                        {% if movement.material %}
+                                            : {{ movement.material.name }}
+                                        {% endif %}
+                                    </div>
+                                    <div class="very-small text-muted">
+                                        {% if movement.user %}
+                                            {{ movement.user.GivenName }} {{ movement.user.Surname }}
+                                        {% endif %}
+                                        • {{ movement.date.strftime('%d/%m/%Y %H:%M') }}
+                                        • {{ movement.manager }}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> Aucun mouvement enregistré.
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .very-small {
+        font-size: 0.7rem;
+    }
+
+    /* Styles pour l'impression */
+    @media print {
+        .btn, .card-header {
+            -webkit-print-color-adjust: exact;
+            color-adjust: exact;
+        }
+
+        .d-print-none {
+            display: none !important;
+        }
+
+        .d-print-block {
+            display: block !important;
+        }
+
+        .container {
+            max-width: none !important;
+        }
+
+        .card {
+            break-inside: avoid;
+            page-break-inside: avoid;
+        }
+
+        canvas {
+            max-height: 250px !important;
+        }
+    }
+
+    /* Graphiques responsive */
+    canvas {
+        max-width: 100%;
+        height: auto;
+    }
+
+    /* Badges personnalisés */
+    .badge {
+        font-size: 0.8em;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    {% if material_data %}
+
+    // Configuration globale des graphiques
+    Chart.defaults.responsive = true;
+    Chart.defaults.maintainAspectRatio = false;
+
+    // Graphique par statut
+    const statusCtx = document.getElementById('statusChart').getContext('2d');
+    const statusData = {
+        labels: [
+            {% for status in material_data.by_status %}
+            '{{ status.label }}'{% if not loop.last %},{% endif %}
+            {% endfor %}
+        ],
+        datasets: [{
+            data: [
+                {% for status in material_data.by_status %}
+                {{ status.value }}{% if not loop.last %},{% endif %}
+                {% endfor %}
+            ],
+            backgroundColor: [
+                {% for status in material_data.by_status %}
+                '{{ status.color }}'{% if not loop.last %},{% endif %}
+                {% endfor %}
+            ],
+            borderWidth: 2,
+            borderColor: '#fff'
+        }]
+    };
+
+    new Chart(statusCtx, {
+        type: 'doughnut',
+        data: statusData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false // Légende personnalisée en HTML
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.parsed;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = ((value / total) * 100).toFixed(1);
+                            return label + ': ' + value + ' (' + percentage + '%)';
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Graphique par service (seulement si des données existent)
+    {% if material_data.by_service %}
+    const serviceCtx = document.getElementById('serviceChart').getContext('2d');
+    const serviceData = {
+        labels: [
+            {% for service in material_data.by_service %}
+            '{{ service.label }}'{% if not loop.last %},{% endif %}
+            {% endfor %}
+        ],
+        datasets: [{
+            data: [
+                {% for service in material_data.by_service %}
+                {{ service.value }}{% if not loop.last %},{% endif %}
+                {% endfor %}
+            ],
+            backgroundColor: [
+                {% for service in material_data.by_service %}
+                '{{ service.color }}'{% if not loop.last %},{% endif %}
+                {% endfor %}
+            ],
+            borderWidth: 2,
+            borderColor: '#fff'
+        }]
+    };
+
+    new Chart(serviceCtx, {
+        type: 'pie',
+        data: serviceData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false // Légende personnalisée en HTML
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.parsed;
+                            return label + ': ' + value + ' matériel(s)';
+                        }
+                    }
+                }
+            }
+        }
+    });
+    {% endif %}
+
+    {% endif %}
+});
+
+// Fonction pour imprimer le rapport
+function printReport() {
+    window.print();
+}
+
+// Fonction pour exporter en PDF
+function exportToPDF() {
+    window.print();
+}
+</script>
+{% endblock %}

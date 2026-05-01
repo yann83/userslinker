@@ -1,0 +1,265 @@
+<!-- templates/users/list.html - Version corrigée avec filtre par service -->
+{% extends "base.html" %}
+
+{% block title %}Liste des utilisateurs{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mt-4 mb-4">
+        <h2><i class="fas fa-users"></i> Liste des utilisateurs</h2>
+        <div>
+            {% if current_user.has_role('gestionnaire') %}
+            <a href="{{ url_for('user_create') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Nouvel utilisateur
+            </a>
+            {% endif %}
+            <a href="{{ url_for('users_trash') }}" class="btn btn-secondary">
+                <i class="fas fa-trash"></i> Corbeille
+            </a>
+        </div>
+    </div>
+
+    <!-- Filtre par service -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" action="{{ url_for('users_list') }}" class="row g-3">
+                <div class="col-md-6">
+                    <label for="service" class="form-label">Filtrer par service</label>
+                    <select class="form-select" id="service" name="service" onchange="this.form.submit()">
+                        <option value="">-- Tous les services --</option>
+                        {% for service in services %}
+                        <option value="{{ service }}" {% if service == selected_service %}selected{% endif %}>
+                            {{ service }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6 d-flex align-items-end">
+                    {% if selected_service %}
+                    <a href="{{ url_for('users_list') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-times"></i> Effacer le filtre
+                    </a>
+                    {% endif %}
+                    <div class="ms-3">
+                        <span class="badge bg-info">
+                            {{ users|length }} utilisateur(s)
+                            {% if selected_service %}
+                                dans le service "{{ selected_service }}"
+                            {% else %}
+                                au total
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% if users %}
+    <!-- Barre de recherche pour affiner dans les résultats -->
+    <div class="row mb-3">
+        <div class="col-md-8">
+            <input type="text" id="searchInput" class="form-control"
+                   placeholder="Rechercher dans les résultats affichés...">
+            <small class="form-text text-muted">
+                Recherche en temps réel dans les résultats actuels
+            </small>
+        </div>
+        <div class="col-md-4">
+            <div class="input-group">
+                <span class="input-group-text">Résultats:</span>
+                <span class="form-control" id="resultCount">{{ users|length }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-striped table-hover" id="usersTable">
+            <thead>
+                <tr>
+                    <th>
+                        <i class="fas fa-user"></i> Nom
+                    </th>
+                    <th>
+                        <i class="fas fa-user"></i> Prénom
+                    </th>
+                    <th>
+                        <i class="fas fa-id-badge"></i> Identifiant
+                    </th>
+                    <th>
+                        <i class="fas fa-briefcase"></i> Fonction
+                    </th>
+                    <th>
+                        <i class="fas fa-building"></i> Service
+                    </th>
+                    <th>
+                        <i class="fas fa-map-marker-alt"></i> Site
+                    </th>
+                    {% if current_user.has_role('gestionnaire') %}
+                    <th>
+                        <i class="fas fa-cogs"></i> Actions
+                    </th>
+                    {% endif %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr class="user-row">
+                    <td><strong>{{ user.Surname or 'N/A' }}</strong></td>
+                    <td>{{ user.GivenName or 'N/A' }}</td>
+                    <td>
+                        <code>{{ user.Username or 'N/A' }}</code>
+                    </td>
+                    <td>{{ user.Title or 'N/A' }}</td>
+                    <td>
+                        {% if user.Department %}
+                            <span class="badge bg-primary">{{ user.Department }}</span>
+                        {% else %}
+                            <span class="text-muted">Non renseigné</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ user.Site or 'N/A' }}</td>
+                    {% if current_user.has_role('gestionnaire') %}
+                    <td>
+                        <div class="btn-group" role="group">
+                            <a href="{{ url_for('user_edit', user_id=user.id) }}"
+                               class="btn btn-sm btn-warning" title="Modifier">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <form action="{{ url_for('user_delete', user_id=user.id) }}"
+                                  method="POST" style="display: inline;"
+                                  onsubmit="return confirm('Êtes-vous sûr de vouloir mettre cet utilisateur dans la corbeille ?');">
+                                <button type="submit" class="btn btn-sm btn-danger" title="Mettre dans la corbeille">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                    {% endif %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i>
+        {% if selected_service %}
+            Aucun utilisateur trouvé dans le service "{{ selected_service }}".
+        {% else %}
+            Aucun utilisateur trouvé.
+        {% endif %}
+
+        {% if current_user.has_role('gestionnaire') %}
+            <br><br>
+            <a href="{{ url_for('user_create') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Créer le premier utilisateur
+            </a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <div class="mt-4">
+        <a href="{{ url_for('lists') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Retour aux listes
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Fonction de recherche en temps réel dans les résultats affichés
+    const searchInput = document.getElementById('searchInput');
+    const table = document.getElementById('usersTable');
+    const resultCount = document.getElementById('resultCount');
+
+    if (searchInput && table) {
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase().trim();
+            const rows = table.querySelectorAll('.user-row');
+            let visibleCount = 0;
+
+            rows.forEach(function(row) {
+                const cells = row.getElementsByTagName('td');
+                let found = false;
+
+                // Rechercher dans toutes les cellules de la ligne
+                for (let i = 0; i < cells.length - 1; i++) { // -1 pour exclure la colonne Actions
+                    if (cells[i].textContent.toLowerCase().includes(searchTerm)) {
+                        found = true;
+                        break;
+                    }
+                }
+
+                if (found) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            // Mettre à jour le compteur de résultats
+            if (resultCount) {
+                resultCount.textContent = visibleCount;
+            }
+        });
+    }
+
+    // Fonction pour améliorer l'UX du formulaire
+    const serviceSelect = document.getElementById('service');
+    if (serviceSelect) {
+        // Ajouter un indicateur de chargement lors du changement
+        serviceSelect.addEventListener('change', function() {
+            if (this.value !== '') {
+                // Ajouter un spinner ou indicateur de chargement
+                const form = this.closest('form');
+                const submitBtn = document.createElement('span');
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Filtrage...';
+                submitBtn.className = 'text-muted small';
+                form.appendChild(submitBtn);
+            }
+        });
+    }
+});
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Améliorer l'apparence des badges */
+.badge {
+    font-size: 0.8em;
+}
+
+/* Style pour les lignes de tableau */
+.user-row:hover {
+    background-color: #f8f9fa;
+}
+
+/* Style pour les boutons d'action */
+.btn-group .btn {
+    margin-right: 2px;
+}
+
+/* Style pour les codes d'identifiant */
+code {
+    background-color: #f8f9fa;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-size: 0.9em;
+}
+
+/* Animation pour les changements */
+.table-responsive {
+    transition: opacity 0.3s ease;
+}
+
+/* Style pour le filtre */
+.card {
+    border-left: 4px solid #007bff;
+}
+</style>
+{% endblock %}

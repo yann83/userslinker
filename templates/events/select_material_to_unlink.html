@@ -1,0 +1,730 @@
+<!-- templates/events/select_material_to_unlink.html - Version avec recherche dynamique -->
+{% extends "base.html" %}
+
+{% block title %}Sélectionner le matériel à délier{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 class="mt-4 mb-4">
+        <i class="fas fa-unlink"></i> Sélectionner le matériel à délier
+    </h2>
+
+    <div class="progress mb-4">
+        <div class="progress-bar bg-primary" role="progressbar" style="width: 50%;" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100">
+            Étape 2/4
+        </div>
+    </div>
+
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i> Utilisateur sélectionné : <strong>{{ user.GivenName }} {{ user.Surname }}</strong> ({{ user.Username }})
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h5>Rechercher le matériel actuellement lié à cet utilisateur</h5>
+        </div>
+        <div class="card-body">
+            <!-- Onglets pour les types de matériel -->
+            <ul class="nav nav-tabs" id="materialTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="computers-tab" data-bs-toggle="tab" data-bs-target="#computers" type="button" role="tab">
+                        <i class="fas fa-laptop"></i> Ordinateurs
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="monitors-tab" data-bs-toggle="tab" data-bs-target="#monitors" type="button" role="tab">
+                        <i class="fas fa-desktop"></i> Moniteurs
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="peripherals-tab" data-bs-toggle="tab" data-bs-target="#peripherals" type="button" role="tab">
+                        <i class="fas fa-keyboard"></i> Périphériques
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="phones-tab" data-bs-toggle="tab" data-bs-target="#phones" type="button" role="tab">
+                        <i class="fas fa-mobile-alt"></i> Téléphones
+                    </button>
+                </li>
+            </ul>
+
+            <!-- Contenu des onglets -->
+            <div class="tab-content" id="materialTabContent">
+                <!-- Onglet Ordinateurs -->
+                <div class="tab-pane fade show active" id="computers" role="tabpanel">
+                    <div class="material-unlink-panel" data-material-type="computers">
+                        <div class="row mt-3">
+                            <div class="col-md-8">
+                                <div class="input-group">
+                                    <input type="text" class="form-control material-search-input"
+                                           placeholder="Rechercher parmi le matériel lié (optionnel)..."
+                                           autocomplete="off">
+                                    <button class="btn btn-outline-secondary clear-search-btn" type="button">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                                <small class="form-text text-muted">
+                                    Filtre optionnel pour rechercher dans le matériel déjà lié
+                                </small>
+                            </div>
+                            <div class="col-md-4">
+                                <span class="badge bg-danger selected-count">0 sélectionné(s)</span>
+                            </div>
+                        </div>
+
+                        <!-- Zone de matériel lié -->
+                        <div class="linked-materials mt-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6><i class="fas fa-laptop text-primary me-2"></i>Ordinateurs liés à cet utilisateur</h6>
+                                <button type="button" class="btn btn-sm btn-outline-primary load-linked-btn">
+                                    <i class="fas fa-sync-alt"></i> Charger
+                                </button>
+                            </div>
+
+                            <!-- Zone de chargement -->
+                            <div class="loading-spinner text-center py-3" style="display: none;">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Chargement...</span>
+                                </div>
+                                <p class="mt-2 text-muted">Chargement du matériel lié...</p>
+                            </div>
+
+                            <!-- Zone d'état initial -->
+                            <div class="initial-state text-center py-4">
+                                <i class="fas fa-laptop fa-2x text-muted mb-2"></i>
+                                <p class="text-muted">Cliquez sur "Charger" pour voir les ordinateurs liés à cet utilisateur</p>
+                            </div>
+
+                            <!-- Résultats -->
+                            <div class="linked-results" style="display: none;">
+                                <div class="table-responsive">
+                                    <table class="table table-striped table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th width="50px">
+                                                    <input type="checkbox" class="form-check-input select-all-checkbox">
+                                                </th>
+                                                <th>Nom</th>
+                                                <th>N° de série</th>
+                                                <th>N° inventaire</th>
+                                                <th>Date liaison</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="results-tbody">
+                                            <!-- Les résultats apparaîtront ici -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Message si aucun matériel lié -->
+                            <div class="no-linked-materials alert alert-info" style="display: none;">
+                                <i class="fas fa-info-circle"></i> Cet utilisateur n'a aucun ordinateur lié.
+                            </div>
+                        </div>
+
+                        <!-- Matériel sélectionné pour délier -->
+                        <div class="selected-materials mt-3" style="display: none;">
+                            <h6><i class="fas fa-check-circle text-danger"></i> Matériel sélectionné pour délier :</h6>
+                            <div class="selected-items-list">
+                                <!-- Les éléments sélectionnés apparaîtront ici -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Onglets similaires pour monitors, peripherals, phones -->
+                <div class="tab-pane fade" id="monitors" role="tabpanel">
+                    <div class="material-unlink-panel" data-material-type="monitors">
+                        <div class="row mt-3">
+                            <div class="col-md-8">
+                                <div class="input-group">
+                                    <input type="text" class="form-control material-search-input"
+                                           placeholder="Rechercher parmi le matériel lié (optionnel)..."
+                                           autocomplete="off">
+                                    <button class="btn btn-outline-secondary clear-search-btn" type="button">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <span class="badge bg-danger selected-count">0 sélectionné(s)</span>
+                            </div>
+                        </div>
+
+                        <div class="linked-materials mt-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6><i class="fas fa-desktop text-primary me-2"></i>Moniteurs liés à cet utilisateur</h6>
+                                <button type="button" class="btn btn-sm btn-outline-primary load-linked-btn">
+                                    <i class="fas fa-sync-alt"></i> Charger
+                                </button>
+                            </div>
+
+                            <div class="loading-spinner text-center py-3" style="display: none;">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Chargement...</span>
+                                </div>
+                            </div>
+
+                            <div class="initial-state text-center py-4">
+                                <i class="fas fa-desktop fa-2x text-muted mb-2"></i>
+                                <p class="text-muted">Cliquez sur "Charger" pour voir les moniteurs liés à cet utilisateur</p>
+                            </div>
+
+                            <div class="linked-results" style="display: none;">
+                                <div class="table-responsive">
+                                    <table class="table table-striped table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th width="50px">
+                                                    <input type="checkbox" class="form-check-input select-all-checkbox">
+                                                </th>
+                                                <th>Nom</th>
+                                                <th>N° de série</th>
+                                                <th>N° inventaire</th>
+                                                <th>Date liaison</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="results-tbody">
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <div class="no-linked-materials alert alert-info" style="display: none;">
+                                <i class="fas fa-info-circle"></i> Cet utilisateur n'a aucun moniteur lié.
+                            </div>
+                        </div>
+
+                        <div class="selected-materials mt-3" style="display: none;">
+                            <h6><i class="fas fa-check-circle text-danger"></i> Matériel sélectionné pour délier :</h6>
+                            <div class="selected-items-list">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="peripherals" role="tabpanel">
+                    <div class="material-unlink-panel" data-material-type="peripherals">
+                        <div class="row mt-3">
+                            <div class="col-md-8">
+                                <div class="input-group">
+                                    <input type="text" class="form-control material-search-input"
+                                           placeholder="Rechercher parmi le matériel lié (optionnel)..."
+                                           autocomplete="off">
+                                    <button class="btn btn-outline-secondary clear-search-btn" type="button">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <span class="badge bg-danger selected-count">0 sélectionné(s)</span>
+                            </div>
+                        </div>
+
+                        <div class="linked-materials mt-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6><i class="fas fa-keyboard text-primary me-2"></i>Périphériques liés à cet utilisateur</h6>
+                                <button type="button" class="btn btn-sm btn-outline-primary load-linked-btn">
+                                    <i class="fas fa-sync-alt"></i> Charger
+                                </button>
+                            </div>
+
+                            <div class="loading-spinner text-center py-3" style="display: none;">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Chargement...</span>
+                                </div>
+                            </div>
+
+                            <div class="initial-state text-center py-4">
+                                <i class="fas fa-keyboard fa-2x text-muted mb-2"></i>
+                                <p class="text-muted">Cliquez sur "Charger" pour voir les périphériques liés à cet utilisateur</p>
+                            </div>
+
+                            <div class="linked-results" style="display: none;">
+                                <div class="table-responsive">
+                                    <table class="table table-striped table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th width="50px">
+                                                    <input type="checkbox" class="form-check-input select-all-checkbox">
+                                                </th>
+                                                <th>Nom</th>
+                                                <th>N° de série</th>
+                                                <th>N° inventaire</th>
+                                                <th>Date liaison</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="results-tbody">
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <div class="no-linked-materials alert alert-info" style="display: none;">
+                                <i class="fas fa-info-circle"></i> Cet utilisateur n'a aucun périphérique lié.
+                            </div>
+                        </div>
+
+                        <div class="selected-materials mt-3" style="display: none;">
+                            <h6><i class="fas fa-check-circle text-danger"></i> Matériel sélectionné pour délier :</h6>
+                            <div class="selected-items-list">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="phones" role="tabpanel">
+                    <div class="material-unlink-panel" data-material-type="phones">
+                        <div class="row mt-3">
+                            <div class="col-md-8">
+                                <div class="input-group">
+                                    <input type="text" class="form-control material-search-input"
+                                           placeholder="Rechercher parmi le matériel lié (optionnel)..."
+                                           autocomplete="off">
+                                    <button class="btn btn-outline-secondary clear-search-btn" type="button">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <span class="badge bg-danger selected-count">0 sélectionné(s)</span>
+                            </div>
+                        </div>
+
+                        <div class="linked-materials mt-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6><i class="fas fa-mobile-alt text-primary me-2"></i>Téléphones liés à cet utilisateur</h6>
+                                <button type="button" class="btn btn-sm btn-outline-primary load-linked-btn">
+                                    <i class="fas fa-sync-alt"></i> Charger
+                                </button>
+                            </div>
+
+                            <div class="loading-spinner text-center py-3" style="display: none;">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Chargement...</span>
+                                </div>
+                            </div>
+
+                            <div class="initial-state text-center py-4">
+                                <i class="fas fa-mobile-alt fa-2x text-muted mb-2"></i>
+                                <p class="text-muted">Cliquez sur "Charger" pour voir les téléphones liés à cet utilisateur</p>
+                            </div>
+
+                            <div class="linked-results" style="display: none;">
+                                <div class="table-responsive">
+                                    <table class="table table-striped table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th width="50px">
+                                                    <input type="checkbox" class="form-check-input select-all-checkbox">
+                                                </th>
+                                                <th>Nom</th>
+                                                <th>N° de série</th>
+                                                <th>N° inventaire</th>
+                                                <th>Date liaison</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="results-tbody">
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <div class="no-linked-materials alert alert-info" style="display: none;">
+                                <i class="fas fa-info-circle"></i> Cet utilisateur n'a aucun téléphone lié.
+                            </div>
+                        </div>
+
+                        <div class="selected-materials mt-3" style="display: none;">
+                            <h6><i class="fas fa-check-circle text-danger"></i> Matériel sélectionné pour délier :</h6>
+                            <div class="selected-items-list">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulaire pour l'envoi des données -->
+    <form method="POST" action="{{ url_for('select_material_to_unlink', user_id=user.id) }}" id="unlinkMaterialForm">
+        <input type="hidden" name="material_type" id="current_material_type" value="computers">
+        <!-- Les IDs du matériel sélectionné seront ajoutés ici dynamiquement -->
+        <div id="hidden_material_ids"></div>
+
+        <div class="mt-4">
+            <button type="submit" class="btn btn-danger" id="submit_btn" disabled>
+                <i class="fas fa-unlink"></i> Délier le matériel sélectionné
+            </button>
+            <a href="{{ url_for('select_user') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Retour à la sélection d'utilisateur
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Variables globales
+    let selectedMaterials = {}; // Matériel sélectionné par type
+    let currentMaterialType = 'computers';
+    let loadedMaterials = {}; // Cache des matériels chargés par type
+
+    // Initialiser les structures de données pour chaque type
+    ['computers', 'monitors', 'peripherals', 'phones'].forEach(type => {
+        selectedMaterials[type] = new Map();
+        loadedMaterials[type] = [];
+    });
+
+    // Fonction pour échapper le HTML (sécurité)
+    function escapeHtml(unsafe) {
+        if (typeof unsafe !== 'string') return '';
+        return unsafe
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // Fonction pour obtenir le panneau actif
+    function getCurrentPanel() {
+        return document.querySelector('.material-unlink-panel[data-material-type="' + currentMaterialType + '"]');
+    }
+
+    // Fonction pour formater une date
+    function formatDate(dateString) {
+        if (!dateString) return 'N/A';
+        try {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('fr-FR');
+        } catch (e) {
+            return 'N/A';
+        }
+    }
+
+    // Fonction pour mettre à jour le compteur d'éléments sélectionnés
+    function updateSelectedCount() {
+        const panel = getCurrentPanel();
+        const countBadge = panel.querySelector('.selected-count');
+        const count = selectedMaterials[currentMaterialType].size;
+        countBadge.textContent = `${count} sélectionné(s)`;
+        countBadge.className = count > 0 ? 'badge bg-danger selected-count' : 'badge bg-info selected-count';
+
+        // Mettre à jour le bouton de soumission
+        updateSubmitButton();
+    }
+
+    // Fonction pour mettre à jour le bouton de soumission
+    function updateSubmitButton() {
+        const submitBtn = document.getElementById('submit_btn');
+        let totalSelected = 0;
+        Object.values(selectedMaterials).forEach(map => {
+            totalSelected += map.size;
+        });
+        submitBtn.disabled = totalSelected === 0;
+    }
+
+    // Fonction pour afficher l'état de chargement
+    function showLoading(panel) {
+        panel.querySelector('.initial-state').style.display = 'none';
+        panel.querySelector('.loading-spinner').style.display = 'block';
+        panel.querySelector('.linked-results').style.display = 'none';
+        panel.querySelector('.no-linked-materials').style.display = 'none';
+    }
+
+    // Fonction pour charger le matériel lié à l'utilisateur
+    function loadLinkedMaterials(panel) {
+        const materialType = panel.dataset.materialType;
+
+        showLoading(panel);
+
+        // Requête pour récupérer le matériel lié à cet utilisateur
+        fetch(`{{ url_for('api_user_linked_materials', user_id=user.id) }}?material_type=${materialType}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                // Filtrer pour ne garder que le matériel lié à cet utilisateur
+                const userMaterials = data.materials.filter(material =>
+                    material.is_linked && material.Username === '{{ user.Username }}'
+                );
+
+                loadedMaterials[materialType] = userMaterials;
+                displayLinkedMaterials(panel, userMaterials);
+            } else {
+                throw new Error(data.message || 'Erreur de chargement');
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            panel.querySelector('.loading-spinner').style.display = 'none';
+            panel.querySelector('.no-linked-materials').style.display = 'block';
+        });
+    }
+
+    // Fonction pour afficher le matériel lié
+    function displayLinkedMaterials(panel, materials) {
+        panel.querySelector('.loading-spinner').style.display = 'none';
+
+        const resultsContainer = panel.querySelector('.linked-results');
+        const tbody = panel.querySelector('.results-tbody');
+        const noMaterialsDiv = panel.querySelector('.no-linked-materials');
+
+        tbody.innerHTML = '';
+
+        if (materials.length === 0) {
+            noMaterialsDiv.style.display = 'block';
+            resultsContainer.style.display = 'none';
+        } else {
+            materials.forEach(material => {
+                const row = document.createElement('tr');
+                const isSelected = selectedMaterials[currentMaterialType].has(material.id);
+
+                row.innerHTML = `
+                    <td>
+                        <input type="checkbox" class="form-check-input material-checkbox"
+                               value="${material.id}"
+                               ${isSelected ? 'checked' : ''}
+                               data-material='${JSON.stringify(material)}'>
+                    </td>
+                    <td>
+                        <strong>${escapeHtml(material.name || 'N/A')}</strong>
+                    </td>
+                    <td>
+                        <code class="small">${escapeHtml(material.serial || 'N/A')}</code>
+                    </td>
+                    <td>
+                        <span class="badge bg-light text-dark">${escapeHtml(material.otherserial || 'N/A')}</span>
+                    </td>
+                    <td>
+                        <small class="text-muted">${formatDate(material.date_mod)}</small>
+                    </td>
+                `;
+
+                tbody.appendChild(row);
+            });
+
+            resultsContainer.style.display = 'block';
+            noMaterialsDiv.style.display = 'none';
+
+            // Attacher les gestionnaires d'événements
+            attachCheckboxListeners(panel);
+            updateSelectAllCheckbox(panel);
+        }
+
+        panel.querySelector('.initial-state').style.display = 'none';
+    }
+
+    // Fonction pour filtrer les résultats selon la recherche
+    function filterResults(panel, searchTerm) {
+        const materialType = panel.dataset.materialType;
+        const materials = loadedMaterials[materialType] || [];
+
+        if (!searchTerm.trim()) {
+            displayLinkedMaterials(panel, materials);
+            return;
+        }
+
+        const filteredMaterials = materials.filter(material =>
+            (material.name && material.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (material.serial && material.serial.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (material.otherserial && material.otherserial.toLowerCase().includes(searchTerm.toLowerCase()))
+        );
+
+        displayLinkedMaterials(panel, filteredMaterials);
+    }
+
+    // Fonction pour attacher les gestionnaires aux checkboxes
+    function attachCheckboxListeners(panel) {
+        const checkboxes = panel.querySelectorAll('.material-checkbox');
+        checkboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const material = JSON.parse(this.dataset.material);
+
+                if (this.checked) {
+                    selectedMaterials[currentMaterialType].set(material.id, material);
+                } else {
+                    selectedMaterials[currentMaterialType].delete(material.id);
+                }
+
+                updateSelectedCount();
+                updateSelectedMaterialsList();
+                updateSelectAllCheckbox(panel);
+            });
+        });
+    }
+
+    // Fonction pour mettre à jour la checkbox "Tout sélectionner"
+    function updateSelectAllCheckbox(panel) {
+        const selectAllCheckbox = panel.querySelector('.select-all-checkbox');
+        const materialCheckboxes = panel.querySelectorAll('.material-checkbox');
+        const checkedCheckboxes = panel.querySelectorAll('.material-checkbox:checked');
+
+        if (materialCheckboxes.length === 0) {
+            selectAllCheckbox.indeterminate = false;
+            selectAllCheckbox.checked = false;
+        } else if (checkedCheckboxes.length === materialCheckboxes.length) {
+            selectAllCheckbox.indeterminate = false;
+            selectAllCheckbox.checked = true;
+        } else if (checkedCheckboxes.length > 0) {
+            selectAllCheckbox.indeterminate = true;
+            selectAllCheckbox.checked = false;
+        } else {
+            selectAllCheckbox.indeterminate = false;
+            selectAllCheckbox.checked = false;
+        }
+    }
+
+    // Fonction pour mettre à jour la liste du matériel sélectionné
+    function updateSelectedMaterialsList() {
+        const panel = getCurrentPanel();
+        const selectedContainer = panel.querySelector('.selected-materials');
+        const selectedList = panel.querySelector('.selected-items-list');
+
+        const materials = Array.from(selectedMaterials[currentMaterialType].values());
+
+        if (materials.length === 0) {
+            selectedContainer.style.display = 'none';
+        } else {
+            selectedList.innerHTML = '';
+
+            materials.forEach(material => {
+                const item = document.createElement('div');
+                item.className = 'alert alert-danger d-flex justify-content-between align-items-center py-2 mb-2';
+                item.innerHTML = `
+                    <div>
+                        <strong>${escapeHtml(material.name)}</strong>
+                        <small class="text-muted d-block">
+                            ${material.serial ? 'S/N: ' + escapeHtml(material.serial) : ''}
+                            ${material.otherserial ? ' • Inv: ' + escapeHtml(material.otherserial) : ''}
+                        </small>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-light remove-material-btn"
+                            data-material-id="${material.id}">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+
+                selectedList.appendChild(item);
+            });
+
+            // Ajouter les gestionnaires pour les boutons de suppression
+            selectedList.querySelectorAll('.remove-material-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const materialId = parseInt(this.dataset.materialId);
+                    selectedMaterials[currentMaterialType].delete(materialId);
+
+                    // Décocher la checkbox correspondante
+                    const checkbox = panel.querySelector(`input[value="${materialId}"]`);
+                    if (checkbox) checkbox.checked = false;
+
+                    updateSelectedCount();
+                    updateSelectedMaterialsList();
+                    updateSelectAllCheckbox(panel);
+                });
+            });
+
+            selectedContainer.style.display = 'block';
+        }
+    }
+
+    // Initialiser les gestionnaires pour tous les panneaux
+    document.querySelectorAll('.material-unlink-panel').forEach(panel => {
+        const materialType = panel.dataset.materialType;
+        const searchInput = panel.querySelector('.material-search-input');
+        const clearBtn = panel.querySelector('.clear-search-btn');
+        const loadBtn = panel.querySelector('.load-linked-btn');
+        const selectAllCheckbox = panel.querySelector('.select-all-checkbox');
+
+        // Gestionnaire pour charger le matériel
+        loadBtn.addEventListener('click', function() {
+            loadLinkedMaterials(panel);
+        });
+
+        // Gestionnaire pour la recherche/filtrage
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.trim();
+            filterResults(panel, searchTerm);
+        });
+
+        // Gestionnaire pour le bouton d'effacement
+        clearBtn.addEventListener('click', function() {
+            searchInput.value = '';
+            filterResults(panel, '');
+        });
+
+        // Gestionnaire pour "Tout sélectionner"
+        selectAllCheckbox.addEventListener('change', function() {
+            const materialCheckboxes = panel.querySelectorAll('.material-checkbox');
+
+            materialCheckboxes.forEach(checkbox => {
+                if (this.checked) {
+                    checkbox.checked = true;
+                    const material = JSON.parse(checkbox.dataset.material);
+                    selectedMaterials[currentMaterialType].set(material.id, material);
+                } else {
+                    checkbox.checked = false;
+                    const material = JSON.parse(checkbox.dataset.material);
+                    selectedMaterials[currentMaterialType].delete(material.id);
+                }
+            });
+
+            updateSelectedCount();
+            updateSelectedMaterialsList();
+        });
+    });
+
+    // Gestionnaire pour le changement d'onglet
+    document.querySelectorAll('#materialTab button[data-bs-toggle="tab"]').forEach(tabBtn => {
+        tabBtn.addEventListener('shown.bs.tab', function(event) {
+            // Extraire le type de matériel depuis l'ID de l'onglet
+            currentMaterialType = event.target.id.replace('-tab', '');
+
+            // Mettre à jour le champ caché
+            document.getElementById('current_material_type').value = currentMaterialType;
+
+            // Mettre à jour le compteur
+            updateSelectedCount();
+
+            // Mettre à jour la liste des éléments sélectionnés
+            updateSelectedMaterialsList();
+        });
+    });
+
+    // Gestionnaire pour la soumission du formulaire
+    document.getElementById('unlinkMaterialForm').addEventListener('submit', function(e) {
+        // Vider les champs cachés précédents
+        const hiddenContainer = document.getElementById('hidden_material_ids');
+        hiddenContainer.innerHTML = '';
+
+        // Ajouter tous les IDs sélectionnés pour le type actuel
+        const selectedIds = Array.from(selectedMaterials[currentMaterialType].keys());
+
+        if (selectedIds.length === 0) {
+            e.preventDefault();
+            alert('Veuillez sélectionner au moins un élément de matériel à délier');
+            return false;
+        }
+
+        selectedIds.forEach(id => {
+            const hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.name = 'material_ids';
+            hiddenInput.value = id;
+            hiddenContainer.appendChild(hiddenInput);
+        });
+    });
+
+    // Initialisation
+    updateSelectedCount();
+});
+</script>
+{% endblock %}

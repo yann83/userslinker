@@ -1,0 +1,99 @@
+<!-- templates/users/edit.html -->
+{% extends "base.html" %}
+
+{% block title %}Modifier un utilisateur{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 class="mt-4 mb-4">
+        <i class="fas fa-user-edit"></i> Modifier l'utilisateur
+    </h2>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('user_edit', user_id=user.id) }}">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="given_name" class="form-label">Prénom <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="given_name" name="given_name" 
+                                           value="{{ user.GivenName }}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="surname" class="form-label">Nom <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="surname" name="surname" 
+                                           value="{{ user.Surname }}" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Identifiant <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="username" name="username" 
+                                   value="{{ user.Username }}" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Fonction</label>
+                            <input type="text" class="form-control" id="title" name="title" 
+                                   value="{{ user.Title }}">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="department" class="form-label">Service</label>
+                            <input type="text" class="form-control" id="department" name="department" 
+                                   value="{{ user.Department }}">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="site" class="form-label">Site</label>
+                            <input type="text" class="form-control" id="site" name="site" 
+                                   value="{{ user.Site }}">
+                        </div>
+
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Enregistrer les modifications
+                            </button>
+                            <a href="{{ url_for('users_list') }}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Annuler
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card bg-light">
+                <div class="card-body">
+                    <h5 class="card-title">Informations sur l'utilisateur</h5>
+                    <p class="card-text">
+                        <small>
+                            <strong>ID :</strong> {{ user.id }}<br>
+                            <strong>Créé le :</strong> {{ user.date_create.strftime('%d/%m/%Y %H:%M') if user.date_create else 'N/A' }}<br>
+                            <strong>Dernière modification :</strong> {{ user.date_mod.strftime('%d/%m/%Y %H:%M') if user.date_mod else 'N/A' }}<br>
+                            <strong>Par :</strong> {{ user.app_management_user }}
+                        </small>
+                    </p>
+
+                    <hr>
+
+                    <h6>Notes</h6>
+                    <p class="card-text">
+                        <small>
+                            • Les modifications seront effectives immédiatement.<br>
+                            • Les champs marqués d'un <span class="text-danger">*</span> sont obligatoires.<br>
+                            • L'historique des modifications est conservé.
+                        </small>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

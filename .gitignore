@@ -1,0 +1,22 @@
+# Fichiers IDE
+.idea/
+
+# Environnements virtuels
+.venv/
+
+# Fichiers compilés Python
+__pycache__/
+
+# Fichiers projet
+img/
+Backup/
+config/bdd.json
+config/post.sql
+setup/indexation.sql
+setup/setup_old.py
+etapes.md
+projet.md
+READMEfr.md
+csrf_fix.py
+.env
+
