@@ -3563,6 +3563,13 @@ def forbidden(e):
     return render_template('errors/403.html'), 403
 
 
-# Application entry point
+# Application entry point for local testing
 if __name__ == '__main__':
     app.run(debug=False, host='127.0.0.1', port=5000)
+
+# Application entry point for production
+"""
+if __name__ == '__main__':
+    from waitress import serve
+    serve(app, host='0.0.0.0', port=8000, threads=4)
+"""

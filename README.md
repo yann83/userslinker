@@ -1,445 +1,559 @@
 # UsersLinker - Asset and User Management System
 
-A comprehensive Flask-based web application for managing users and IT assets with role-based access control, external database integration, and comprehensive reporting capabilities.
-
-A small gesture, a big support! Buy me a coffee ☕ if you appreciate my work. Thanks in advance!
+**UsersLinker** is a Flask-based web application designed to manage hardware assets assigned to remote workers in a company. It tracks the link between staff users and their equipment (computers, monitors, peripherals, phones) and provides a full audit trail of movements.
 
 [!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/yann83)
 
-## 🚀 Features
-
-### Role-Based Access Control
-- **Administrator**: Manages user accounts, roles, and permissions
-- **Manager**: Creates events, accesses reports, and edits materials/users
-- **Reader**: Read-only access to reports and asset/user lists
-
-### Asset Management
-- Support for multiple asset types: computers, monitors, peripherals, and phones
-- Link/unlink assets to users with full audit trail
-- Soft delete with trash bin functionality
-- Real-time conflict detection when assets are already assigned
-
-### External Database Integration (Optional)
-- Connect to external user directories (LDAP/AD)
-- GLPI inventory system integration
-- Auto-completion for user and asset creation
-- Fallback to manual entry when external systems unavailable
-
-### Event Management Workflow
-- Step-by-step wizard for asset assignment/unassignment
-- Visual conflict detection with current asset ownership
-- Complete audit trail with timestamps and user tracking
-- Bulk operations support
-
-### Comprehensive Reporting
-- Filter by department, name, date ranges
-- Historical movement tracking
-- PDF export with formatted data
-- Visual analytics with pie charts for asset distribution
-- Asset distribution by model, type, and department
-
-### Modern UI/UX
-- Bootstrap 5 responsive design
-- FontAwesome icons
-- Intuitive navigation
-- Mobile-friendly interface
-
-## 🛠️ Technology Stack
-
-- **Backend**: Flask 2.x (Latest Stable)
-- **Authentication**: Flask-Security
-- **Database**: MySQL (bd_userslinker)
-- **Frontend**: Bootstrap 5 + FontAwesome (Free)
-- **Templates**: Jinja2
-- **Charts**: JavaScript charting library for pie charts
-
-## 📋 Prerequisites
-
-- Python 3.8+
-- MySQL 5.7+ or MariaDB 10.3+
-- pip (Python package installer)
-- Virtual environment (recommended)
-
-## 🚀 Installation
-
-### 1. Clone the Repository
-
-```bash
-git clone https://github.com/yourusername/userslinker.git
-cd userslinker
-```
-
-### 2. Create Virtual Environment
-
-```bash
-# Create virtual environment
-python -m venv venv
-
-# Activate virtual environment
-# On Windows:
-venv\Scripts\activate
-# On macOS/Linux:
-source venv/bin/activate
-```
-
-### 3. Install Dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-### 4. Setup
-
-In the  `setup` folder update this values
-
-```
-PG_HOST=localhost
-PG_USER=userslinker_app
-PG_PASSWORD=userslinker
-PG_DB=bd_userslinker
-PG_PORT=5432
-``` 
-
-Configure a Psql database and configure your connection settings.
-
-```sql
-postgresql_step1.sql
-postgresql_step2.sql
-postgresql_step3.sql
-```
-
-### 5. Configure External Databases (Optional)
-
-Create a `bdd.json` file in the root directory (outside web-accessible folder) with your external database configurations:
-
-```json
-{
-  "users": {
-    "connect": {
-      "host": "your-ldap-server",
-      "user": "username",
-      "password": "password",
-      "db": "database_name",
-      "table": "users_table"
-    },
-    "fields": {
-      "GivenName": "first_name",
-      "Surname": "last_name",
-      "Username": "username",
-      "email": "email_address",
-      "Title": "job_title",
-      "Department": "department",
-      "Site": "location"
-    }
-  },
-  "computers": {
-    "connect": {
-      "host": "glpi-server",
-      "user": "username",
-      "password": "password",
-      "db": "glpi_db",
-      "table": "glpi_computers"
-    },
-    "fields": {
-      "name": "name",
-      "serial": "serial",
-      "otherserial": "otherserial"
-    }
-  }
-  // ... similar configuration for monitors, peripherals, phones
-}
-```
-
-### 6. Initialize Database Tables
-
-❌ error not use 
-
-```bash
-python db_setup.py db init
-python db_setup.py db migrate
-python db_setup.py db upgrade
-```
-
-### 7. Create Initial Administrator
-
-❌ error not functionnal
-
-```bash
-python create_admin.py
-```
-
-### 8. Run the Application
-
-❌ export FLASK_ENV=development don't work
-
-```bash
-# Development mode
-export FLASK_ENV=development
-python app.py
-```
-
-
-### 8. Run the Application
-
-```bash
-python app.py
-```
-
-The application will be available at `http://localhost:5000`
-
-
-
-## 📊 Database Schema
-
-### Core Tables
-
-#### app_management
-Stores application users and their roles
-- `id` (INT, PRIMARY KEY, AUTO_INCREMENT)
-- `GivenName` (VARCHAR(45))
-- `Surname` (VARCHAR(45))
-- `user` (VARCHAR(100))
-- `password` (VARCHAR(255))
-- `email` (VARCHAR(255))
-- `role` (VARCHAR(45))
-
-#### users
-Stores end-users who receive assets
-- `id` (INT, PRIMARY KEY, AUTO_INCREMENT)
-- `GivenName` (VARCHAR(45))
-- `Surname` (VARCHAR(45))
-- `Username` (VARCHAR(100))
-- `Title` (VARCHAR(200))
-- `Department` (VARCHAR(45))
-- `Site` (LONGTEXT)
-- `date_create` (DATETIME)
-- `date_mod` (DATETIME)
-- `date_delete` (DATETIME)
-- `is_delete` (TINYINT(1))
-- `app_management_user` (VARCHAR(100))
-
-#### Asset Tables (computers, monitors, peripherals, phones)
-Each asset table contains:
-- `id` (INT, PRIMARY KEY, AUTO_INCREMENT)
-- `name` (VARCHAR(255))
-- `serial` (VARCHAR(255))
-- `otherserial` (VARCHAR(255))
-- `Username` (VARCHAR(255))
-- `date_create` (DATETIME)
-- `date_mod` (DATETIME)
-- `date_delete` (DATETIME)
-- `is_delete` (TINYINT(1))
-- `is_linked` (TINYINT(1))
-- `app_management_user` (VARCHAR(100))
-
-#### history
-Audit trail for all asset movements
-- `id` (INT, PRIMARY KEY, AUTO_INCREMENT)
-- `app_management_id` (INT)
-- `users_id` (INT)
-- `computers_id` (INT)
-- `monitors_id` (INT)
-- `peripherals_id` (INT)
-- `phones_id` (INT)
-- `date_mod` (DATETIME)
-- `is_linked` (TINYINT(1))
-- `is_delete` (TINYINT(1))
-- `app_management_user` (VARCHAR(100))
-
-## 💼 Usage
-
-### First Login
-1. Navigate to `http://localhost:5000`
-2. Login with administrator credentials
-3. The system will test external database connections (if configured)
-4. Create additional users and assign roles
-
-### Creating Events (Manager Role)
-1. Go to "Create Event" from the main menu
-2. Select or create a user
-3. Choose to link or unlink assets
-4. Follow the step-by-step wizard
-5. Review and confirm changes
-
-### Managing Assets and Users
-1. Access "Lists" menu for asset/user management
-2. Search, edit, add, or delete items
-3. Use trash bin for soft deletes
-4. Permanently delete items from trash when needed
-
-### Generating Reports
-1. Navigate to "Reports" section
-2. Apply filters (department, date range, etc.)
-3. View historical data and movements
-4. Export to PDF or view charts
-5. Analyze asset distribution patterns
-
-## 🔧 Configuration
-
-### Environment Variables
-
-```bash
-# Flask configuration
-FLASK_ENV=development|production
-SECRET_KEY=your-secret-key-here
-
-# Database configuration
-DATABASE_URL=mysql://username:password@host:port/bd_userslinker
-
-# External database configuration path
-EXTERNAL_DB_CONFIG=/path/to/bdd.json
-```
-
-### Security Considerations
-
-- The `bdd.json` file contains sensitive database credentials and should never be accessible via web browser
-- Use strong passwords for database connections
-- Implement SSL/TLS in production
-- Regular backup of the main database
-- Monitor access logs for security issues
-
-## 📈 Monitoring and Maintenance
-
-### Health Checks
-The application performs automatic health checks on:
-- Main database connectivity
-- External database connections (if configured)
-- File system permissions
-
-### Backup Strategy
-- Regular MySQL database backups
-- Configuration file backups
-- Log file rotation and archival
-
-### Performance Optimization
-- Database indexing on frequently queried fields
-- Connection pooling for external databases
-- Caching for frequently accessed data
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-### Development Guidelines
-- Follow PEP 8 style guidelines
-- Add comprehensive comments for beginners
-- Include unit tests for new features
-- Update documentation for changes
-
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🗂️ Project Structure
-
-```
-userslinker/
-├── app.py                 # Main application entry point
-├── config.py             # Application configuration
-├── requirements.txt      # Python dependencies
-├── bdd.json             # External DB config (not in repo)
-├── models/              # Database models
-│   ├── __init__.py
-│   ├── user.py          # User models
-│   ├── asset.py         # Asset models
-│   └── history.py       # History/audit models
-├── views/               # Application routes
-│   ├── __init__.py
-│   ├── auth.py          # Authentication routes
-│   ├── admin.py         # Admin functionality
-│   ├── events.py        # Event management
-│   ├── reports.py       # Reporting features
-│   └── api.py           # API endpoints
-├── templates/           # Jinja2 templates
-│   ├── base.html
-│   ├── auth/
-│   ├── admin/
-│   ├── events/
-│   └── reports/
-├── static/              # Static files
-│   ├── css/
-│   ├── js/
-│   └── images/
-├── utils/               # Utility functions
-│   ├── __init__.py
-│   ├── database.py      # DB helper functions
-│   ├── external_db.py   # External DB integration
-│   └── reporting.py     # Report generation
-└── tests/               # Unit tests
-    ├── __init__.py
-    ├── test_models.py
-    ├── test_views.py
-    └── test_utils.py
-```
-### Manager Role
-
-![public_map](./img/03.jpg)
-
-The manager can access the following functions:
-
-- Create an event: manage links between users and equipment
-- Lists: view users and equipment
-- Reports: generate reports and statistics
-
-__Create an event__
-
-![public_map](./img/04.jpg)
-
-This is the most important function. You must follow the steps to assign (link) or retrieve (unlink) equipment for a given user.
-
-__Lists__
-
-![public_map](./img/05.jpg)
-
-Allows you to view the equipment inventory and create, edit, or delete objects.
-
-__Reports__
-
-![public_map](./img/06.jpg)
-
-1. Report by department: Generates a detailed report of users and their equipment by department.
-
-- Filter by department (required)
-- Filter by period (optional)
-- Display of linked equipment
-- History of movements
-
-2. Report by user: Generates a detailed report for a specific user.
-
-- Dynamic user search
-- Complete history (all dates)
-- Currently linked equipment
-- Detailed statistics
-
-3. Report by equipment type: Analysis of distribution and usage by equipment type.
-
-![public_map](./img/07.jpg)
-
-- Pie charts
-- Detailed statistics
-- Utilization rates
-- Breakdown by department
-
-4. Activity report: analysis of movements and activities over a given period.
-
-- Activity timeline
-- Statistics by manager
-- Trend charts
-- Detailed export
-
-### Reader role
-
-The reader can access the following functions:
-
-- Lists: view users and equipment.
-- Reports: generate reports and statistics.
-
-The reader does not have editing rights to lists.
+---
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Requirements](#requirements)
+- [Project Structure](#project-structure)
+- [Installation](#installation)
+  - [Step 1 : PostgreSQL Setup](#step-1-postgresql-setup)
+  - [Step 2 : Python Environment](#step-2-Installation)
+  - [Step 3 : Production](#step-3-Production)
+  - [Step 4 : Web Installer](#step-4-web-installer)
+- [Configuration](#configuration)
+  - [Environment File (.env)](#environment-file-env)
+- [Roles and Permissions](#roles-and-permissions)
+- [Features](#features)
+  - [Event Workflow](#event-workflow)
+  - [Asset and User Lists](#asset-and-user-lists)
+  - [Reports and Exports](#reports-and-exports)
+- [Tech Stack](#tech-stack)
+- [Known Limitations](#known-limitations)
+- [License](#license)
 
 ---
 
-**Built with ❤️ using Flask, Bootstrap, and modern web technologies**
+## Overview
+
+UsersLinker was built to address the needs of IT departments managing equipment issued to remote workers. It keeps track of which employee holds which device at any point in time, logs every assignment and return, and provides reporting tools to audit the fleet.
+
+Key capabilities:
+
+- Role-based access control (Administrator, Manager, Reader)
+- Step-by-step event workflow for linking and unlinking hardware to users
+- Full movement history with timestamps and responsible manager
+- Optional import your datas (csv format) from external databases
+- PDF export of filtered reports
+- Pie charts showing distribution by model, type, and department
+- Trash/soft-delete mechanism with permanent deletion on demand
+
+---
+
+## Requirements
+
+> **⚠️ Python 3.11 is required.**
+> Python 3.12 and above remove `pkg_resources` from the standard library, which breaks several dependencies used by this application. Use exactly **Python 3.11**.
+
+- Python 3.11
+- PostgreSQL 14 or later
+
+---
+
+## Project Structure
+
+```
+userslinker/
+├── app.py                  # Main Flask application — routes and business logic
+├── install.py              # Web-based installation wizard (blueprint)
+├── db_setup.py             # SQLAlchemy model definitions
+├── config.py               # Centralized Flask configuration
+├── forms.py                # WTForms form definitions
+├── users_import_export.py  # CSV import/export helpers for users
+├── check_env.py            # Utility to verify the .env file
+├── requirements.txt        # Python dependencies
+├── setup.py                # Package metadata
+├── babel.cfg               # Babel configuration for i18n
+├── messages.po             # Translation strings
+│
+├── postgresql_step1.sql    # SQL — create role
+├── postgresql_step2.sql    # SQL — create database
+├── postgresql_step3.sql    # SQL — create schema + grant privileges
+│
+├── .env                    # Generated by the installer (not committed to git)
+├── installed.lock          # Sentinel file written after successful install
+│
+├── static/
+│   └── style.css           # Custom CSS (Bootstrap 5 overrides)
+│
+└── templates/
+    ├── base.html           # Master layout
+    ├── base_install.html   # Layout for the installer
+    ├── dashboard.html      # Home page (post-login)
+    ├── login_user.html     # Login page
+    ├── install/
+    │   ├── step1.html
+    │   ├── step2.html
+    │   ├── step3.html
+    │   └── finish.html
+    ├── users/
+    │   ├── users.html
+    │   ├── create_user.html
+    │   ├── edit_user.html
+    │   └── import_users.html
+    ├── materials/
+    │   ├── list.html
+    │   ├── edit.html
+    │   ├── create.html
+    │   └── trash.html
+    ├── events/
+    │   ├── select_user.html
+    │   ├── select_material_to_link.html
+    │   └── select_material_to_unlink.html
+    ├── reports/
+    │   ├── reports.html
+    │   ├── by_service.html
+    │   ├── by_user.html
+    │   └── by_material_type.html
+    └── ...
+```
+
+---
+
+## Installation
+
+### Step 1 PostgreSQL Setup
+
+Three SQL scripts are provided to prepare the database server. Run them **in order** as the `postgres` superuser, either via pgAdmin (Query Tool) or the `psql` command line.
+
+```
+# From the Windows command prompt:
+psql -U postgres -f postgresql_step1.sql
+psql -U postgres -f postgresql_step2.sql
+psql -U postgres -f postgresql_step3.sql
+```
+
+| Script | What it does |
+|--------|-------------|
+| `postgresql_step1.sql` | Creates the `userslinker_app` PostgreSQL role |
+| `postgresql_step2.sql` | Creates the `bd_userslinker` database owned by that role |
+| `postgresql_step3.sql` | Creates the `app` schema and grants the necessary privileges |
+
+> **Important:** Before running `postgresql_step1.sql`, open the file and replace the placeholder password `'userslinker'` with a strong password of your choice. You will need this password during the web installer (Step 3 below).
+
+---
+
+### Step 2 Local installation
+
+1. Make sure **Python 3.11** is active in your environment.
+
+2. Create and activate a virtual environment:
+
+```batch
+python -m venv venv
+venv\Scripts\activate
+```
+
+3. Install dependencies:
+
+```batch
+pip install -r requirements.txt
+```
+
+To go to production, proceed to **step 3** or :
+
+Start the application for the first time:
+
+```batch
+python app.py
+```
+
+### Step 3 Production
+
+1. Windows
+
+**Install Waitress**
+
+Waitress is the recommended production server for Flask on Windows. It replaces the mini-server integrated into Flask.
+
+```batch
+pip install waitress
+```
+
+In `app.py` add comment for :
+
+```python
+if __name__ == '__main__':
+    app.run(debug=False, host='127.0.0.1', port=5000)
+```
+
+and remove comment for :
+
+```python
+if __name__ == '__main__':
+    from waitress import serve
+    serve(app, host='0.0.0.0', port=8000, threads=4)
+```
+
+**Create a Windows Service with NSSM**
+
+NSSM (Non-Sucking Service Manager) allows you to transform any application into a Windows service. The service will start automatically with Windows and restart in case of a crash.
+
+- Download and Install NSSM
+
+  - Go to: [https://nssm.cc/download](https://nssm.cc/download)
+  - Download the 64-bit version (nssm-2.24.zip).
+  - Unzip the ZIP file. Copy the nssm.exe file (from the win64 folder) to C:\Windows\System32\ to use it from any terminal.
+
+ - Create the Service
+
+Open a terminal as an administrator (right-click on the Start menu > Administrator Terminal) and type:
+
+```batch
+nssm install UsersLinker
+```
+
+A graphical window will open. Fill in the fields as follows:
+
+| Onglet Application ||
+|------|-------------|
+|Path|C:\userslinker\venv\Scripts\python.exe|
+|Startup directory|C:\userslinker\|
+|Arguments|app.py|
+|Onglet Details||
+|Display name|UsersLinker Flask App|
+|Description|IT asset management application|
+|Startup type|Automatic (auto startup)|
+|Onglet Environment||
+|Environment|FLASK_ENV=production|
+
+ - Click on "Install service".
+
+ - Start the service: 
+
+```batch
+nssm start UsersLinker
+```
+ - Verify that the service is running : 
+
+```batch
+nssm status UsersLinker
+```
+You should see : `SERVICE_RUNNING`
+
+ - Useful commands NSSM
+
+|command|description|
+|------|-------------|
+|`nssm start UsersLinker`| Start the service|
+|`nssm stop UsersLinker`| Stop the service|
+|`nssm restart UsersLinker`| Restart the service|
+|`nssm edit UsersLinker`| Edit configuration|
+|`nssm remove UsersLinker`| Remove service|
+
+ - Open the port in the Windows Firewall
+
+By default, Windows blocks incoming connections on port 8000. You need to create a firewall rule.
+
+In an administrator terminal:
+
+```batch
+netsh advfirewall firewall add rule name="UsersLinker" protocol=TCP dir=in localport=8000 action=allow
+```
+
+2. Linux
+
+**Install Gunicorn**
+
+Gunicorn is the most widely used production Python server on Linux. It handles multiple simultaneous requests much better than the built-in Flask server.
+
+```batch
+pip install gunicorn
+```
+Under Linux with Gunicorn, app.run() is not called in production. Gunicorn directly imports the app object from app.py. Therefore, the if __name__ == '__main__' statement is only used in development.
+
+**Activate the virtual environment and test:**
+
+```batch
+source venv/bin/activate
+gunicorn --workers 3 --bind 0.0.0.0:8000 app:app
+```
+Open a browser from another computer `http://192.168.X.X:8000`
+
+If you see the login page, great. Exit with Ctrl+C.
+
+ℹ️ Note: The syntax `app:app` means: `app.py` file, `Flask object named app`.
+
+**Create a systemd service (automatic startup)**
+
+Systemd is the Linux service manager. We will create a service file for UsersLinker.
+
+Create the service file (replace /home/your_user/userslinker with the actual path):
+
+```batch
+sudo nano /etc/systemd/system/userslinker.service
+```
+
+Paste the following content (adjust the paths):
+
+```batch
+[Unit]
+Description=UsersLinker Flask Application
+After=network.target postgresql.service
+
+[Service]
+User=www-data
+Group=www-data
+WorkingDirectory=/home/votre_user/userslinker
+Environment="FLASK_ENV=production"
+EnvironmentFile=/home/votre_user/userslinker/.env
+ExecStart=/home/votre_user/userslinker/venv/bin/gunicorn \
+    --workers 3 \
+    --bind unix:/run/userslinker.sock \
+    app:app
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+```
+
+ℹ️ Note: Save with Ctrl+O then Enter, exit with Ctrl+X.
+
+Enable and start the service:
+
+```batch
+sudo systemctl daemon-reload
+sudo systemctl enable userslinker
+sudo systemctl start userslinker
+sudo systemctl status userslinker
+```
+
+You should see "active" (running) in green.
+
+**Install and configure Nginx**
+
+Nginx is a web server that acts as a front end. It receives HTTP requests from browsers and forwards them to Nginx. It also manages static files (CSS, images) directly, which is faster.
+
+```batch
+sudo apt install nginx -y
+```
+
+Create the site configuration `sudo nano /etc/nginx/sites-available/userslinker`
+
+Paste the following content:
+
+```json
+server {
+    listen 80;
+    server_name 192.168.X.X;  # Your IP address or domain name
+
+    # Fichiers statiques servis directement par Nginx
+    location /static {
+        alias /home/votre_user/userslinker/static;
+    }
+
+    # Tout le reste va vers Gunicorn
+    location / {
+        include proxy_params;
+        proxy_pass http://unix:/run/userslinker.sock;
+    }
+}
+```
+
+Enable the configuration and restart Nginx:
+
+```batch
+sudo ln -s /etc/nginx/sites-available/userslinker /etc/nginx/sites-enabled/
+sudo nginx -t
+```
+
+⚠️  Warning: `sudo nginx -t` checks that your configuration does not contain any syntax errors. Only proceed to the next step if you see "syntax is ok".
+
+```batch
+sudo systemctl restart nginx
+```
+
+**Open the port in the Linux firewall (UFW)**
+
+🔴  Important: Don't forget to enable ssh before activating UFW, otherwise you could cut yourself off from SSH access to your server!
+
+```batch
+sudo ufw allow 'Nginx Full'
+sudo ufw allow ssh
+sudo ufw enable
+sudo ufw status
+```
+
+**Accessing from other computers on the network**
+
+With Nginx on port 80, users simply type the IP address without specifying a port:
+
+http://192.168.X.X
+
+To find the IP address of your Linux server:
+
+```batch
+ip a | grep inet
+```
+
+Useful commands for Linux
+
+|command|description|
+|------|-------------|
+|`sudo systemctl start userslinker`| Start the application|
+|`sudo systemctl stop userslinker` |Stop the application|
+|`sudo systemctl restart userslinker` |Restart after a change|
+|`sudo systemctl status userslinker` |View the service status|
+|`sudo journalctl -u userslinker -f` |View real-time logs|
+|`sudo systemctl restart nginx` |Restart Nginx|
+
+---
+
+### Step 4 Web Installer
+
+1. Open your browser and navigate to:
+
+```
+http://127.0.0.1:5000/install
+```
+
+The installer guides you through three steps:
+
+| Step | Description |
+|------|-------------|
+| **Step 1** | Enter PostgreSQL connection settings. The installer writes the `.env` file and generates secure secret keys. |
+| **Step 2** | Tests the database connection and creates all application tables in the `app` schema. |
+| **Step 3** | Creates the first administrator account (email + password). |
+
+Once the installer completes successfully, it writes an `installed.lock` file. On every subsequent startup, the `/install` route is disabled and returns 404.
+
+> **If you need to reinstall:** Delete `installed.lock` and `.env`, then restart the application and visit `/install` again.
+
+2. About security (Production)
+
+These steps are important before making the application accessible on the network.
+
+|steps|
+|------|
+|In the `.env` file, verify that `FLASK_DEBUG=0`. Debug mode should never be enabled in production (it exposes the source code in case of an error).|
+|Change the password for the administrator account created during installation if you used a weak password.|
+|The `.env` file contains the database secret keys and password. Verify that this file is not publicly accessible (it is in the application folder, not in the public web folder).|
+|Only make the application accessible from your company's internal network. Avoid exposing it directly to the internet without HTTPS.|
+| If you need to access it from outside the network, use a corporate VPN rather than opening ports on your router/firewall.|
+
+3. Troubleshooting Common Problems (Production)
+
+|Problem|Solution|
+|------|------|
+|Unable to access from another PC (Windows)|Check the firewall rule. Verify that Waitress is running correctly (nssm status UsersLinker). Test first from the server itself on `localhost:8000` .|
+|NSSM service not starting (Windows)|Check the path to `python.exe` in the NSSM configuration. Open the "I/O" tab of NSSM to configure a log file and view the error.|
+|Error 502 Bad Gateway (Linux)| Gunicorn is not running. Check `sudo systemctl status userslinker` and `sudo journalctl -u userslinker -n 50`|
+|Error 403 Forbidden (Linux)|Permissions problem. Verify that www-data can read the directory `sudo chown -R www-data:www-data /home/your_user/userslinker`|
+|The application runs, but the CSS/image files do not.| Check the `/static` path in the Nginx configuration. Restart Nginx after any changes.|
+|After modifying the code, the changes are not displayed.| Restart the service: `nssm restart UsersLinker` (Windows) or `sudo systemctl restart userslinker` (Linux).|
+|The application has difficulty connecting to PostgreSQL from production.| Verify that the `.env` file is present and contains the correct parameters. The `WorkingDirectory` path in systemd must point to the directory containing `.env`.|
+
+---
+
+## Configuration
+
+### Environment File (.env)
+
+The `.env` file is generated automatically by the installer. It contains:
+
+```dotenv
+# PostgreSQL connection
+PG_HOST=host
+PG_PORT=5432
+PG_USER=userslinker_app
+PG_PASSWORD=your_strong_password
+PG_DB=bd_userslinker
+
+# Flask security keys — stable, never regenerated after first install
+SECRET_KEY=<auto-generated>
+SECURITY_PASSWORD_SALT=<auto-generated>
+```
+
+> **Critical:** `SECRET_KEY` and `SECURITY_PASSWORD_SALT` must remain stable between restarts. Changing them will invalidate all active sessions and make stored passwords unverifiable.
+
+---
+
+## Roles and Permissions
+
+| Permission | Administrator | Manager | Reader |
+|------------|:---:|:---:|:---:|
+| Create / edit / delete app users | ✅ | ❌ | ❌ |
+| Assign roles to app users | ✅ | ❌ | ❌ |
+| Create events (link / unlink hardware) | ❌ | ✅ | ❌ |
+| Edit users and hardware entries | ❌ | ✅ | ❌ |
+| Add / delete users and hardware | ❌ | ✅ | ❌ |
+| Access reports | ❌ | ✅ | ✅ |
+| View user and hardware lists | ❌ | ✅ | ✅ |
+| Export PDF reports | ❌ | ✅ | ✅ |
+
+> The **Administrator** role is dedicated to managing access to the application itself. They do not interact with the operational data (users, hardware, events).
+
+---
+
+## Features
+
+### Event Workflow
+
+Accessible to **Managers**. The event wizard mirrors the experience of a guided installer:
+
+1. **Select or create a user** — search by username with auto-completion (if `bdd.json` is configured). If the user does not exist, create them on the spot.
+2. **Choose an action** — `Link` (assign hardware) or `Unlink` (recover hardware).
+3. **Link flow** — Select equipment to assign. Items already linked to another user appear in red with the current owner's name. No alert = confirm and close the event. A timestamped record is written to the `history` table with the manager's name and the user's identifier.
+4. **Unlink flow** — The user's currently linked equipment is displayed. Select the item(s) to recover. Items not in the list can be added manually, with a duplicate-ownership check.
+
+---
+
+### Asset and User Lists
+
+Accessible to **Managers** (read + edit) and **Readers** (read only).
+
+- Sub-menus for each category: Users, Computers, Monitors, Peripherals, Phones.
+- Search, add, edit, soft-delete (move to trash), and permanently delete from trash.
+- Items in the trash display a red **Deleted** badge in lists.
+- Permanent deletion of a hardware or user record cascades to linked `history` entries.
+
+---
+
+### Reports and Exports
+
+Accessible to **Managers** and **Readers**.
+
+- Filter movement history by department, user name, and date range.
+- Full chronological audit trail with all link / unlink events.
+- **PDF export** — data is reformatted for readability using ReportLab.
+- **Pie charts** — distribution by model, type, and department, generated with Matplotlib.
+
+---
+
+## Tech Stack
+
+| Component | Library / Version |
+|-----------|------------------|
+| Web framework | Flask 2.3.3 |
+| ORM | Flask-SQLAlchemy 3.0.5 |
+| Authentication | Flask-Security-Too 5.3.0 |
+| Database | PostgreSQL 14+ via psycopg2-binary |
+| Forms | Flask-WTF 1.2.1 |
+| Password hashing | Flask-Bcrypt 1.0.1 + passlib 1.7.4 |
+| Frontend | Bootstrap 5 + Font Awesome (free) |
+| PDF export | ReportLab 4.0.7 |
+| Charts | Matplotlib 3.8.2 |
+| Translations | Flask-Babel |
+| Environment | python-dotenv 1.0.0 |
+
+---
+
+## Known Limitations
+
+- **Python 3.11 only** — `pkg_resources` is removed in Python 3.12+. Do not upgrade the Python interpreter until all dependencies have been updated.
+- **PostgreSQL only** — The application was migrated from MySQL to PostgreSQL. MySQL is no longer supported as the internal database. `mysql.connector` is only used for optional external GLPI connections.
+- **Windows + psycopg2** — The `search_path` URI parameter is unreliable with psycopg2 on Windows. All models explicitly declare `schema = 'app'` to work around this. Do not remove the `__table_args__` declarations.
+- **No Docker support** — This application is designed to run natively on Windows with a local PostgreSQL instance.
+- **Single administrator account at first install** — Additional administrator accounts can be created after the first login.
+
+---
+
+## License
+
+See [LICENSE](LICENSE) for details.
