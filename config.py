@@ -1,46 +1,96 @@
 # config.py
 """
-Configuration pour l'application Flask
+Centralized configuration for the Flask application.
+
+All sensitive values are read from environment variables.
+load_dotenv() is called in app.py BEFORE this module is imported,
+so os.environ is already populated when this class is evaluated.
+
+DO NOT call load_dotenv() here — it creates a race condition where Config
+attributes are evaluated before the .env file has been read.
+
+Location: config.py  (root of the project, same folder as app.py)
 """
 
 import os
-from dotenv import load_dotenv
-
-# Charge les variables d'environnement depuis le fichier .env
-load_dotenv()
 
 
 class Config:
+    """Base configuration class.
+
+    Every attribute reads its value from an environment variable set by
+    the .env file (loaded by app.py before this module is imported).
+
+    IMPORTANT — SECRET_KEY stability:
+        Flask uses SECRET_KEY to sign session cookies.  If the key changes
+        between server restarts all active sessions are invalidated and
+        every logged-in user is silently logged out.
+        Flask-Security-Too also derives internal tokens from this key.
+        Always keep a fixed value in your .env file.
+        Generate a good one with:
+            python -c "import secrets; print(secrets.token_hex(32))"
+
+    IMPORTANT — SECURITY_PASSWORD_SALT stability:
+        Although Flask-Security-Too 5.x uses bcrypt (which embeds its own
+        random salt in every hash), SECURITY_PASSWORD_SALT is still used
+        for token generation (password-reset links, confirmation emails...).
+        Keep it fixed in .env — changing it invalidates those tokens.
     """
-    Configuration de base pour l'application
-    """
-    # Clé secrète pour Flask
+
+    # -------------------------------------------------------------------------
+    # Flask secret key — signs session cookies and Flask-Security tokens.
+    # -------------------------------------------------------------------------
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-key-change-in-production'
+    if not SECRET_KEY:
+        raise RuntimeError("SECRET_KEY is not set. Check your .env file.")
+    # -------------------------------------------------------------------------
+    # PostgreSQL connection settings
+    # -------------------------------------------------------------------------
+    PG_HOST     = os.environ.get('PG_HOST')     or 'localhost'
+    PG_USER     = os.environ.get('PG_USER')     or 'userslinker_app'
+    PG_PASSWORD = os.environ.get('PG_PASSWORD') or ''
+    PG_DB       = os.environ.get('PG_DB')       or 'bd_userslinker'
+    PG_PORT     = os.environ.get('PG_PORT')     or '5432'
 
-    # Configuration de la base de données MySQL
-    MYSQL_HOST = os.environ.get('MYSQL_HOST') or 'localhost'
-    MYSQL_USER = os.environ.get('MYSQL_USER') or 'root'
-    MYSQL_PASSWORD = os.environ.get('MYSQL_PASSWORD') or ''
-    MYSQL_DB = os.environ.get('MYSQL_DB') or 'bd_userslinker'
-
-    # URI SQLAlchemy
-    SQLALCHEMY_DATABASE_URI = f'mysql+pymysql://{MYSQL_USER}:{MYSQL_PASSWORD}@{MYSQL_HOST}/{MYSQL_DB}'
+    # SQLAlchemy URI — schema is handled by __table_args__ in each model,
+    # so no search_path option is needed here.
+    SQLALCHEMY_DATABASE_URI = (
+        f'postgresql+psycopg2://{PG_USER}:{PG_PASSWORD}'
+        f'@{PG_HOST}:{PG_PORT}/{PG_DB}'
+    )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-    # Configuration Flask-Security
-    SECURITY_PASSWORD_SALT = os.environ.get('SECURITY_PASSWORD_SALT') or 'super-secret-random-salt'
-    SECURITY_REGISTERABLE = False  # Seul les admin peuvent créer des comptes
-    SECURITY_SEND_REGISTER_EMAIL = False
-    SECURITY_LOGIN_URL = '/login'
-    SECURITY_LOGOUT_URL = '/logout'
-    SECURITY_POST_LOGIN_VIEW = '/dashboard'
-    SECURITY_POST_LOGOUT_VIEW = '/login'
+    # -------------------------------------------------------------------------
+    # Flask-Security settings
+    # -------------------------------------------------------------------------
+    SECURITY_PASSWORD_SALT = (
+        os.environ.get('SECURITY_PASSWORD_SALT') or 'super-secret-random-salt'
+    )
+    SECURITY_REGISTERABLE               = False
+    SECURITY_SEND_REGISTER_EMAIL        = False
+    SECURITY_LOGIN_URL                  = '/login'
+    SECURITY_LOGOUT_URL                 = '/logout'
+    SECURITY_POST_LOGIN_VIEW            = '/dashboard'
+    SECURITY_POST_LOGOUT_VIEW           = '/login'
     SECURITY_LOGIN_WITHOUT_CONFIRMATION = True
 
-    # Configuration des sessions
-    PERMANENT_SESSION_LIFETIME = 3600  # 1 heure
+    # -------------------------------------------------------------------------
+    # Session settings
+    # -------------------------------------------------------------------------
+    PERMANENT_SESSION_LIFETIME = 3600   # seconds (1 hour)
 
-    # Protection CSRF - Temporairement désactivée pour résoudre le conflit
-    WTF_CSRF_ENABLED = False
-    SECURITY_CSRF_PROTECT_FORMS = []
-    SECURITY_CSRF_IGNORE_UNAUTH_ENDPOINTS = True
+    # -------------------------------------------------------------------------
+    # CSRF — disabled for now to avoid conflicts with Flask-Security forms.
+    # -------------------------------------------------------------------------
+    WTF_CSRF_ENABLED = True
+    WTF_CSRF_CHECK_DEFAULT = True
+    SECURITY_CSRF_PROTECT_FORMS = False
+    SECURITY_CSRF_IGNORE_UNAUTH_ENDPOINTS = False
+
+    # -------------------------------------------------------------------------
+    # Internationalisation (Flask-Babel)
+    # Set BABEL_DEFAULT_LOCALE to 'fr' or 'en' to switch the UI language.
+    # Available locales must have a compiled .mo file in translations/.
+    # -------------------------------------------------------------------------
+    BABEL_DEFAULT_LOCALE = 'en'  # <-- change to 'en' pour l'anglais
+    BABEL_DEFAULT_TIMEZONE = 'Europe/Paris'

@@ -1,6 +1,6 @@
 # forms.py
 """
-Formulaires Flask-WTF pour l'application
+Flask-WTF forms for the applicationn
 """
 
 from flask_wtf import FlaskForm
@@ -11,7 +11,7 @@ from db_setup import AppManagement
 
 class UserForm(FlaskForm):
     """
-    Formulaire pour la création et modification d'utilisateurs
+    Form for creating and modifying users
     """
     given_name = StringField('Prénom', validators=[DataRequired(), Length(max=45)])
     surname = StringField('Nom', validators=[DataRequired(), Length(max=45)])
@@ -28,16 +28,16 @@ class UserForm(FlaskForm):
 
     def validate_email(self, field):
         """
-        Vérifie que l'email n'est pas déjà utilisé
+        Check that the email address is not already in use.
         """
         if self.user:
-            # En mode édition, vérifier seulement si l'email a changé
+            # In edit mode, only check if the email has changed
             if field.data != self.user.email:
                 existing = AppManagement.query.filter_by(email=field.data).first()
                 if existing:
                     raise ValidationError('Cet email est déjà utilisé.')
         else:
-            # En mode création, vérifier si l'email existe
+            # In creation mode, check if the email exists.
             existing = AppManagement.query.filter_by(email=field.data).first()
             if existing:
                 raise ValidationError('Cet email est déjà utilisé.')
@@ -45,6 +45,6 @@ class UserForm(FlaskForm):
 
 class CreateUserForm(UserForm):
     """
-    Formulaire spécifique pour la création d'utilisateurs
+    Specific form for creating users
     """
     password = PasswordField('Mot de passe', validators=[DataRequired(), Length(min=6)])

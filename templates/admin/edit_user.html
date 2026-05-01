@@ -1,12 +1,12 @@
 <!-- templates/admin/edit_user.html -->
 {% extends "base.html" %}
 
-{% block title %}Modifier un utilisateur{% endblock %}
+{% block title %}{{ _('Edit an user') }}{% endblock %}
 
 {% block content %}
 <div class="container">
     <h2 class="mt-4 mb-4">
-        <i class="fas fa-user-edit"></i> Modifier l'utilisateur
+        <i class="fas fa-user-edit"></i> {{ _('Edit an user') }}
     </h2>
 
     <div class="row">
@@ -14,18 +14,20 @@
             <div class="card">
                 <div class="card-body">
                     <form method="POST" action="{{ url_for('edit_user', user_id=user.id) }}">
+                        <!-- CSRF token for security -->
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
 
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="given_name" class="form-label">Prénom <span class="text-danger">*</span></label>
+                                    <label for="given_name" class="form-label">{{ _('First Name') }} <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control" id="given_name" name="given_name"
                                            value="{{ user.GivenName }}" required>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="surname" class="form-label">Nom <span class="text-danger">*</span></label>
+                                    <label for="surname" class="form-label">{{ _('Name') }} <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control" id="surname" name="surname"
                                            value="{{ user.Surname }}" required>
                                 </div>
@@ -33,26 +35,26 @@
                         </div>
 
                         <div class="mb-3">
-                            <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
+                            <label for="email" class="form-label">{{ _('Email') }} <span class="text-danger">*</span></label>
                             <input type="email" class="form-control" id="email" name="email"
                                    value="{{ user.email }}" required>
                             <small class="form-text text-muted">Sera utilisé pour la connexion</small>
                         </div>
 
                         <div class="mb-3">
-                            <label for="username" class="form-label">Nom d'utilisateur <span class="text-danger">*</span></label>
+                            <label for="username" class="form-label">{{ _('Username') }} <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="username" name="username"
                                    value="{{ user.user }}" required>
                         </div>
 
                         <div class="mb-3">
-                            <label for="password" class="form-label">Nouveau mot de passe</label>
+                            <label for="password" class="form-label">{{ _('New password') }}</label>
                             <input type="password" class="form-control" id="password" name="password" minlength="6">
                             <small class="form-text text-muted">Laissez vide pour conserver le mot de passe actuel</small>
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label">Rôles</label>
+                            <label class="form-label">{{ _('Role') }}</label>
                             <div class="form-check">
                                 {% for role in roles %}
                                 <input class="form-check-input" type="checkbox"
@@ -70,31 +72,31 @@
                             <input class="form-check-input" type="checkbox" id="active" name="active" value="1"
                                    {% if user.active %}checked{% endif %}>
                             <label class="form-check-label" for="active">
-                                <i class="fas fa-user-check text-success"></i> Compte actif
+                                <i class="fas fa-user-check text-success"></i> {{ _('Active account') }}
                             </label>
                             <small class="form-text text-muted d-block">
-                                Un compte inactif ne peut pas se connecter à l'application
+                                {{ _('An inactive account cannot log in to the application.') }}
                             </small>
                         </div>
 
                         <div class="alert alert-info">
                             <i class="fas fa-info-circle"></i>
-                            <strong>Statut actuel :</strong>
+                            <strong>{{ _('Current status:') }}</strong>
                             {% if user.active %}
-                                <span class="badge bg-success">Actif</span>
-                                - L'utilisateur peut se connecter
+                                <span class="badge bg-success">{{ _('Active') }}</span>
+                                - {{ _('The user can log in') }}
                             {% else %}
                                 <span class="badge bg-danger">Inactif</span>
-                                - L'utilisateur ne peut pas se connecter
+                                - {{ _('The user cannot log in') }}
                             {% endif %}
                         </div>
 
                         <div class="mt-4">
                             <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save"></i> Enregistrer les modifications
+                                <i class="fas fa-save"></i> {{ _('Save changes') }}
                             </button>
                             <a href="{{ url_for('admin_users') }}" class="btn btn-secondary">
-                                <i class="fas fa-times"></i> Annuler
+                                <i class="fas fa-times"></i> {{ _('Cancel') }}
                             </a>
                         </div>
                     </form>
@@ -105,12 +107,12 @@
         <div class="col-md-4">
             <div class="card bg-light">
                 <div class="card-body">
-                    <h5 class="card-title">Informations sur l'utilisateur</h5>
+                    <h5 class="card-title">{{ _('User information') }}</h5>
                     <p class="card-text">
                         <small>
-                            <strong>Créé :</strong> {% if user.fs_uniquifier %}Oui{% else %}N/A{% endif %}<br>
+                            <strong>{{ _('Created on:') }}</strong> {% if user.fs_uniquifier %}{{ _('Yes') }}{% else %}N/A{% endif %}<br>
                             <strong>ID :</strong> {{ user.id }}<br>
-                            <strong>Rôles actuels :</strong><br>
+                            <strong>{{ _('Current roles:') }}</strong><br>
                             {% for role in user.roles %}
                                 <span class="badge bg-primary">{{ role.name }}</span>
                             {% endfor %}
@@ -119,12 +121,12 @@
 
                     <hr>
 
-                    <h6>Notes</h6>
+                    <h6>{{ _('Notes') }}</h6>
                     <p class="card-text">
                         <small>
-                            • Les modifications seront effectives immédiatement.<br>
-                            • L'utilisateur devra se reconnecter si le mot de passe est modifié.<br>
-                            • Un utilisateur peut avoir plusieurs rôles.
+                            • {{ _('The changes will be effective immediately.') }}<br>
+                            • {{ _('The user will need to log in again if the password is changed.') }}<br>
+                            • {{ _('A user can have multiple roles.') }}
                         </small>
                     </p>
                 </div>
@@ -135,8 +137,12 @@
 {% endblock %}
 
 {% block extra_js %}
+{# Define translatable strings for use in JavaScript #}
 <script>
-    // Empêcher la soumission accidentelle du formulaire
+    const msgCanLogin    = {{ _('- The user can log in') | tojson }};
+    const msgCannotLogin = {{ _('- The user cannot log in') | tojson }};
+
+    // Prevent accidental form submission
     document.getElementById('password').addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
             e.preventDefault();
@@ -154,11 +160,11 @@
             if (this.checked) {
                 badge.className = 'badge bg-success';
                 badge.textContent = 'Actif';
-                text.innerHTML = text.innerHTML.replace(/- L'utilisateur ne peut pas se connecter/, '- L\'utilisateur peut se connecter');
+                           text.innerHTML = text.innerHTML.replace(msgCannotLogin, msgCanLogin);
             } else {
                 badge.className = 'badge bg-danger';
                 badge.textContent = 'Inactif';
-                text.innerHTML = text.innerHTML.replace(/- L'utilisateur peut se connecter/, '- L\'utilisateur ne peut pas se connecter');
+                text.innerHTML = text.innerHTML.replace(msgCanLogin, msgCannotLogin);
             }
         });
     }

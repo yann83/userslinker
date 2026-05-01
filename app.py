@@ -1,98 +1,174 @@
 # app.py
 """
-Application principale Flask avec authentification
+Main Flask application — authentication, routes, and business logic.
+
+Location: app.py  (root of the project)
 """
 
+# ---------------------------------------------------------------------------
+# load_dotenv() MUST be called first — before ANY import that reads
+# os.environ (Config, SQLAlchemy URI, security keys…).
+# If Config is imported before load_dotenv() runs, SECRET_KEY and
+# SECURITY_PASSWORD_SALT fall back to their hardcoded defaults on every
+# restart, which invalidates all sessions and makes stored passwords
+# impossible to verify.
+# ---------------------------------------------------------------------------
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
 from flask import Flask, render_template, redirect, url_for, flash, request, send_file, jsonify
-from flask_sqlalchemy import SQLAlchemy
-from flask_security import Security, SQLAlchemySessionUserDatastore, login_required, current_user, roles_accepted, \
-    roles_required, hash_password, verify_password
+from flask_security import Security, SQLAlchemySessionUserDatastore, login_required, current_user, \
+    roles_accepted, roles_required, hash_password, verify_password
 from flask_bootstrap import Bootstrap5
 from flask_wtf.csrf import CSRFProtect, generate_csrf
+from flask_babel import Babel
 from datetime import datetime, timezone
-from dotenv import load_dotenv
+from sqlalchemy import text
 from config import Config
 from db_setup import db, Role, AppManagement, Users, History, Computers, Monitors, Peripherals, Phones
 from users_import_export import export_users_csv, import_users_csv
 import os
-import mysql.connector
 import re
+import csv
+import io
 
-
-
-# Charge les variables d'environnement
-load_dotenv()
-
-# Initialisation de Flask
+# Flask Initialization
 app = Flask(__name__)
 
-# Utilisation de la configuration centralisée
+# Using centralized configuration
 app.config.from_object(Config)
 
-# Initialisation des extensions
+# Initializing extensions
 db.init_app(app)
 Bootstrap5(app)
 
-# CSRF doit être initialisé avant Flask-Security
+# CSRF must be initialized before Flask-Security
 csrf = CSRFProtect(app)
+
+# Initializing babel for translations
+babel = Babel(app)
 
 # Configuration Flask-Security
 user_datastore = SQLAlchemySessionUserDatastore(db.session, AppManagement, Role)
 security = Security(app, user_datastore)
 
+# ---------------------------------------------------------------------------
+# Template definitions
+# ---------------------------------------------------------------------------
 
-# Ajoute csrf_token au contexte global de Jinja2
+# Columns filled automatically at import time — excluded from the template.
+_AUTO_COLUMNS = {
+    'date_create', 'date_mod', 'date_delete',
+    'is_delete', 'is_linked', 'app_management_user'
+}
+
+_TEMPLATE_COLUMNS = {
+    'computers': ['name', 'serial', 'otherserial'],
+    'monitors': ['name', 'serial', 'otherserial'],
+    'peripherals': ['name', 'serial', 'otherserial'],
+    'phones': ['name', 'serial', 'otherserial'],
+    'users': ['GivenName', 'Surname', 'Username', 'Title', 'Department', 'Site'],
+}
+
+# example row per table shown in the downloaded template
+_TEMPLATE_EXAMPLES = {
+    'computers': {
+        'name': 'HP EliteBook 850',
+        'serial': 'CND1234567',
+        'otherserial': '12.2024.11.0001',
+    },
+    'monitors': {
+        'name': 'Dell P2422H',
+        'serial': 'CN-0T1234',
+        'otherserial': 'MON.2024.0001',
+    },
+    'peripherals': {
+        'name': 'Logitech MX Keys',
+        'serial': 'KBD123456',
+        'otherserial': 'PER.2024.0001',
+    },
+    'phones': {
+        'name': 'Samsung Galaxy A54',
+        'serial': 'R58N12345678',
+        'otherserial': 'PHN.2024.0001',
+    },
+    'users': {
+        'GivenName': 'Jean',
+        'Surname': 'Dupont',
+        'Username': 'DUPONT-001',
+        'Title': 'Developpeur',
+        'Department': 'DSI',
+        'Site': 'Paris',
+    },
+}
+# Adds csrf_token to Jinja2's global context
 @app.context_processor
 def inject_csrf_token():
     return dict(csrf_token=generate_csrf)
 
 
-# Page de connexion (sera gérée par Flask-Security)
-@app.route('/')
-def index():
-    """
-    Page d'accueil - redirige vers le login ou le dashboard
-    """
-    if current_user.is_authenticated:
-        return redirect(url_for('dashboard'))
-    return redirect(url_for('security.login'))
+_LOCK_FILE = os.path.join(os.path.dirname(__file__), 'installed.lock')
+
+if not os.path.exists(_LOCK_FILE):
+    # First run: register the installation wizard
+    from install import install_bp
+
+    app.register_blueprint(install_bp)
 
 
-# Page d'accueil après connexion
+    @app.route('/')
+    def index():
+        """Redirect to the installation wizard on first run."""
+        return redirect(url_for('install.step1'))
+
+
+else:
+    # Normal run: register the standard index route
+    @app.route('/')
+    def index():
+        """Home page — redirect to dashboard or login."""
+        if current_user.is_authenticated:
+            return redirect(url_for('dashboard'))
+        return redirect(url_for('security.login'))
+
+
+# Homepage after login
 @app.route('/dashboard')
 @login_required
 def dashboard():
     """
-    Page principale après connexion - affiche "Bienvenue"
+    Main page after login - displays "Welcome"
     """
-    # Récupère les rôles de l'utilisateur pour l'affichage
+    # Retrieves the user's roles for display
     user_roles = [role.name for role in current_user.roles]
     return render_template('dashboard.html', user_roles=user_roles)
 
 
-# Page de gestion des utilisateurs (administrateur uniquement)
+# User management page (administrator only)
 @app.route('/admin/users')
 @login_required
 @roles_required('administrateur')
 def admin_users():
     """
-    Page de gestion des utilisateurs - Administrateur seulement
+    User management page - Administrator only
     """
     users = AppManagement.query.all()
     return render_template('admin/users.html', users=users)
 
 
-# Création d'un nouvel utilisateur
+# Creating a new user
 @app.route('/admin/users/create', methods=['GET', 'POST'])
 @login_required
 @roles_required('administrateur')
 def create_user():
     """
-    Création d'un nouvel utilisateur
+    Creating a new user
     """
     if request.method == 'POST':
         try:
-            # Récupération des données du formulaire
+            # Retrieving form data
             email = request.form.get('email')
             password = request.form.get('password')
             given_name = request.form.get('given_name')
@@ -100,14 +176,14 @@ def create_user():
             username = request.form.get('username')
             role_id = request.form.get('role_id')
 
-            # Vérification si l'utilisateur existe déjà
+            # Checking if the user already exists
             existing_user = AppManagement.query.filter_by(email=email).first()
             if existing_user:
                 flash('Cet email est déjà utilisé.', 'danger')
                 return redirect(url_for('create_user'))
 
-            # Création de l'utilisateur avec Flask-Security user_datastore
-            # Cette méthode gère automatiquement le fs_uniquifier
+            # Creating the user with Flask-Security user_datastore
+            # This method automatically handles the fs_uniquifier
             new_user = user_datastore.create_user(
                 email=email,
                 password=hash_password(password),
@@ -116,64 +192,59 @@ def create_user():
                 user=username
             )
 
-            # Attribution du rôle
+            # Role assignment
             if role_id:
                 role = Role.query.get(role_id)
                 if role:
                     user_datastore.add_role_to_user(new_user, role)
 
             db.session.commit()
-            flash('Utilisateur créé avec succès.', 'success')
+            flash('User created successfully.', 'success')
             return redirect(url_for('admin_users'))
 
         except Exception as e:
             db.session.rollback()
-            flash(f'Erreur lors de la création : {str(e)}', 'danger')
+            app.logger.error(f"Error during creation: {e}")
+            flash('Error during creation please contact the administrator', 'danger')
             return redirect(url_for('create_user'))
 
-    # GET : afficher le formulaire
+    # GET : display form
     roles = Role.query.all()
     return render_template('admin/create_user.html', roles=roles)
 
 
-# Modification d'un utilisateur
+# User modification
 @app.route('/admin/users/edit/<int:user_id>', methods=['GET', 'POST'])
 @login_required
 @roles_required('administrateur')
 def edit_user(user_id):
     """
-    Modification d'un utilisateur existant
+    Modifying an existing user
     """
     user = AppManagement.query.get_or_404(user_id)
 
     if request.method == 'POST':
         try:
-            # Mise à jour des données de base
+            # Basic data update
             user.email = request.form.get('email')
             user.GivenName = request.form.get('given_name')
             user.Surname = request.form.get('surname')
             user.user = request.form.get('username')
 
-            # Mise à jour du mot de passe si fourni
+            # Update password if provided
             new_password = request.form.get('password')
             if new_password:
                 user.password = hash_password(new_password)
 
-            # CORRECTION : Gestion correcte du champ 'active'
-            # Si la checkbox n'est pas cochée, elle n'apparaît pas dans request.form
-            # On vérifie explicitement sa présence
+            # If the checkbox is not checked, it does not appear in request.form
+            # We explicitly check for its presence
             user.active = 'active' in request.form
 
-            # Alternative plus explicite :
-            # active_value = request.form.get('active')
-            # user.active = active_value == 'on' if active_value else False
-
-            # Mise à jour des rôles
-            # Supprimer tous les rôles actuels
+            # Update roles
             for role in user.roles:
                 user_datastore.remove_role_from_user(user, role)
 
-            # Ajouter les nouveaux rôles sélectionnés
+            # Add the newly selected roles
             role_ids = request.form.getlist('role_ids')
             for role_id in role_ids:
                 role = Role.query.get(role_id)
@@ -182,140 +253,142 @@ def edit_user(user_id):
 
             db.session.commit()
 
-            # Message de feedback plus informatif
+            # More informative feedback message
             status_text = "actif" if user.active else "inactif"
-            flash(f'Utilisateur modifié avec succès. Statut : {status_text}', 'success')
+            flash(f'User modified successfully. Status : {status_text}', 'success')
             return redirect(url_for('admin_users'))
 
         except Exception as e:
             db.session.rollback()
-            flash(f'Erreur lors de la modification : {str(e)}', 'danger')
+            app.logger.error(f"Error during editing: {e}")
+            flash('Error during editing : please contact the administrator', 'danger')
             return redirect(url_for('edit_user', user_id=user_id))
 
-    # GET : afficher le formulaire
+    # GET : display form
     roles = Role.query.all()
     return render_template('admin/edit_user.html', user=user, roles=roles)
 
-# Suppression d'un utilisateur
+# Delete an user
 @app.route('/admin/users/delete/<int:user_id>', methods=['POST'])
 @login_required
 @roles_required('administrateur')
 def delete_user(user_id):
     """
-    Suppression d'un utilisateur
+    Delete an user
     """
     try:
         user = AppManagement.query.get_or_404(user_id)
 
-        # Empêcher la suppression du dernier administrateur
+        # Prevent the removal of the last administrator
         if 'administrateur' in [role.name for role in user.roles]:
             admin_count = AppManagement.query.join(AppManagement.roles).filter(Role.name == 'administrateur').count()
             if admin_count <= 1:
-                flash('Impossible de supprimer le dernier administrateur.', 'danger')
+                flash('Unable to delete the last administrator.', 'danger')
                 return redirect(url_for('admin_users'))
 
-        # Empêcher la suppression de soi-même
+        # Preventing self-destruction
         if user.id == current_user.id:
-            flash('Vous ne pouvez pas supprimer votre propre compte.', 'danger')
+            flash('You cannot delete your own account.', 'danger')
             return redirect(url_for('admin_users'))
 
         db.session.delete(user)
         db.session.commit()
-        flash('Utilisateur supprimé avec succès.', 'success')
+        flash('User successfully deleted.', 'success')
 
     except Exception as e:
         db.session.rollback()
-        flash(f'Erreur lors de la suppression : {str(e)}', 'danger')
+        app.logger.error(f"Error during deletion: {e}")
+        flash('Error during deletion : please contact the administrator', 'danger')
 
     return redirect(url_for('admin_users'))
 
 
-# Route pour afficher le profil utilisateur
+# Route to view user profile
 @app.route('/profile')
 @login_required
 def user_profile():
     """
-    Page de profil de l'utilisateur connecté
-    Permet de voir ses informations et changer son mot de passe
+    User profile page
+    Allows users to view their information and change their password
     """
     return render_template('profile.html')
 
 
-# Route pour changer le mot de passe
+# Instructions for changing your password
 @app.route('/profile/change_password', methods=['POST'])
 @login_required
 def change_password():
     """
-    Permet à un utilisateur de changer son propre mot de passe
-    Nécessite de connaître l'ancien mot de passe pour sécurité
+    Allows a user to change their own password.
+    Requires knowledge of the old password for security reasons.
     """
     try:
-        # Récupération des données du formulaire
+        # Retrieving form data
         current_password = request.form.get('current_password')
         new_password = request.form.get('new_password')
         confirm_password = request.form.get('confirm_password')
 
-        # Validation des données
+        # Data validation
         if not current_password or not new_password or not confirm_password:
-            flash('Tous les champs sont obligatoires.', 'danger')
+            flash('All fields are required.', 'danger')
             return redirect(url_for('user_profile'))
 
-        # Vérifier que le nouveau mot de passe est assez long
+        # Check that the new password is long enough
         if len(new_password) < 6:
-            flash('Le nouveau mot de passe doit contenir au moins 6 caractères.', 'danger')
+            flash('The new password must contain at least 6 characters.', 'danger')
             return redirect(url_for('user_profile'))
 
-        # Vérifier que les nouveaux mots de passe correspondent
+        # Verify that the new passwords match
         if new_password != confirm_password:
-            flash('Les nouveaux mots de passe ne correspondent pas.', 'danger')
+            flash('The new passwords do not match.', 'danger')
             return redirect(url_for('user_profile'))
 
-        # Vérifier l'ancien mot de passe
+        # Check the old password
         if not verify_password(current_password, current_user.password):
-            flash('Le mot de passe actuel est incorrect.', 'danger')
+            flash('The current password is incorrect.', 'danger')
             return redirect(url_for('user_profile'))
 
-        # Vérifier que le nouveau mot de passe est différent de l'ancien
+        # Verify that the new password is different from the old one.
         if verify_password(new_password, current_user.password):
-            flash('Le nouveau mot de passe doit être différent de l\'ancien.', 'warning')
+            flash('The new password must be different from the old one.', 'warning')
             return redirect(url_for('user_profile'))
 
-        # Mettre à jour le mot de passe
+        # Update password
         current_user.password = hash_password(new_password)
         db.session.commit()
 
-        # Message de succès
-        flash('Votre mot de passe a été modifié avec succès. '
-              'Vous devrez utiliser ce nouveau mot de passe lors de votre prochaine connexion.',
+        # Success message
+        flash('Your password has been successfully changed. '
+              'You will need to use this new password the next time you log in.',
               'success')
 
-        # Log de sécurité (optionnel - pour tracer les changements de mot de passe)
+        # Security log (optional - to track password changes)
         app.logger.info(f'Password changed for user: {current_user.email} ({current_user.user})')
 
         return redirect(url_for('user_profile'))
 
     except Exception as e:
-        # En cas d'erreur, annuler les changements
+        # If there is an error, cancel the changes
         db.session.rollback()
         app.logger.error(f'Error changing password for user {current_user.email}: {str(e)}')
-        flash(f'Erreur lors du changement de mot de passe : {str(e)}', 'danger')
+        flash('Error changing password', 'danger')
         return redirect(url_for('user_profile'))
 
 
-# Route API pour vérifier la force du mot de passe (optionnelle)
+# API route to check password strength
 @app.route('/api/check_password_strength', methods=['POST'])
 @login_required
 def check_password_strength():
     """
-    API pour vérifier la force d'un mot de passe côté serveur
-    Peut être utilisée pour des validations supplémentaires
+    API for server-side password strength verification
+    Can be used for additional validations
     """
     try:
         password = request.json.get('password', '')
 
         # Critères de validation
         criteria = {
-            'length': len(password) >= 8,
+            'length': len(password) >= 12,
             'lowercase': bool(re.search(r'[a-z]', password)),
             'uppercase': bool(re.search(r'[A-Z]', password)),
             'digit': bool(re.search(r'\d', password)),
@@ -327,13 +400,13 @@ def check_password_strength():
 
         # Détermination de la force
         if score < 2:
-            strength = {'level': 'weak', 'message': 'Très faible'}
+            strength = {'level': 'weak', 'message': 'Very low'}
         elif score < 3:
-            strength = {'level': 'fair', 'message': 'Faible'}
+            strength = {'level': 'fair', 'message': 'Weak'}
         elif score < 4:
             strength = {'level': 'good', 'message': 'Correct'}
         else:
-            strength = {'level': 'strong', 'message': 'Fort'}
+            strength = {'level': 'strong', 'message': 'Strong'}
 
         return jsonify({
             'status': 'success',
@@ -356,7 +429,7 @@ def check_password_strength():
 @roles_required('gestionnaire')
 def create_event():
     """
-    Première étape du workflow de création d'événements
+    First step in the event creation workflow
     """
     return render_template('events/create.html')
 
@@ -366,47 +439,47 @@ def create_event():
 @roles_required('gestionnaire')
 def select_user():
     """
-    Étape 1: Sélectionner un utilisateur pour créer un événement
-    Version modifiée pour supporter la recherche dynamique
+    Step 1: Select a user to create an event
+    Modified version to support dynamic search
     """
     if request.method == 'POST':
         user_id = request.form.get('user_id')
         action = request.form.get('action')
 
         if not user_id:
-            flash("Veuillez sélectionner un utilisateur", 'warning')
+            flash("Please select a user", 'warning')
             return redirect(url_for('select_user'))
 
-        # Vérifier si l'utilisateur existe
+        # Check if the user exists
         user = Users.query.get(user_id)
         if not user:
-            flash("L'utilisateur sélectionné n'existe pas", 'danger')
+            flash("The selected user does not exist", 'danger')
             return redirect(url_for('select_user'))
 
-        # Redirection en fonction de l'action choisie
+        # Redirection based on the chosen action
         if action == 'link':
             return redirect(url_for('select_material_to_link', user_id=user_id))
         elif action == 'unlink':
             return redirect(url_for('select_material_to_unlink', user_id=user_id))
         else:
-            flash("Action non valide", 'danger')
+            flash("Invalid action", 'danger')
             return redirect(url_for('select_user'))
 
-    # GET : afficher la page avec la nouvelle interface de recherche
-    # Plus besoin de charger tous les utilisateurs d'avance
+    # GET: Display the page with the new search interface
+    # No need to load all users in advance
     return render_template('events/select_user.html')
 
 
-# Modification de la route select_material_to_link pour supporter la nouvelle interface
+# Modified the select_material_to_link route to support the new interface
 @app.route('/events/select_material_to_link/<int:user_id>', methods=['GET', 'POST'])
 @login_required
 @roles_required('gestionnaire')
 def select_material_to_link(user_id):
     """
-    Étape 2A: Sélectionner le matériel à lier à l'utilisateur
-    Version modifiée pour supporter la recherche dynamique
+    Step 2A: Select the hardware to link to the user
+    Modified version to support dynamic search
     """
-    # Récupérer l'utilisateur
+    # Retrieve the user
     user = Users.query.get_or_404(user_id)
 
     if request.method == 'POST':
@@ -414,21 +487,21 @@ def select_material_to_link(user_id):
         material_ids = request.form.getlist('material_ids')
 
         if not material_type or not material_ids:
-            flash("Veuillez sélectionner au moins un matériel", 'warning')
+            flash("Please select at least one item", 'warning')
             return redirect(url_for('select_material_to_link', user_id=user_id))
 
-        # Validation des IDs (s'assurer qu'ils sont des entiers valides)
+        # Validating IDs (ensuring they are valid integers)
         try:
             material_ids = [int(mid) for mid in material_ids]
         except ValueError:
-            flash("IDs de matériel invalides", 'danger')
+            flash("IDs invalid equipment", 'danger')
             return redirect(url_for('select_material_to_link', user_id=user_id))
 
-        # Création des liens et historique
+        # Link creation and history
         try:
             model = get_model_by_type(material_type)
             if not model:
-                flash(f"Type de matériel '{material_type}' invalide.", 'danger')
+                flash(f"Type of equipment '{material_type}' invalide.", 'danger')
                 return redirect(url_for('select_material_to_link', user_id=user_id))
 
             linked_count = 0
@@ -437,25 +510,25 @@ def select_material_to_link(user_id):
             for material_id in material_ids:
                 material = model.query.get(material_id)
                 if material:
-                    # Vérifier si le matériel est déjà lié à un autre utilisateur
+                    # Check if the device is already linked to another user
                     if material.is_linked and material.Username and material.Username != user.Username:
-                        warnings.append(f"Le matériel '{material.name}' est déjà lié à {material.Username}")
+                        warnings.append(f"The equipment '{material.name}' is already linked to {material.Username}")
                         continue
 
-                    # Mettre à jour le matériel
+                    # Update the hardware
                     material.Username = user.Username
                     material.is_linked = True
                     material.date_mod = datetime.now(timezone.utc)
                     material.app_management_user = current_user.user
 
-                    # Créer une entrée dans l'historique
+                    # Create an entry in the history
                     history_entry = History()
                     history_entry.app_management_id = current_user.id
                     history_entry.users_id = user.id
                     history_entry.is_linked = True
                     history_entry.app_management_user = current_user.user
 
-                    # Ajouter l'ID du matériel dans le champ correspondant
+                    # Add the hardware ID to the corresponding field
                     if material_type == 'computers':
                         history_entry.computers_id = material.id
                     elif material_type == 'monitors':
@@ -470,9 +543,9 @@ def select_material_to_link(user_id):
 
             db.session.commit()
 
-            # Messages de feedback
+            # Feedback messages
             if linked_count > 0:
-                flash(f"{linked_count} élément(s) de matériel lié(s) avec succès à {user.GivenName} {user.Surname}",
+                flash(f"{linked_count} item(s) of material successfully linked to {user.GivenName} {user.Surname}",
                       'success')
 
             for warning in warnings:
@@ -482,10 +555,11 @@ def select_material_to_link(user_id):
 
         except Exception as e:
             db.session.rollback()
-            flash(f"Erreur lors de la création du lien : {str(e)}", 'danger')
+            app.logger.error(f"Error creating the link: {e}")
+            flash("Error creating the link : please contact the administrator", 'danger')
             return redirect(url_for('select_material_to_link', user_id=user_id))
 
-    # GET : afficher la page avec la nouvelle interface de recherche
+    # GET : display the page with the new search interface
     return render_template('events/select_material_to_link.html', user=user)
 
 
@@ -494,10 +568,10 @@ def select_material_to_link(user_id):
 @roles_required('gestionnaire')
 def select_material_to_unlink(user_id):
     """
-    Étape 2B: Sélectionner le matériel à délier de l'utilisateur
-    Version modifiée pour supporter la recherche dynamique
+    Step 2B: Select the material to unbind from the user
+    Modified version to support dynamic search
     """
-    # Récupérer l'utilisateur
+    # Retrieve the user
     user = Users.query.get_or_404(user_id)
 
     if request.method == 'POST':
@@ -505,21 +579,21 @@ def select_material_to_unlink(user_id):
         material_ids = request.form.getlist('material_ids')
 
         if not material_type or not material_ids:
-            flash("Veuillez sélectionner au moins un matériel", 'warning')
+            flash("Please select at least one item", 'warning')
             return redirect(url_for('select_material_to_unlink', user_id=user_id))
 
-        # Validation des IDs
+        # ID Validation
         try:
             material_ids = [int(mid) for mid in material_ids]
         except ValueError:
-            flash("IDs de matériel invalides", 'danger')
+            flash("Invalid hardware IDs", 'danger')
             return redirect(url_for('select_material_to_unlink', user_id=user_id))
 
-        # Suppression des liens et historique
+        # Removal of links and history
         try:
             model = get_model_by_type(material_type)
             if not model:
-                flash(f"Type de matériel '{material_type}' invalide.", 'danger')
+                flash(f"Type of equipment '{material_type}' invalid.", 'danger')
                 return redirect(url_for('select_material_to_unlink', user_id=user_id))
 
             unlinked_count = 0
@@ -528,25 +602,25 @@ def select_material_to_unlink(user_id):
             for material_id in material_ids:
                 material = model.query.get(material_id)
                 if material:
-                    # Vérifier si le matériel est bien lié à cet utilisateur
+                    # Check if the hardware is correctly linked to this user
                     if not material.is_linked or material.Username != user.Username:
-                        warnings.append(f"Le matériel '{material.name}' n'est pas lié à cet utilisateur")
+                        warnings.append(f"The hardware '{material.name}' is not linked to this user")
                         continue
 
-                    # Mettre à jour le matériel
+                    # Update the hardware
                     material.Username = None
                     material.is_linked = False
                     material.date_mod = datetime.now(timezone.utc)
                     material.app_management_user = current_user.user
 
-                    # Créer une entrée dans l'historique
+                    # Create a history entry
                     history_entry = History()
                     history_entry.app_management_id = current_user.id
                     history_entry.users_id = user.id
                     history_entry.is_linked = False
                     history_entry.app_management_user = current_user.user
 
-                    # Ajouter l'ID du matériel dans le champ correspondant
+                    # Add the hardware ID in the corresponding field
                     if material_type == 'computers':
                         history_entry.computers_id = material.id
                     elif material_type == 'monitors':
@@ -561,10 +635,10 @@ def select_material_to_unlink(user_id):
 
             db.session.commit()
 
-            # Messages de feedback
+            # Feedback messages
             if unlinked_count > 0:
                 flash(
-                    f"{unlinked_count} élément(s) de matériel délié(s) avec succès de {user.GivenName} {user.Surname}",
+                    f"{unlinked_count} successfully detached material element(s) {user.GivenName} {user.Surname}",
                     'success')
 
             for warning in warnings:
@@ -574,10 +648,11 @@ def select_material_to_unlink(user_id):
 
         except Exception as e:
             db.session.rollback()
-            flash(f"Erreur lors de la suppression du lien : {str(e)}", 'danger')
+            app.logger.error(f"Error deleting link: {e}")
+            flash("Error deleting link : please contact the administrator", 'danger')
             return redirect(url_for('select_material_to_unlink', user_id=user_id))
 
-    # GET : afficher la page avec la nouvelle interface
+    # GET : display the page with the new interface
     return render_template('events/select_material_to_unlink.html', user=user)
 
 
@@ -586,12 +661,12 @@ def select_material_to_unlink(user_id):
 @roles_required('gestionnaire')
 def event_summary(user_id):
     """
-    Étape 3: Résumé de l'événement
+    Step 3: Event Summary
     """
-    # Récupérer l'utilisateur
+    # Retrieve the user
     user = Users.query.get_or_404(user_id)
 
-    # Récupérer le matériel lié à cet utilisateur
+    # Retrieve the material associated with this user
     computers = Computers.query.filter_by(
         Username=user.Username,
         is_linked=True,
@@ -616,7 +691,7 @@ def event_summary(user_id):
         is_delete=False
     ).all()
 
-    # Récupérer l'historique récent pour cet utilisateur
+    # Retrieve recent history for this user
     history = History.query.filter_by(
         users_id=user.id
     ).order_by(
@@ -630,114 +705,114 @@ def event_summary(user_id):
                            peripherals=peripherals,
                            phones=phones,
                            history=history,
-                           # Ajouter les modèles pour pouvoir les utiliser dans le template
+                           # Add the models so they can be used in the template
                            Computers=Computers,
                            Monitors=Monitors,
                            Peripherals=Peripherals,
                            Phones=Phones)
 
 
-# Page des listes (gestionnaire et lecteur)
+# Lists page (manager and reader)
 @app.route('/lists')
 @login_required
 @roles_accepted('gestionnaire', 'lecteur')
 def lists():
     """
-    Page des listes - Accessible aux gestionnaires et lecteurs
+    Lists page - Accessible to managers and readers
     """
     return render_template('lists.html')
 
 
-# Page des rapports (gestionnaire et lecteur) - mise à jour
+# Reports page (manager and reader) - update
 @app.route('/reports')
 @login_required
 @roles_accepted('gestionnaire', 'lecteur')
 def reports():
     """
-    Page des rapports - Accessible aux gestionnaires et lecteurs
+    Reports page - Accessible to managers and readers
     """
     return render_template('reports.html')
 
 
-# Nouveau rapport par service
+# New report by department
 @app.route('/reports/by_service', methods=['GET', 'POST'])
 @login_required
 @roles_accepted('gestionnaire', 'lecteur')
 def reports_by_service():
     """
-    Rapport des utilisateurs et leurs matériels par service
+    Report on users and their equipment by department
     """
-    # Récupérer tous les services uniques (non vides et non supprimés)
+    # Retrieve all unique services (non-empty and non-deleted)
     services_query = db.session.query(Users.Department).filter(
         Users.is_delete == False,
         Users.Department.isnot(None),
         Users.Department != ''
     ).distinct().order_by(Users.Department.asc()).all()
 
-    # Convertir en liste simple
+    # Convert to a simple list
     services = [service[0] for service in services_query if service[0]]
 
-    # Variables pour les résultats
+    # Variables for the results
     selected_service = None
     date_from = None
     date_to = None
     users_data = []
-    generation_date = datetime.now(timezone.utc)  # Toujours définie
+    generation_date = datetime.now(timezone.utc)  # Always defined
 
     if request.method == 'POST':
         try:
-            # Récupérer les paramètres du formulaire
+            # Retrieve form parameters
             selected_service = request.form.get('service')
             date_from_str = request.form.get('date_from')
             date_to_str = request.form.get('date_to')
 
-            # Validation du service (obligatoire)
+            # Service validation (required)
             if not selected_service:
-                flash("Veuillez sélectionner un service", 'warning')
+                flash("Please select a service", 'warning')
                 return render_template('reports/by_service.html',
                                        services=services)
 
-            # Conversion des dates (optionnelles)
+            # Date conversion (optional)
             if date_from_str:
                 try:
                     date_from = datetime.strptime(date_from_str, '%Y-%m-%d')
                 except ValueError:
-                    flash("Format de date incorrect pour la date de début", 'warning')
+                    flash("Incorrect date format for the start date", 'warning')
                     date_from = None
 
             if date_to_str:
                 try:
                     date_to = datetime.strptime(date_to_str, '%Y-%m-%d')
-                    # Ajouter 23:59:59 pour inclure toute la journée
+                    # Add 23:59:59 to include the whole day
                     date_to = date_to.replace(hour=23, minute=59, second=59)
                 except ValueError:
-                    flash("Format de date incorrect pour la date de fin", 'warning')
+                    flash("Incorrect date format for the end date", 'warning')
                     date_to = None
 
-            # Validation de la cohérence des dates
+            # Validation of date consistency
             if date_from and date_to and date_from > date_to:
-                flash("La date de début ne peut pas être postérieure à la date de fin", 'warning')
+                flash("The start date cannot be later than the end date.", 'warning')
                 return render_template('reports/by_service.html',
                                        services=services,
                                        selected_service=selected_service,
                                        date_from=date_from_str,
                                        date_to=date_to_str)
 
-            # Récupérer les utilisateurs du service sélectionné
+            # Retrieve users from the selected service
             users_in_service = Users.query.filter(
                 Users.Department == selected_service,
                 Users.is_delete == False
             ).order_by(Users.Surname.asc(), Users.GivenName.asc()).all()
 
             if not users_in_service:
-                flash(f"Aucun utilisateur trouvé dans le service '{selected_service}'", 'info')
+                flash(f"No users found in the service '{selected_service}'", 'info')
                 return render_template('reports/by_service.html',
                                        services=services,
                                        selected_service=selected_service,
                                        date_from=date_from_str,
                                        date_to=date_to_str)
 
-            # Pour chaque utilisateur, récupérer son matériel et son historique
+            # For each user, retrieve their hardware and history
             for user in users_in_service:
                 user_data = {
                     'user': user,
@@ -750,7 +825,7 @@ def reports_by_service():
                     'history': []
                 }
 
-                # Récupérer le matériel lié à l'utilisateur
+                # Retrieve user-related material
                 user_data['materials']['computers'] = Computers.query.filter(
                     Computers.Username == user.Username,
                     Computers.is_linked == True,
@@ -775,26 +850,26 @@ def reports_by_service():
                     Phones.is_delete == False
                 ).all()
 
-                # Récupérer l'historique pour cet utilisateur
+                # Retrieve history for this user
                 history_query = History.query.filter(
                     History.users_id == user.id
                 )
 
-                # Appliquer les filtres de date si spécifiés
+                # Apply date filters if specified
                 if date_from:
                     history_query = history_query.filter(History.date_mod >= date_from)
                 if date_to:
                     history_query = history_query.filter(History.date_mod <= date_to)
 
-                # Ordonner par date décroissante (plus récent en premier)
+                # Sort by descending date (newest first)
                 history_entries = history_query.order_by(History.date_mod.desc()).all()
 
-                # Enrichir l'historique avec les informations du matériel
+                # Enrich the history with hardware information
                 for entry in history_entries:
                     material_info = None
                     material_type = None
 
-                    # Identifier le type de matériel et récupérer ses informations
+                    # Identify the type of equipment and retrieve its information
                     if entry.computers_id:
                         material = Computers.query.get(entry.computers_id)
                         material_type = 'Ordinateur'
@@ -815,7 +890,7 @@ def reports_by_service():
                             'otherserial': material.otherserial
                         }
 
-                    # Ajouter l'entrée enrichie à l'historique
+                    # Add the enriched entry to the history
                     user_data['history'].append({
                         'entry': entry,
                         'material_info': material_info,
@@ -824,12 +899,13 @@ def reports_by_service():
 
                 users_data.append(user_data)
 
-            # Message de succès
-            flash(f"Rapport généré pour {len(users_data)} utilisateur(s) du service '{selected_service}'", 'success')
+            # Success Message
+            flash(f"Report generated for {len(users_data)} of the service '{selected_service}'", 'success')
 
         except Exception as e:
-            # En cas d'erreur, afficher un message et revenir au formulaire
-            flash(f"Erreur lors de la génération du rapport : {str(e)}", 'danger')
+            # If an error occurs, display a message and return to the form
+            app.logger.error(f"Error generating report: {e}")
+            flash("Error generating report : please contact the administrator", 'danger')
             return render_template('reports/by_service.html',
                                    services=services)
 
@@ -842,43 +918,43 @@ def reports_by_service():
                            generation_date=generation_date)
 
 
-# Nouveau rapport par utilisateur
+# New report per user
 @app.route('/reports/by_user', methods=['GET', 'POST'])
 @login_required
 @roles_accepted('gestionnaire', 'lecteur')
 def reports_by_user():
     """
-    Rapport détaillé pour un utilisateur spécifique
-    Avec recherche dynamique et historique complet
+    Detailed report for a specific user
+    With dynamic search and complete history
     """
-    # Variables pour les résultats
+    # Variables for the results
     selected_user = None
     user_data = None
     generation_date = datetime.now(timezone.utc)
 
     if request.method == 'POST':
         try:
-            # Récupérer l'ID utilisateur sélectionné
+            # Retrieve the selected user ID
             user_id = request.form.get('user_id')
 
-            # Validation de l'utilisateur (obligatoire)
+            # User validation (required)
             if not user_id:
-                flash("Veuillez sélectionner un utilisateur", 'warning')
+                flash("Please select an user", 'warning')
                 return render_template('reports/by_user.html',
                                        generation_date=generation_date)
 
-            # Récupérer l'utilisateur sélectionné
+            # Retrieve the selected user
             selected_user = Users.query.filter(
                 Users.id == user_id,
                 Users.is_delete == False
             ).first()
 
             if not selected_user:
-                flash("L'utilisateur sélectionné n'existe pas ou a été supprimé", 'danger')
+                flash("The selected user does not exist or has been deleted", 'danger')
                 return render_template('reports/by_user.html',
                                        generation_date=generation_date)
 
-            # Construire les données complètes de l'utilisateur
+            # Build the complete user data
             user_data = {
                 'user': selected_user,
                 'materials': {
@@ -896,7 +972,7 @@ def reports_by_user():
                 }
             }
 
-            # Récupérer TOUT le matériel lié à l'utilisateur (actuel)
+            # Retrieve ALL material linked to the (current) user
             user_data['materials']['computers'] = Computers.query.filter(
                 Computers.Username == selected_user.Username,
                 Computers.is_linked == True,
@@ -921,24 +997,24 @@ def reports_by_user():
                 Phones.is_delete == False
             ).order_by(Phones.name.asc()).all()
 
-            # Compter le total de matériel lié
+            # Count the total amount of related equipment
             total_materials = sum(len(materials) for materials in user_data['materials'].values())
             user_data['statistics']['total_materials'] = total_materials
 
-            # Récupérer TOUT l'historique pour cet utilisateur (toutes dates)
+            # Retrieve the ENTIRE history for this user (all dates)
             history_entries = History.query.filter(
                 History.users_id == selected_user.id
             ).order_by(History.date_mod.desc()).all()
 
             user_data['statistics']['total_movements'] = len(history_entries)
 
-            # Enrichir l'historique avec les informations du matériel
+            # Enrich the history with hardware information
             for entry in history_entries:
                 material_info = None
                 material_type = None
                 material_icon = None
 
-                # Identifier le type de matériel et récupérer ses informations
+                # Identify the type of equipment and retrieve its information
                 if entry.computers_id:
                     material = Computers.query.get(entry.computers_id)
                     material_type = 'Ordinateur'
@@ -961,10 +1037,10 @@ def reports_by_user():
                         'name': material.name,
                         'serial': material.serial,
                         'otherserial': material.otherserial,
-                        'is_deleted': material.is_delete  # Savoir si le matériel a été supprimé depuis
+                        'is_deleted': material.is_delete  # To know if the material has been removed since
                     }
 
-                # Ajouter l'entrée enrichie à l'historique
+                # Add the enriched entry to the history
                 user_data['history'].append({
                     'entry': entry,
                     'material_info': material_info,
@@ -972,17 +1048,18 @@ def reports_by_user():
                     'material_icon': material_icon
                 })
 
-            # Calculer les statistiques d'activité
+            # Calculate activity statistics
             if history_entries:
                 user_data['statistics']['last_activity'] = history_entries[0].date_mod
                 user_data['statistics']['first_activity'] = history_entries[-1].date_mod
 
-            # Message de succès
-            flash(f"Rapport généré pour {selected_user.GivenName} {selected_user.Surname}", 'success')
+            # Success Message
+            flash(f"Report generated for {selected_user.GivenName} {selected_user.Surname}", 'success')
 
         except Exception as e:
-            # En cas d'erreur, afficher un message et revenir au formulaire
-            flash(f"Erreur lors de la génération du rapport : {str(e)}", 'danger')
+            # If an error occurs, display a message and return to the form
+            app.logger.error(f"Error generating report: {e}")
+            flash("Error generating report : please contact the administrator", 'danger')
             return render_template('reports/by_user.html',
                                    generation_date=generation_date)
 
@@ -992,21 +1069,21 @@ def reports_by_user():
                            generation_date=generation_date)
 
 
-# Nouveau rapport par type de matériel
+# New report by equipment type
 @app.route('/reports/by_material_type', methods=['GET', 'POST'])
 @login_required
 @roles_accepted('gestionnaire', 'lecteur')
 def reports_by_material_type():
     """
-    Rapport d'analyse par type de matériel avec graphiques
-    Analyse de la répartition et utilisation par type de matériel
+    Equipment type analysis report with graphs
+    Analysis of distribution and usage by equipment type
     """
-    # Variables pour les résultats
+    # Variables for the results
     selected_material_type = None
     material_data = None
     generation_date = datetime.now(timezone.utc)
 
-    # Liste des types de matériel disponibles
+    # List of available equipment types
     material_types = {
         'computers': {'name': 'Ordinateurs', 'icon': 'fas fa-laptop', 'model': Computers},
         'monitors': {'name': 'Moniteurs', 'icon': 'fas fa-desktop', 'model': Monitors},
@@ -1016,21 +1093,21 @@ def reports_by_material_type():
 
     if request.method == 'POST':
         try:
-            # Récupérer le type de matériel sélectionné
+            # Retrieve the selected material type
             selected_material_type = request.form.get('material_type')
 
-            # Validation du type de matériel (obligatoire)
+            # Validation of equipment type (mandatory)
             if not selected_material_type or selected_material_type not in material_types:
-                flash("Veuillez sélectionner un type de matériel valide", 'warning')
+                flash("Please select a valid material type", 'warning')
                 return render_template('reports/by_material_type.html',
                                        material_types=material_types,
                                        generation_date=generation_date)
 
-            # Récupérer le modèle correspondant
+            # Retrieve the corresponding model
             model = material_types[selected_material_type]['model']
             material_name = material_types[selected_material_type]['name']
 
-            # Construire les données complètes du matériel
+            # Build the complete hardware data
             material_data = {
                 'type': selected_material_type,
                 'name': material_name,
@@ -1049,13 +1126,13 @@ def reports_by_material_type():
                 'top_users': []
             }
 
-            # Statistiques globales
+            # Overall Statistics
             total_items = model.query.filter_by(is_delete=False).count()
             linked_items = model.query.filter_by(is_delete=False, is_linked=True).count()
             unlinked_items = total_items - linked_items
             deleted_items = model.query.filter_by(is_delete=True).count()
 
-            # Compter les utilisateurs uniques
+            # Count unique users
             unique_users_query = db.session.query(model.Username).filter(
                 model.is_delete == False,
                 model.is_linked == True,
@@ -1071,14 +1148,14 @@ def reports_by_material_type():
                 'deleted': deleted_items
             }
 
-            # Données pour graphique par statut
+            # Data for graph by status
             material_data['by_status'] = [
                 {'label': 'Liés', 'value': linked_items, 'color': '#28a745'},
                 {'label': 'Libres', 'value': unlinked_items, 'color': '#6c757d'},
                 {'label': 'Supprimés', 'value': deleted_items, 'color': '#dc3545'}
             ]
 
-            # Répartition par service (pour le matériel lié)
+            # Breakdown by department (for related equipment)
             services_query = db.session.query(
                 Users.Department,
                 db.func.count(model.id).label('count')
@@ -1094,7 +1171,7 @@ def reports_by_material_type():
                 db.func.count(model.id).desc()
             ).limit(10).all()
 
-            # Couleurs pour les graphiques par service
+            # Colors for graphics by service
             service_colors = ['#007bff', '#28a745', '#ffc107', '#dc3545', '#17a2b8',
                               '#6f42c1', '#e83e8c', '#fd7e14', '#20c997', '#6c757d']
 
@@ -1106,7 +1183,7 @@ def reports_by_material_type():
                     'color': service_colors[i % len(service_colors)]
                 })
 
-            # Top 10 des utilisateurs avec le plus de matériel de ce type
+            # Top 10 users with the most hardware of this type
             top_users_query = db.session.query(
                 model.Username,
                 Users.GivenName,
@@ -1136,17 +1213,17 @@ def reports_by_material_type():
                     'count': count
                 })
 
-            # Mouvements récents (30 derniers)
+            # Recent movements (last 30)
             recent_movements_query = History.query.filter(
                 getattr(History, f"{selected_material_type}_id").isnot(None)
             ).order_by(History.date_mod.desc()).limit(30).all()
 
             material_data['recent_movements'] = []
             for movement in recent_movements_query:
-                # Récupérer l'utilisateur
+                # Retrieve the user
                 user = Users.query.get(movement.users_id) if movement.users_id else None
 
-                # Récupérer le matériel
+                # Retrieve the equipment
                 material_id = getattr(movement, f"{selected_material_type}_id")
                 material_item = model.query.get(material_id) if material_id else None
 
@@ -1158,12 +1235,13 @@ def reports_by_material_type():
                     'manager': movement.app_management_user
                 })
 
-            # Message de succès
-            flash(f"Rapport généré pour {material_name.lower()}", 'success')
+            # Success Message
+            flash(f"Report generated for {material_name.lower()}", 'success')
 
         except Exception as e:
             # En cas d'erreur, afficher un message et revenir au formulaire
-            flash(f"Erreur lors de la génération du rapport : {str(e)}", 'danger')
+            app.logger.error(f"Error generating report: {e}")
+            flash("Error generating report : please contact the administrator", 'danger')
             return render_template('reports/by_material_type.html',
                                    material_types=material_types,
                                    generation_date=generation_date)
@@ -1175,63 +1253,61 @@ def reports_by_material_type():
                            generation_date=generation_date)
 
 
-# Ajoutez cette route dans votre app.py
-
 @app.route('/reports/activity', methods=['GET', 'POST'])
 @login_required
 @roles_accepted('gestionnaire', 'lecteur')
 def reports_activity():
     """
-    Rapport d'activité avec analyse des mouvements et activités sur une période donnée
-    Inclut des statistiques par gestionnaire et des graphiques de tendance
+    Activity report with analysis of movements and activities over a given period
+    Includes statistics by manager and trend charts
     """
-    # Récupérer tous les gestionnaires uniques pour le filtre
+    # Retrieve all unique handlers for the filter
     gestionnaires_query = db.session.query(History.app_management_user).filter(
         History.app_management_user.isnot(None),
         History.app_management_user != ''
     ).distinct().order_by(History.app_management_user.asc()).all()
 
-    # Convertir en liste simple
+    # Convert to a simple list
     gestionnaires = [gest[0] for gest in gestionnaires_query if gest[0]]
 
-    # Variables pour les résultats
+    # Variables for the results
     date_from = None
     date_to = None
     selected_gestionnaire = None
     action_filter = None
     activity_data = None
-    generation_date = datetime.now(timezone.utc)  # Toujours définie
+    generation_date = datetime.now(timezone.utc) # Always defined
 
     if request.method == 'POST':
         try:
-            # Récupérer les paramètres du formulaire
+            # Retrieve form parameters
             date_from_str = request.form.get('date_from')
             date_to_str = request.form.get('date_to')
             selected_gestionnaire = request.form.get('gestionnaire_filter')
             action_filter = request.form.get('action_filter')
 
-            # Validation des dates (obligatoires)
+            # Date validation (required)
             if not date_from_str or not date_to_str:
-                flash("Les dates de début et de fin sont obligatoires", 'warning')
+                flash("Start and end dates are mandatory.", 'warning')
                 return render_template('reports/activity.html',
                                        gestionnaires=gestionnaires,
                                        generation_date=generation_date)
 
-            # Conversion des dates
+            # Date Conversion
             try:
                 date_from = datetime.strptime(date_from_str, '%Y-%m-%d')
                 date_to = datetime.strptime(date_to_str, '%Y-%m-%d')
                 # Ajouter 23:59:59 pour inclure toute la journée de fin
                 date_to = date_to.replace(hour=23, minute=59, second=59)
             except ValueError:
-                flash("Format de date incorrect", 'warning')
+                flash("Incorrect date format", 'warning')
                 return render_template('reports/activity.html',
                                        gestionnaires=gestionnaires,
                                        generation_date=generation_date)
 
-            # Validation de la cohérence des dates
+            # Validation of date consistency
             if date_from > date_to:
-                flash("La date de début ne peut pas être postérieure à la date de fin", 'warning')
+                flash("The start date cannot be later than the end date.", 'warning')
                 return render_template('reports/activity.html',
                                        gestionnaires=gestionnaires,
                                        date_from=date_from_str,
@@ -1240,10 +1316,10 @@ def reports_activity():
                                        action_filter=action_filter,
                                        generation_date=generation_date)
 
-            # Vérifier que la période n'est pas trop longue (max 1 an pour éviter les problèmes de performance)
+            # Check that the period is not too long (max 1 year to avoid performance problems)
             date_diff = date_to - date_from
             if date_diff.days > 365:
-                flash("La période sélectionnée ne peut pas dépasser 1 an", 'warning')
+                flash("The selected period cannot exceed 1 year", 'warning')
                 return render_template('reports/activity.html',
                                        gestionnaires=gestionnaires,
                                        date_from=date_from_str,
@@ -1252,29 +1328,29 @@ def reports_activity():
                                        action_filter=action_filter,
                                        generation_date=generation_date)
 
-            # Construction de la requête principale pour l'historique
+            # Building the main query for the history
             history_query = History.query.filter(
                 History.date_mod >= date_from,
                 History.date_mod <= date_to
             )
 
-            # Appliquer le filtre gestionnaire si spécifié
+            # Apply the filter handler if specified
             if selected_gestionnaire:
                 history_query = history_query.filter(
                     History.app_management_user == selected_gestionnaire
                 )
 
-            # Appliquer le filtre d'action si spécifié
+            # Apply the action filter if specified
             if action_filter == 'link':
                 history_query = history_query.filter(History.is_linked == True)
             elif action_filter == 'unlink':
                 history_query = history_query.filter(History.is_linked == False)
 
-            # Récupérer toutes les activités pour la période
+            # Retrieve all activities for the period
             all_activities = history_query.order_by(History.date_mod.desc()).all()
 
             if not all_activities:
-                flash("Aucune activité trouvée pour les critères sélectionnés", 'info')
+                flash("No activity found matching the selected criteria", 'info')
                 return render_template('reports/activity.html',
                                        gestionnaires=gestionnaires,
                                        date_from=date_from_str,
@@ -1283,15 +1359,16 @@ def reports_activity():
                                        action_filter=action_filter,
                                        generation_date=generation_date)
 
-            # Construire les données d'activité
+            # Build activity data
             activity_data = build_activity_data(all_activities, date_from, date_to)
 
-            # Message de succès
+            # Success Message
             flash(f"Rapport d'activité généré : {len(all_activities)} activité(s) trouvée(s)", 'success')
 
         except Exception as e:
-            # En cas d'erreur, afficher un message et revenir au formulaire
-            flash(f"Erreur lors de la génération du rapport : {str(e)}", 'danger')
+            # If an error occurs, display a message and return to the form
+            app.logger.error(f"Error generating report : {e}")
+            flash("Error generating report : please contact the administrator", 'danger')
             return render_template('reports/activity.html',
                                    gestionnaires=gestionnaires,
                                    generation_date=generation_date)
@@ -1308,34 +1385,34 @@ def reports_activity():
 
 def build_activity_data(activities, date_from, date_to):
     """
-    Construit les données structurées pour le rapport d'activité
+    Builds structured data for the activity report
 
     Args:
-        activities: Liste des activités History
-        date_from: Date de début
-        date_to: Date de fin
+        activities: List of History activities
+        date_from: Start date
+        date_to: End date
 
     Returns:
-        dict: Données structurées pour le template
+        dict: Structured data for the template
     """
     from collections import defaultdict, Counter
     import json
 
-    # Statistiques générales
+    # General Statistics
     total_activities = len(activities)
     total_links = sum(1 for activity in activities if activity.is_linked)
     total_unlinks = total_activities - total_links
 
-    # Compteur des utilisateurs uniques impactés
+    # Counter of unique users impacted
     unique_users = set()
     for activity in activities:
         if activity.users_id:
             unique_users.add(activity.users_id)
 
-    # Données pour les graphiques par jour
+    # Data for graphs per day
     daily_data = defaultdict(lambda: {'total': 0, 'links': 0, 'unlinks': 0})
 
-    # Parcourir toutes les activités pour les statistiques quotidiennes
+    # Browse all activities for daily statistics
     for activity in activities:
         date_key = activity.date_mod.strftime('%Y-%m-%d')
         daily_data[date_key]['total'] += 1
@@ -1344,7 +1421,7 @@ def build_activity_data(activities, date_from, date_to):
         else:
             daily_data[date_key]['unlinks'] += 1
 
-    # Créer la liste complète des dates (combler les trous)
+    # Create the complete list of dates (fill in the gaps)
     from datetime import timedelta
     current_date = date_from.date()
     end_date = date_to.date()
@@ -1365,7 +1442,7 @@ def build_activity_data(activities, date_from, date_to):
 
         current_date += timedelta(days=1)
 
-    # Statistiques par type de matériel
+    # Statistics by type of equipment
     material_stats = {
         'Ordinateurs': 0,
         'Moniteurs': 0,
@@ -1383,7 +1460,7 @@ def build_activity_data(activities, date_from, date_to):
         elif activity.phones_id:
             material_stats['Téléphones'] += 1
 
-    # Statistiques par gestionnaire
+    # Statistics by manager
     manager_stats_raw = defaultdict(lambda: {'total': 0, 'links': 0, 'unlinks': 0})
 
     for activity in activities:
@@ -1394,7 +1471,7 @@ def build_activity_data(activities, date_from, date_to):
         else:
             manager_stats_raw[manager]['unlinks'] += 1
 
-    # Calculer la moyenne quotidienne pour chaque gestionnaire
+    # Calculate the daily average for each manager
     period_days = (date_to.date() - date_from.date()).days + 1
     manager_stats = []
     manager_chart_labels = []
@@ -1411,12 +1488,12 @@ def build_activity_data(activities, date_from, date_to):
             'daily_average': daily_avg
         })
 
-        # Données pour le graphique
+        # Data for the graph
         manager_chart_labels.append(manager)
         manager_chart_links.append(stats['links'])
         manager_chart_unlinks.append(stats['unlinks'])
 
-    # Top des utilisateurs les plus impactés
+    # Top users most impacted
     user_activity_count = defaultdict(lambda: {'total': 0, 'links': 0, 'unlinks': 0})
 
     for activity in activities:
@@ -1427,7 +1504,7 @@ def build_activity_data(activities, date_from, date_to):
             else:
                 user_activity_count[activity.users_id]['unlinks'] += 1
 
-    # Récupérer les informations des utilisateurs les plus actifs
+    # Retrieve information from the most active users
     top_users = []
     sorted_users = sorted(user_activity_count.items(), key=lambda x: x[1]['total'], reverse=True)[:10]
 
@@ -1443,10 +1520,10 @@ def build_activity_data(activities, date_from, date_to):
                 'unlinks': stats['unlinks']
             })
 
-    # Enrichir les 50 activités les plus récentes avec les informations des matériels et utilisateurs
+    # Enrich the 50 most recent activities with hardware and user information
     recent_activities = []
     for activity in activities[:50]:  # Limiter à 50 pour éviter la surcharge
-        # Identifier le type de matériel et récupérer ses informations
+        # Identify the type of equipment and retrieve its information
         material_info = None
         material_type = None
         material_icon = None
@@ -1475,7 +1552,7 @@ def build_activity_data(activities, date_from, date_to):
                 'otherserial': material.otherserial
             }
 
-        # Récupérer les informations de l'utilisateur
+        # Retrieve user information
         user_info = None
         if activity.users_id:
             user = Users.query.get(activity.users_id)
@@ -1486,7 +1563,7 @@ def build_activity_data(activities, date_from, date_to):
                     'Username': user.Username
                 }
 
-        # Ajouter l'activité enrichie
+        # Add the enriched activity
         recent_activities.append({
             'id': activity.id,
             'date_mod': activity.date_mod,
@@ -1498,7 +1575,7 @@ def build_activity_data(activities, date_from, date_to):
             'user_info': user_info
         })
 
-    # Structurer toutes les données
+    # Structure all the data
     activity_data = {
         'statistics': {
             'total_activities': total_activities,
@@ -1529,50 +1606,50 @@ def build_activity_data(activities, date_from, date_to):
     return activity_data
 
 
-# API pour rechercher des utilisateurs (spécifique aux rapports)
+# API for searching for users (specific to reports)
 @app.route('/api/reports/search_users')
 @login_required
 @roles_accepted('gestionnaire', 'lecteur')
 def api_reports_search_users():
     """
-    API pour la recherche d'utilisateurs dans les rapports
-    Similaire au workflow mais optimisée pour les rapports
+    API for searching users in reports
+    Similar to the workflow but optimized for reports
     """
     try:
-        # Récupérer le terme de recherche depuis les paramètres GET
+        # Retrieve the search term from the GET parameters
         search_term = request.args.get('q', '').strip()
 
-        # Vérifier la longueur minimale
+        # Check the minimum length
         if len(search_term) < 4:
             return jsonify({
                 'status': 'success',
                 'users': [],
-                'message': 'Minimum 4 caractères requis'
+                'message': 'Minimum 4 characters required'
             })
 
-        # Recherche optimisée (uniquement dans GivenName, Surname, Username)
+        # Optimized search (only in GivenName, Surname, Username)
         search_pattern = f"%{search_term}%"
 
         users = Users.query.filter(
             Users.is_delete == False
         ).filter(
-            # Rechercher uniquement dans les champs pertinents
+            # Search only in relevant fields
             db.or_(
                 Users.GivenName.ilike(search_pattern),
                 Users.Surname.ilike(search_pattern),
                 Users.Username.ilike(search_pattern)
             )
         ).order_by(
-            # Priorité : correspondance exacte dans Username, puis ordre alphabétique
+            # Priority: exact match in Username, then alphabetical order
             Users.Username.ilike(f"{search_term}%").desc(),
             Users.Surname.asc(),
             Users.GivenName.asc()
-        ).limit(10).all()  # Limiter strictement à 10 résultats
+        ).limit(10).all()  # Strictly limit to 10 results
 
-        # Convertir les utilisateurs en format JSON avec informations enrichies
+        # Convert users to JSON format with enriched information
         users_data = []
         for user in users:
-            # Compter rapidement le matériel lié pour chaque utilisateur
+            # Quickly count the associated hardware for each user
             total_computers = Computers.query.filter_by(Username=user.Username, is_linked=True, is_delete=False).count()
             total_monitors = Monitors.query.filter_by(Username=user.Username, is_linked=True, is_delete=False).count()
             total_peripherals = Peripherals.query.filter_by(Username=user.Username, is_linked=True,
@@ -1580,7 +1657,7 @@ def api_reports_search_users():
             total_phones = Phones.query.filter_by(Username=user.Username, is_linked=True, is_delete=False).count()
             total_materials = total_computers + total_monitors + total_peripherals + total_phones
 
-            # Compter l'historique
+            # Count the history
             total_history = History.query.filter_by(users_id=user.id).count()
 
             users_data.append({
@@ -1610,13 +1687,13 @@ def api_reports_search_users():
         }), 500
 
 
-# API pour obtenir la liste des services (pour AJAX si nécessaire)
+# API to get the list of services (for AJAX if necessary)
 @app.route('/api/services')
 @login_required
 @roles_accepted('gestionnaire', 'lecteur')
 def api_services():
     """
-    API pour récupérer la liste des services uniques
+    API to retrieve the list of unique services
     """
     try:
         services_query = db.session.query(Users.Department).filter(
@@ -1635,102 +1712,28 @@ def api_services():
     except Exception as e:
         return jsonify({
             'status': 'error',
-            'message': f'Erreur lors de la récupération des services : {str(e)}',
+            'message': f'Error retrieving services : {str(e)}',
             'services': []
         }), 500
 
 
-# Page test pour vérifier la connexion aux bases externes
-@app.route('/db_check')
-@login_required
-def db_check():
-    """
-    Vérifie la connexion aux bases de données externes
-    """
-    try:
-        # Importer le module DBConnector
-        from db_connector import DBConnector
-
-        # Chemin vers le fichier bdd.json (ajuster selon l'emplacement réel)
-        json_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config', 'bdd.json')
-
-        # Tester les connexions
-        connector = DBConnector(json_path)
-        connection_status = connector.test_all_connections()
-
-        return render_template(
-            'db_check.html',
-            connection_status=connection_status,
-            config_exists=os.path.exists(json_path)
-        )
-    except Exception as e:
-        flash(f"Erreur lors de la vérification des connexions: {str(e)}", 'danger')
-        return render_template(
-            'db_check.html',
-            error=str(e),
-            config_exists=False
-        )
-
-
-@app.route('/api/check_connection_status')
-@login_required
-def check_connection_status():
-    """
-    API pour vérifier rapidement le statut des connexions aux bases de données externes
-    Retourne un JSON avec le statut des connexions
-    """
-    try:
-        # Importer le module DBConnector
-        from db_connector import DBConnector
-
-        # Chemin vers le fichier bdd.json
-        json_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config',  'bdd.json')
-
-        # Vérifier si le fichier existe
-        if not os.path.exists(json_path):
-            return jsonify({
-                'users': {'status': False, 'message': 'Fichier de configuration introuvable'},
-                'computers': {'status': False, 'message': 'Fichier de configuration introuvable'},
-                'monitors': {'status': False, 'message': 'Fichier de configuration introuvable'},
-                'peripherals': {'status': False, 'message': 'Fichier de configuration introuvable'},
-                'phones': {'status': False, 'message': 'Fichier de configuration introuvable'}
-            })
-
-        # Tester les connexions
-        connector = DBConnector(json_path)
-        connection_status = connector.test_all_connections()
-
-        return jsonify(connection_status)
-
-    except Exception as e:
-        # En cas d'erreur, retourner un statut d'erreur pour toutes les connexions
-        error_message = str(e)
-        return jsonify({
-            'users': {'status': False, 'message': error_message},
-            'computers': {'status': False, 'message': error_message},
-            'monitors': {'status': False, 'message': error_message},
-            'peripherals': {'status': False, 'message': error_message},
-            'phones': {'status': False, 'message': error_message}
-        })
-
-
-# Statistiques des utilisateurs
+# User Statistics
 @app.route('/admin/users/stats')
 @login_required
 @roles_required('administrateur')
 def users_stats():
     """
-    Page de statistiques des utilisateurs
+    User statistics page
     """
-    # Compter le total des utilisateurs
+    # Count the total number of users
     total_users = AppManagement.query.count()
 
-    # Compter par rôle
+    # Count by role
     admin_count = AppManagement.query.join(AppManagement.roles).filter(Role.name == 'administrateur').count()
     gestionnaire_count = AppManagement.query.join(AppManagement.roles).filter(Role.name == 'gestionnaire').count()
     lecteur_count = AppManagement.query.join(AppManagement.roles).filter(Role.name == 'lecteur').count()
 
-    # Compter actifs/inactifs
+    # Count active/inactive
     active_count = AppManagement.query.filter_by(active=True).count()
     inactive_count = AppManagement.query.filter_by(active=False).count()
 
@@ -1743,33 +1746,33 @@ def users_stats():
                            inactive_count=inactive_count)
 
 
-# Export des utilisateurs
+# User Export
 @app.route('/admin/users/export')
 @login_required
 @roles_required('administrateur')
 def export_users():
     """
-    Exporte la liste des utilisateurs au format CSV
+    Exports the user list in CSV format
     """
     return export_users_csv()
 
 
-# Import des utilisateurs
+# Importing users
 @app.route('/admin/users/import', methods=['GET', 'POST'])
 @login_required
 @roles_required('administrateur')
 def import_users():
     """
-    Importe des utilisateurs depuis un fichier CSV
+    Import users from a CSV file
     """
     if request.method == 'POST':
         if 'file' not in request.files:
-            flash('Aucun fichier sélectionné', 'danger')
+            flash('No file selected', 'danger')
             return redirect(url_for('import_users'))
 
         file = request.files['file']
         if file.filename == '':
-            flash('Aucun fichier sélectionné', 'danger')
+            flash('No file selected', 'danger')
             return redirect(url_for('import_users'))
 
         if file and file.filename.endswith('.csv'):
@@ -1777,7 +1780,7 @@ def import_users():
                 imported_count, errors = import_users_csv(file)
 
                 if imported_count > 0:
-                    flash(f'{imported_count} utilisateur(s) importé(s) avec succès', 'success')
+                    flash(f'{imported_count} user(s) successfully imported', 'success')
 
                 if errors:
                     for error in errors:
@@ -1786,46 +1789,46 @@ def import_users():
                 return redirect(url_for('admin_users'))
 
             except Exception as e:
-                flash(f'Erreur lors de l\'import : {str(e)}', 'danger')
+                app.logger.error(f"Error during import: {e}")
+                flash('Error during import : please contact the administrator', 'danger')
                 return redirect(url_for('import_users'))
         else:
-            flash('Le fichier doit être au format CSV', 'danger')
+            flash('The file must be in CSV format', 'danger')
             return redirect(url_for('import_users'))
 
-    # GET : afficher le formulaire
+    # GET :display the form
     return render_template('admin/import_users.html')
 
 
-# ---- Gestion des utilisateurs (table users) ----
-
+# User management (users table)
 @app.route('/users')
 @login_required
 @roles_accepted('gestionnaire', 'lecteur')
 def users_list():
     """
-    Affiche la liste des utilisateurs de l'organisation avec filtre par service
+    Displays a list of users in the organization, filtered by department.
     """
-    # Récupérer le service sélectionné depuis les paramètres GET
+    # Retrieve the selected service from the GET settings
     selected_service = request.args.get('service', '').strip()
 
-    # Construire la requête de base (utilisateurs non supprimés)
+    # Build the basic query (users not deleted)
     query = Users.query.filter_by(is_delete=False)
 
-    # Appliquer le filtre par service si sélectionné
+    # Apply filter by service if selected
     if selected_service:
         query = query.filter(Users.Department == selected_service)
 
-    # Récupérer les utilisateurs filtrés
+    # Retrieve filtered users
     users = query.order_by(Users.Surname.asc(), Users.GivenName.asc()).all()
 
-    # Récupérer tous les services uniques (non vides et non supprimés) pour le filtre
+    # Retrieve all unique services (non-empty and non-deleted) for the filter
     services_query = db.session.query(Users.Department).filter(
         Users.is_delete == False,
         Users.Department.isnot(None),
         Users.Department != ''
     ).distinct().order_by(Users.Department.asc()).all()
 
-    # Convertir en liste simple
+    # Convert to a simple list
     services = [service[0] for service in services_query if service[0]]
 
     return render_template('users/list.html',
@@ -1839,11 +1842,11 @@ def users_list():
 @roles_required('gestionnaire')
 def user_create():
     """
-    Création d'un nouvel utilisateur de l'organisation
+    Creating a new user for the organization
     """
     if request.method == 'POST':
         try:
-            # Récupération des données du formulaire
+            # Retrieving form data
             given_name = request.form.get('given_name')
             surname = request.form.get('surname')
             username = request.form.get('username')
@@ -1851,13 +1854,13 @@ def user_create():
             department = request.form.get('department')
             site = request.form.get('site')
 
-            # Vérification si l'utilisateur existe déjà
+            # Checking if the user already exists
             existing_user = Users.query.filter_by(Username=username).first()
             if existing_user and not existing_user.is_delete:
-                flash(f"L'utilisateur {username} existe déjà.", 'warning')
+                flash(f"The user {username} already exists.", 'warning')
                 return redirect(url_for('user_create'))
 
-            # Création du nouvel utilisateur
+            # Creating the new user
             new_user = Users(
                 GivenName=given_name,
                 Surname=surname,
@@ -1871,15 +1874,16 @@ def user_create():
             db.session.add(new_user)
             db.session.commit()
 
-            flash(f"L'utilisateur {given_name} {surname} a été créé avec succès.", 'success')
+            flash(f"The user {given_name} {surname} was successfully created.", 'success')
             return redirect(url_for('users_list'))
 
         except Exception as e:
             db.session.rollback()
-            flash(f"Erreur lors de la création de l'utilisateur : {str(e)}", 'danger')
+            app.logger.error(f"Error creating user: {e}")
+            flash("Error creating user : please contact the administrator", 'danger')
             return redirect(url_for('user_create'))
 
-    # GET : affichage du formulaire
+    # GET : display of the form
     return render_template('users/create.html')
 
 
@@ -1888,18 +1892,18 @@ def user_create():
 @roles_required('gestionnaire')
 def user_edit(user_id):
     """
-    Modification d'un utilisateur de l'organisation
+    Modification of an organization user
     """
     user = Users.query.get_or_404(user_id)
 
-    # Vérifier si l'utilisateur est dans la corbeille
+    # Check if the user is in the trash.
     if user.is_delete:
-        flash("Cet utilisateur est dans la corbeille et ne peut pas être modifié.", 'warning')
+        flash("This user is in the trash and cannot be modified..", 'warning')
         return redirect(url_for('users_list'))
 
     if request.method == 'POST':
         try:
-            # Mise à jour des données
+            # Data update
             user.GivenName = request.form.get('given_name')
             user.Surname = request.form.get('surname')
             user.Username = request.form.get('username')
@@ -1907,21 +1911,22 @@ def user_edit(user_id):
             user.Department = request.form.get('department')
             user.Site = request.form.get('site')
 
-            # Mettre à jour la date de modification et l'utilisateur qui a fait la modification
+            # Update the modification date and the user who made the change
             user.date_mod = datetime.now(timezone.utc)
             user.app_management_user = current_user.user
 
             db.session.commit()
 
-            flash(f"L'utilisateur {user.GivenName} {user.Surname} a été modifié avec succès.", 'success')
+            flash(f"The user {user.GivenName} {user.Surname} has been successfully modified.", 'success')
             return redirect(url_for('users_list'))
 
         except Exception as e:
             db.session.rollback()
-            flash(f"Erreur lors de la modification de l'utilisateur : {str(e)}", 'danger')
+            app.logger.error(f"Error modifying user: {e}")
+            flash("Error modifying user : please contact the administrator", 'danger')
             return redirect(url_for('user_edit', user_id=user_id))
 
-    # GET : affichage du formulaire pré-rempli
+    # GET : display of the pre-filled form
     return render_template('users/edit.html', user=user)
 
 
@@ -1930,22 +1935,23 @@ def user_edit(user_id):
 @roles_required('gestionnaire')
 def user_delete(user_id):
     """
-    Placer un utilisateur dans la corbeille (soft delete)
+    Place a user in the trash (soft delete)
     """
     try:
         user = Users.query.get_or_404(user_id)
 
-        # Soft delete : mettre à jour les champs is_delete et date_delete
+        #Soft delete: update the is_delete and date_delete fields
         user.is_delete = True
         user.date_delete = datetime.now(timezone.utc)
         user.app_management_user = current_user.user
 
         db.session.commit()
 
-        flash(f"L'utilisateur {user.GivenName} {user.Surname} a été placé dans la corbeille.", 'success')
+        flash(f"The user {user.GivenName} {user.Surname} was placed in the bin.", 'success')
     except Exception as e:
         db.session.rollback()
-        flash(f"Erreur lors de la suppression de l'utilisateur : {str(e)}", 'danger')
+        app.logger.error(f"Error deleting user: {e}")
+        flash("Error deleting user : please contact the administrator", 'danger')
 
     return redirect(url_for('users_list'))
 
@@ -1955,22 +1961,23 @@ def user_delete(user_id):
 @roles_required('gestionnaire')
 def user_restore(user_id):
     """
-    Restaurer un utilisateur depuis la corbeille
+    Restore a user from the recycle bin
     """
     try:
         user = Users.query.get_or_404(user_id)
 
-        # Restaurer l'utilisateur
+        # Restore user
         user.is_delete = False
         user.date_delete = None
         user.app_management_user = current_user.user
 
         db.session.commit()
 
-        flash(f"L'utilisateur {user.GivenName} {user.Surname} a été restauré.", 'success')
+        flash(f"The user {user.GivenName} {user.Surname} has been restored.", 'success')
     except Exception as e:
         db.session.rollback()
-        flash(f"Erreur lors de la restauration de l'utilisateur : {str(e)}", 'danger')
+        app.logger.error(f"Error restoring user: {e}")
+        flash("Error restoring user : please contact the administrator", 'danger')
 
     return redirect(url_for('users_trash'))
 
@@ -1980,7 +1987,7 @@ def user_restore(user_id):
 @roles_accepted('gestionnaire', 'lecteur')
 def users_trash():
     """
-    Affiche la liste des utilisateurs dans la corbeille
+    Displays the list of users in the trash.
     """
     users = Users.query.filter_by(is_delete=True).all()
     return render_template('users/trash.html', users=users)
@@ -1991,27 +1998,28 @@ def users_trash():
 @roles_required('gestionnaire')
 def user_purge(user_id):
     """
-    Suppression définitive d'un utilisateur (hard delete)
+    Permanent deletion of a user (hard delete)
     """
     try:
         user = Users.query.get_or_404(user_id)
 
-        # Vérifier si l'utilisateur est dans la corbeille
+        # Check if the user is in the trash.
         if not user.is_delete:
-            flash("Cet utilisateur n'est pas dans la corbeille et ne peut pas être supprimé définitivement.", 'warning')
+            flash("This user is not in the trash and cannot be permanently deleted..", 'warning')
             return redirect(url_for('users_list'))
 
-        # Supprimer les entrées de l'historique associées à cet utilisateur
+        # Delete the history entries associated with this user
         History.query.filter_by(users_id=user_id).delete()
 
-        # Suppression définitive
+        # Permanent deletion
         db.session.delete(user)
         db.session.commit()
 
-        flash(f"L'utilisateur a été supprimé définitivement.", 'success')
+        flash(f"The user has been permanently removed.", 'success')
     except Exception as e:
         db.session.rollback()
-        flash(f"Erreur lors de la suppression définitive de l'utilisateur : {str(e)}", 'danger')
+        app.logger.error(f"Error  during permanent deletion of the user: {e}")
+        flash("Error during permanent deletion of the user : please contact the administrator", 'danger')
 
     return redirect(url_for('users_trash'))
 
@@ -2021,24 +2029,24 @@ def user_purge(user_id):
 @roles_accepted('gestionnaire', 'lecteur')
 def api_search_users():
     """
-    API pour rechercher des utilisateurs
-    Retourne une liste JSON des utilisateurs qui correspondent aux critères
+    API for searching users
+    Returns a JSON list of users who match the criteria
     """
     try:
-        # Récupérer le terme de recherche depuis les paramètres GET
+        # Retrieve the search term from the GET parameters
         search_term = request.args.get('q', '').strip()
 
-        # Si aucun terme de recherche, retourner tous les utilisateurs (limité)
+        # If no search terms are found, return all users (limited).
         if not search_term:
             users = Users.query.filter_by(is_delete=False).limit(100).all()
         else:
-            # Recherche dans plusieurs champs avec LIKE (insensible à la casse)
+            # Search across multiple fields using LIKE (case-insensitive)
             search_pattern = f"%{search_term}%"
 
             users = Users.query.filter(
                 Users.is_delete == False
             ).filter(
-                # Rechercher dans tous les champs pertinents
+                # Search in all relevant fields
                 db.or_(
                     Users.GivenName.ilike(search_pattern),
                     Users.Surname.ilike(search_pattern),
@@ -2048,12 +2056,12 @@ def api_search_users():
                     Users.Site.ilike(search_pattern)
                 )
             ).order_by(
-                # Tri par pertinence : d'abord par nom/prénom, puis par département
+                # Sorted by relevance: first by last name/first name, then by department
                 Users.Surname.asc(),
                 Users.GivenName.asc()
-            ).limit(500).all()  # Limiter à 500 résultats pour éviter la surcharge
+            ).limit(500).all()  # Limit to 500 results to avoid overload
 
-        # Convertir les utilisateurs en format JSON
+        # Convert users to JSON format
         users_data = []
         for user in users:
             users_data.append({
@@ -2076,10 +2084,10 @@ def api_search_users():
         })
 
     except Exception as e:
-        # En cas d'erreur, retourner un message d'erreur JSON
+        # In case of an error, return a JSON error message
         return jsonify({
             'status': 'error',
-            'message': f'Erreur lors de la recherche : {str(e)}',
+            'message': f'Error during search : {str(e)}',
             'users': []
         }), 500
 
@@ -2089,18 +2097,18 @@ def api_search_users():
 @roles_accepted('gestionnaire', 'lecteur')
 def api_search_departments():
     """
-    API pour récupérer la liste des départements/services uniques
-    Utilisée pour alimenter le filtre par département
+    API to retrieve the list of unique departments/services
+    Used to populate the department filter
     """
     try:
-        # Récupérer tous les départements uniques, non vides et non supprimés
+        # Retrieve all unique, non-empty, and non-deleted departments
         departments_query = db.session.query(Users.Department).filter(
             Users.is_delete == False,
             Users.Department.isnot(None),
             Users.Department != ''
         ).distinct().order_by(Users.Department.asc()).all()
 
-        # Extraire les noms des départements
+        # Extract the names of the departments
         departments = [dept[0] for dept in departments_query if dept[0]]
 
         return jsonify({
@@ -2111,24 +2119,24 @@ def api_search_departments():
     except Exception as e:
         return jsonify({
             'status': 'error',
-            'message': f'Erreur lors de la récupération des départements : {str(e)}',
+            'message': f'Error retrieving departments : {str(e)}',
             'departments': []
         }), 500
 
 
-# Route alternative pour la recherche avec autocomplétion avancée
+# Alternative search route with advanced autocomplete
 @app.route('/api/autocomplete_users')
 @login_required
 @roles_accepted('gestionnaire', 'lecteur')
 def api_autocomplete_users():
     """
-    API d'autocomplétion pour les utilisateurs
-    Retourne des suggestions basées sur les premiers caractères tapés
-    Optimisée pour des réponses rapides
+    Autocomplete API for users
+    Returns suggestions based on the first few characters typed
+    Optimized for quick responses
     """
     try:
         search_term = request.args.get('q', '').strip()
-        limit = int(request.args.get('limit', 10))  # Limiter les suggestions
+        limit = int(request.args.get('limit', 10))  # Limit suggestions
 
         if len(search_term) < 2:
             return jsonify({
@@ -2136,9 +2144,9 @@ def api_autocomplete_users():
                 'suggestions': []
             })
 
-        search_pattern = f"{search_term}%"  # Recherche au début des mots
+        search_pattern = f"{search_term}%"  # Search at the beginning of words
 
-        # Recherche optimisée pour l'autocomplétion
+        # Search optimized for autocomplete
         suggestions = db.session.query(
             Users.id,
             Users.GivenName,
@@ -2158,7 +2166,7 @@ def api_autocomplete_users():
             Users.GivenName.asc()
         ).limit(limit).all()
 
-        # Formater les suggestions
+        # Format the suggestions
         suggestions_data = []
         for suggestion in suggestions:
             suggestions_data.append({
@@ -2181,41 +2189,39 @@ def api_autocomplete_users():
         }), 500
 
 
-# Ajoutez ces routes dans votre app.py pour la recherche de matériel
-
 @app.route('/api/search_materials')
 @login_required
 @roles_accepted('gestionnaire', 'lecteur')
 def api_search_materials():
     """
-    API pour rechercher du matériel par type
-    Retourne une liste JSON du matériel qui correspond aux critères
+    API for searching for hardware by type
+    Returns a JSON list of hardware that matches the criteria
     """
     try:
-        # Récupérer les paramètres de recherche
+        # Retrieve search parameters
         material_type = request.args.get('material_type', '').strip()
         search_term = request.args.get('q', '').strip()
 
-        # Vérifier que le type de matériel est valide
+        # Verify that the equipment type is valid
         model = get_model_by_type(material_type)
         if not model:
             return jsonify({
                 'status': 'error',
-                'message': f'Type de matériel invalide: {material_type}',
+                'message': f'Invalid equipment type: {material_type}',
                 'materials': []
             }), 400
 
-        # Si aucun terme de recherche, retourner tout le matériel (limité)
+        # If no search terms are found, return all material (limited).
         if not search_term:
             materials = model.query.filter_by(is_delete=False).limit(200).all()
         else:
-            # Recherche dans plusieurs champs avec LIKE (insensible à la casse)
+            # Search across multiple fields using LIKE (case-insensitive)
             search_pattern = f"%{search_term}%"
 
             materials = model.query.filter(
                 model.is_delete == False
             ).filter(
-                # Rechercher dans tous les champs pertinents
+                # Search in all relevant fields
                 db.or_(
                     model.name.ilike(search_pattern),
                     model.serial.ilike(search_pattern),
@@ -2223,12 +2229,12 @@ def api_search_materials():
                     model.Username.ilike(search_pattern)
                 )
             ).order_by(
-                # Tri par pertinence : d'abord par nom, puis par statut lié/non lié
+                # Sorted by relevance: first by name, then by linked/unlinked status
                 model.name.asc(),
-                model.is_linked.desc()  # Matériel lié en premier
-            ).limit(500).all()  # Limiter à 500 résultats
+                model.is_linked.desc()  # Materials linked first
+            ).limit(500).all()  # Limit to 500 results
 
-        # Convertir le matériel en format JSON
+        # Convert the material to JSON format
         materials_data = []
         for material in materials:
             materials_data.append({
@@ -2252,10 +2258,10 @@ def api_search_materials():
         })
 
     except Exception as e:
-        # En cas d'erreur, retourner un message d'erreur JSON
+        # In case of an error, return a JSON error message
         return jsonify({
             'status': 'error',
-            'message': f'Erreur lors de la recherche : {str(e)}',
+            'message': f'Error during search : {str(e)}',
             'materials': []
         }), 500
 
@@ -2265,27 +2271,27 @@ def api_search_materials():
 @roles_accepted('gestionnaire', 'lecteur')
 def api_search_material_users(material_type):
     """
-    API pour récupérer la liste des utilisateurs uniques liés à un type de matériel
-    Utilisée pour alimenter le filtre par utilisateur
+    API to retrieve the list of unique users associated with a hardware type
+    Used to populate the user filter
     """
     try:
-        # Vérifier que le type de matériel est valide
+        # Verify that the equipment type is valid
         model = get_model_by_type(material_type)
         if not model:
             return jsonify({
                 'status': 'error',
-                'message': f'Type de matériel invalide: {material_type}',
+                'message': f'Invalid equipment type: {material_type}',
                 'users': []
             }), 400
 
-        # Récupérer tous les utilisateurs uniques, non vides et non supprimés
+        # Retrieve all unique, non-empty, and non-deleted users
         users_query = db.session.query(model.Username).filter(
             model.is_delete == False,
             model.Username.isnot(None),
             model.Username != ''
         ).distinct().order_by(model.Username.asc()).all()
 
-        # Extraire les noms des utilisateurs
+        # Extract user names
         users = [user[0] for user in users_query if user[0]]
 
         return jsonify({
@@ -2297,7 +2303,7 @@ def api_search_material_users(material_type):
     except Exception as e:
         return jsonify({
             'status': 'error',
-            'message': f'Erreur lors de la récupération des utilisateurs : {str(e)}',
+            'message': f'Error retrieving users : {str(e)}',
             'users': []
         }), 500
 
@@ -2307,31 +2313,31 @@ def api_search_material_users(material_type):
 @roles_accepted('gestionnaire', 'lecteur')
 def api_material_statistics(material_type):
     """
-    API pour récupérer les statistiques d'un type de matériel
+    API to retrieve statistics for a type of hardware
     """
     try:
-        # Vérifier que le type de matériel est valide
+        # Verify that the equipment type is valid
         model = get_model_by_type(material_type)
         if not model:
             return jsonify({
                 'status': 'error',
-                'message': f'Type de matériel invalide: {material_type}',
+                'message': f'Invalid equipment type: {material_type}',
                 'statistics': {}
             }), 400
 
-        # Calculer les statistiques
+        # Calculate the statistics
         total_count = model.query.filter_by(is_delete=False).count()
         linked_count = model.query.filter_by(is_delete=False, is_linked=True).count()
         unlinked_count = total_count - linked_count
 
-        # Compter les utilisateurs uniques
+        # Count unique users
         unique_users_query = db.session.query(model.Username).filter(
             model.is_delete == False,
             model.Username.isnot(None),
             model.Username != ''
         ).distinct().count()
 
-        # Statistiques par utilisateur (top 10)
+        # Statistics per user (top 10)
         user_stats_query = db.session.query(
             model.Username,
             db.func.count(model.id).label('count')
@@ -2360,43 +2366,42 @@ def api_material_statistics(material_type):
     except Exception as e:
         return jsonify({
             'status': 'error',
-            'message': f'Erreur lors du calcul des statistiques : {str(e)}',
+            'message': f'Error in calculating statistics : {str(e)}',
             'statistics': {}
         }), 500
 
 
-# Route alternative pour l'autocomplétion du matériel
 @app.route('/api/autocomplete_materials/<material_type>')
 @login_required
 @roles_accepted('gestionnaire', 'lecteur')
 def api_autocomplete_materials(material_type):
     """
-    API d'autocomplétion pour le matériel
-    Retourne des suggestions basées sur les premiers caractères tapés
-    Optimisée pour des réponses rapides
+    Hardware autocomplete API
+    Returns suggestions based on the first few characters typed
+    Optimized for fast responses
     """
     try:
-        # Vérifier que le type de matériel est valide
+        # Verify that the equipment type is valid
         model = get_model_by_type(material_type)
         if not model:
             return jsonify({
                 'status': 'error',
-                'message': f'Type de matériel invalide: {material_type}',
+                'message': f'Invalid equipment type: {material_type}',
                 'suggestions': []
             }), 400
 
         search_term = request.args.get('q', '').strip()
-        limit = int(request.args.get('limit', 15))  # Limiter les suggestions
+        limit = int(request.args.get('limit', 15))  # Limit suggestions
 
-        if len(search_term) < 3:  # Minimum 3 caractères pour l'autocomplétion
+        if len(search_term) < 3:  # Minimum 3 characters for autocomplete
             return jsonify({
                 'status': 'success',
                 'suggestions': []
             })
 
-        search_pattern = f"{search_term}%"  # Recherche au début des mots
+        search_pattern = f"{search_term}%"  # Search at the beginning of words
 
-        # Recherche optimisée pour l'autocomplétion
+        # Search optimized for autocomplete
         suggestions = db.session.query(
             model.id,
             model.name,
@@ -2416,11 +2421,11 @@ def api_autocomplete_materials(material_type):
             model.name.asc()
         ).limit(limit).all()
 
-        # Formater les suggestions
+        # Format suggestions
         suggestions_data = []
         for suggestion in suggestions:
-            # Créer un label descriptif
-            label_parts = [suggestion.name or 'Sans nom']
+            # Create a descriptive label
+            label_parts = [suggestion.name or 'Without name']
             if suggestion.serial:
                 label_parts.append(f"S/N: {suggestion.serial}")
             if suggestion.otherserial:
@@ -2453,33 +2458,33 @@ def api_autocomplete_materials(material_type):
         }), 500
 
 
-# Route pour la recherche avancée de matériel avec filtres multiples
+# Route for advanced hardware search with multiple filters
 @app.route('/api/advanced_search_materials/<material_type>')
 @login_required
 @roles_accepted('gestionnaire', 'lecteur')
 def api_advanced_search_materials(material_type):
     """
-    API pour recherche avancée de matériel avec filtres multiples
-    Paramètres supportés:
-    - q: terme de recherche
+    API for advanced hardware search with multiple filters
+    Supported parameters:
+    - q: search term
     - status: linked/unlinked
-    - user: nom d'utilisateur
-    - date_from: date de création depuis (YYYY-MM-DD)
-    - date_to: date de création jusqu'à (YYYY-MM-DD)
+    - user: username
+    - date_from: creation date from (YYYY-MM-DD)
+    - date_to: creation date up to (YYYY-MM-DD)
     - sort_by: name/serial/date_mod/username
     - sort_order: asc/desc
     """
     try:
-        # Vérifier que le type de matériel est valide
+        # Verify that the equipment type is valid
         model = get_model_by_type(material_type)
         if not model:
             return jsonify({
                 'status': 'error',
-                'message': f'Type de matériel invalide: {material_type}',
+                'message': f'Invalid equipment type: {material_type}',
                 'materials': []
             }), 400
 
-        # Récupérer les paramètres de recherche
+        # Retrieve search parameters
         search_term = request.args.get('q', '').strip()
         status_filter = request.args.get('status', '').strip()
         user_filter = request.args.get('user', '').strip()
@@ -2490,10 +2495,10 @@ def api_advanced_search_materials(material_type):
         page = int(request.args.get('page', 1))
         per_page = int(request.args.get('per_page', 50))
 
-        # Construire la requête de base
+        # Build the basic query
         query = model.query.filter(model.is_delete == False)
 
-        # Appliquer le filtre de recherche textuelle
+        # Apply the text search filter
         if search_term:
             search_pattern = f"%{search_term}%"
             query = query.filter(
@@ -2505,24 +2510,24 @@ def api_advanced_search_materials(material_type):
                 )
             )
 
-        # Appliquer le filtre de statut
+        # Apply the status filter
         if status_filter == 'linked':
             query = query.filter(model.is_linked == True)
         elif status_filter == 'unlinked':
             query = query.filter(model.is_linked == False)
 
-        # Appliquer le filtre d'utilisateur
+        # Apply user filter
         if user_filter:
             query = query.filter(model.Username.ilike(f"%{user_filter}%"))
 
-        # Appliquer les filtres de date
+        # Apply date filters
         if date_from:
             try:
                 from datetime import datetime
                 date_from_obj = datetime.strptime(date_from, '%Y-%m-%d')
                 query = query.filter(model.date_create >= date_from_obj)
             except ValueError:
-                pass  # Ignorer les dates invalides
+                pass  # Ignore invalid dates
 
         if date_to:
             try:
@@ -2530,23 +2535,23 @@ def api_advanced_search_materials(material_type):
                 date_to_obj = datetime.strptime(date_to, '%Y-%m-%d')
                 query = query.filter(model.date_create <= date_to_obj)
             except ValueError:
-                pass  # Ignorer les dates invalides
+                pass  # Ignore invalid dates
 
-        # Appliquer le tri
+        # Apply the sorting
         sort_column = getattr(model, sort_by, model.name)
         if sort_order.lower() == 'desc':
             query = query.order_by(sort_column.desc())
         else:
             query = query.order_by(sort_column.asc())
 
-        # Appliquer la pagination
+        # Apply pagination
         materials = query.paginate(
             page=page,
             per_page=per_page,
             error_out=False
         )
 
-        # Convertir les résultats en JSON
+        # Convert the results to JSON
         materials_data = []
         for material in materials.items:
             materials_data.append({
@@ -2587,39 +2592,39 @@ def api_advanced_search_materials(material_type):
     except Exception as e:
         return jsonify({
             'status': 'error',
-            'message': f'Erreur lors de la recherche avancée : {str(e)}',
+            'message': f'Error during search avancée : {str(e)}',
             'materials': []
         }), 500
 
 
-# Route pour l'export des résultats de recherche de matériel
+# Route for exporting hardware search results
 @app.route('/api/export_materials/<material_type>')
 @login_required
 @roles_accepted('gestionnaire', 'lecteur')
 def api_export_materials(material_type):
     """
-    API pour exporter les résultats de recherche de matériel en CSV
-    Utilise les mêmes paramètres que la recherche avancée
+    API for exporting hardware search results to CSV
+    Uses the same parameters as the advanced search
     """
     try:
         import csv
         import io
         from flask import make_response
 
-        # Vérifier que le type de matériel est valide
+        # Verify that the equipment type is valid
         model = get_model_by_type(material_type)
         if not model:
             return jsonify({
                 'status': 'error',
-                'message': f'Type de matériel invalide: {material_type}'
+                'message': f'Invalid equipment type: {material_type}'
             }), 400
 
-        # Récupérer les paramètres de recherche (mêmes que pour la recherche avancée)
+        # Retrieve search parameters (same as for advanced search)
         search_term = request.args.get('q', '').strip()
         status_filter = request.args.get('status', '').strip()
         user_filter = request.args.get('user', '').strip()
 
-        # Construire la requête (sans pagination pour l'export)
+        # Build the query (without pagination for export)
         query = model.query.filter(model.is_delete == False)
 
         if search_term:
@@ -2641,14 +2646,14 @@ def api_export_materials(material_type):
         if user_filter:
             query = query.filter(model.Username.ilike(f"%{user_filter}%"))
 
-        # Ordonner par nom
+        # Sort by name
         materials = query.order_by(model.name.asc()).all()
 
-        # Créer le fichier CSV
+        # Create the CSV file
         output = io.StringIO()
         writer = csv.writer(output)
 
-        # En-têtes du CSV
+        # CSV Headers
         headers = [
             'ID', 'Nom', 'Numéro de série', 'Numéro d\'inventaire',
             'Utilisateur', 'Statut', 'Date de création', 'Dernière modification',
@@ -2670,7 +2675,7 @@ def api_export_materials(material_type):
                 material.app_management_user or ''
             ])
 
-        # Préparer la réponse
+        # Prepare the answer
         output.seek(0)
         response = make_response(output.getvalue())
         response.headers['Content-Type'] = 'text/csv'
@@ -2681,15 +2686,13 @@ def api_export_materials(material_type):
     except Exception as e:
         return jsonify({
             'status': 'error',
-            'message': f'Erreur lors de l\'export : {str(e)}'
+            'message': f'Error during export : {str(e)}'
         }), 500
 
 
-# ---- Fonctions génériques pour la gestion du matériel ----
-
 def get_model_by_type(material_type):
     """
-    Retourne le modèle en fonction du type de matériel
+    Returns the model based on the type of equipment
     """
     models = {
         'computers': Computers,
@@ -2705,18 +2708,18 @@ def get_model_by_type(material_type):
 @roles_accepted('gestionnaire', 'lecteur')
 def material_list(material_type):
     """
-    Affiche la liste du matériel en fonction du type
+    Displays the list of equipment based on type
     """
-    # Vérifier si le type de matériel est valide
+    # Check if the equipment type is valid
     model = get_model_by_type(material_type)
     if not model:
-        flash(f"Type de matériel '{material_type}' invalide.", 'danger')
+        flash(f"Type of equipment '{material_type}' invalid.", 'danger')
         return redirect(url_for('dashboard'))
 
-    # Récupérer tous les éléments non supprimés
+    # Recover all undeleted items
     items = model.query.filter_by(is_delete=False).all()
 
-    # Titre et description pour l'affichage
+    # Title and description for display
     titles = {
         'computers': 'Ordinateurs',
         'monitors': 'Moniteurs',
@@ -2735,30 +2738,30 @@ def material_list(material_type):
 @roles_required('gestionnaire')
 def material_create(material_type):
     """
-    Création d'un nouveau matériel en fonction du type
+    Creation of new equipment based on the type
     """
-    # Vérifier si le type de matériel est valide
+    # Check if the equipment type is valid
     model = get_model_by_type(material_type)
     if not model:
-        flash(f"Type de matériel '{material_type}' invalide.", 'danger')
+        flash(f"Type of equipment '{material_type}' invalid.", 'danger')
         return redirect(url_for('dashboard'))
 
     if request.method == 'POST':
         try:
-            # Récupération des données du formulaire
+            # Retrieving form data
             name = request.form.get('name')
             serial = request.form.get('serial')
             otherserial = request.form.get('otherserial')
             username = request.form.get('username')
 
-            # Vérifier si le matériel existe déjà (par numéro de série)
+            # Check if the equipment already exists (by serial number)
             if serial:
                 existing_item = model.query.filter_by(serial=serial, is_delete=False).first()
                 if existing_item:
-                    flash(f"Un matériel avec le numéro de série '{serial}' existe déjà.", 'warning')
+                    flash(f"A device with the serial number '{serial}' already exists.", 'warning')
                     return redirect(url_for('material_create', material_type=material_type))
 
-            # Création du nouveau matériel
+            # Creation of the new equipment
             new_item = model(
                 name=name,
                 serial=serial,
@@ -2770,15 +2773,16 @@ def material_create(material_type):
             db.session.add(new_item)
             db.session.commit()
 
-            flash(f"Le matériel '{name}' a été créé avec succès.", 'success')
+            flash(f"The material '{name}' was successfully created.", 'success')
             return redirect(url_for('material_list', material_type=material_type))
 
         except Exception as e:
             db.session.rollback()
-            flash(f"Erreur lors de la création du matériel : {str(e)}", 'danger')
+            app.logger.error(f"Error creating material: {e}")
+            flash("Error creating material : please contact the administrator", 'danger')
             return redirect(url_for('material_create', material_type=material_type))
 
-    # Titres pour l'affichage
+    # Titles for display
     titles = {
         'computers': 'Créer un ordinateur',
         'monitors': 'Créer un moniteur',
@@ -2786,7 +2790,7 @@ def material_create(material_type):
         'phones': 'Créer un téléphone'
     }
 
-    # GET : affichage du formulaire
+    # GET: display of the form
     return render_template('material/create.html',
                            material_type=material_type,
                            title=titles.get(material_type, 'Créer un matériel'))
@@ -2797,45 +2801,46 @@ def material_create(material_type):
 @roles_required('gestionnaire')
 def material_edit(material_type, item_id):
     """
-    Modification d'un matériel en fonction du type
+    Modification of equipment based on type
     """
-    # Vérifier si le type de matériel est valide
+    # Check if the equipment type is valid
     model = get_model_by_type(material_type)
     if not model:
-        flash(f"Type de matériel '{material_type}' invalide.", 'danger')
+        flash(f"Type of equipment '{material_type}' invalid.", 'danger')
         return redirect(url_for('dashboard'))
 
-    # Récupérer l'élément à modifier
+    # Retrieve the element to modify
     item = model.query.get_or_404(item_id)
 
-    # Vérifier si l'élément est dans la corbeille
+    # Check if the item is in the trash
     if item.is_delete:
-        flash("Ce matériel est dans la corbeille et ne peut pas être modifié.", 'warning')
+        flash("This material is in the trash and cannot be modified..", 'warning')
         return redirect(url_for('material_list', material_type=material_type))
 
     if request.method == 'POST':
         try:
-            # Mise à jour des données
+            # Data update
             item.name = request.form.get('name')
             item.serial = request.form.get('serial')
             item.otherserial = request.form.get('otherserial')
             item.Username = request.form.get('username')
 
-            # Mettre à jour la date de modification et l'utilisateur qui a fait la modification
+            # Update the modification date and the user who made the change
             item.date_mod = datetime.now(timezone.utc)
             item.app_management_user = current_user.user
 
             db.session.commit()
 
-            flash(f"Le matériel '{item.name}' a été modifié avec succès.", 'success')
+            flash(f"The item '{item.name}' has been successfully modified.", 'success')
             return redirect(url_for('material_list', material_type=material_type))
 
         except Exception as e:
             db.session.rollback()
-            flash(f"Erreur lors de la modification du matériel : {str(e)}", 'danger')
+            app.logger.error(f"Error  during item modification: {e}")
+            flash("Error during item modification : please contact the administrator", 'danger')
             return redirect(url_for('material_edit', material_type=material_type, item_id=item_id))
 
-    # Titres pour l'affichage
+    # Titles for display
     titles = {
         'computers': 'Modifier un ordinateur',
         'monitors': 'Modifier un moniteur',
@@ -2843,7 +2848,7 @@ def material_edit(material_type, item_id):
         'phones': 'Modifier un téléphone'
     }
 
-    # GET : affichage du formulaire pré-rempli
+    # GET : display of the form pré-rempli
     return render_template('material/edit.html',
                            item=item,
                            material_type=material_type,
@@ -2857,26 +2862,27 @@ def material_delete(material_type, item_id):
     """
     Placer un matériel dans la corbeille (soft delete)
     """
-    # Vérifier si le type de matériel est valide
+    # Check if the equipment type is valid
     model = get_model_by_type(material_type)
     if not model:
-        flash(f"Type de matériel '{material_type}' invalide.", 'danger')
+        flash(f"Type of equipment '{material_type}' invalid.", 'danger')
         return redirect(url_for('dashboard'))
 
     try:
         item = model.query.get_or_404(item_id)
 
-        # Soft delete : mettre à jour les champs is_delete et date_delete
+        # Soft delete: update the is_delete and date_delete fields
         item.is_delete = True
         item.date_delete = datetime.now(timezone.utc)
         item.app_management_user = current_user.user
 
         db.session.commit()
 
-        flash(f"Le matériel '{item.name}' a été placé dans la corbeille.", 'success')
+        flash(f"The item '{item.name}' has been placed in the trashe.", 'success')
     except Exception as e:
         db.session.rollback()
-        flash(f"Erreur lors de la suppression du matériel : {str(e)}", 'danger')
+        app.logger.error(f"Error deleting material: {e}")
+        flash("Error deleting material : please contact the administrator", 'danger')
 
     return redirect(url_for('material_list', material_type=material_type))
 
@@ -2886,28 +2892,29 @@ def material_delete(material_type, item_id):
 @roles_required('gestionnaire')
 def material_restore(material_type, item_id):
     """
-    Restaurer un matériel depuis la corbeille
+    Restore equipment from the recycle bin
     """
-    # Vérifier si le type de matériel est valide
+    # Check if the equipment type is valid
     model = get_model_by_type(material_type)
     if not model:
-        flash(f"Type de matériel '{material_type}' invalide.", 'danger')
+        flash(f"Type of equipment '{material_type}' invalid.", 'danger')
         return redirect(url_for('dashboard'))
 
     try:
         item = model.query.get_or_404(item_id)
 
-        # Restaurer l'élément
+        # Restore the item
         item.is_delete = False
         item.date_delete = None
         item.app_management_user = current_user.user
 
         db.session.commit()
 
-        flash(f"Le matériel '{item.name}' a été restauré.", 'success')
+        flash(f"The item '{item.name}' has been restored.", 'success')
     except Exception as e:
         db.session.rollback()
-        flash(f"Erreur lors de la restauration du matériel : {str(e)}", 'danger')
+        app.logger.error(f"Error during item restoration: {e}")
+        flash("Error during item restoration : please contact the administrator", 'danger')
 
     return redirect(url_for('material_trash', material_type=material_type))
 
@@ -2917,18 +2924,18 @@ def material_restore(material_type, item_id):
 @roles_accepted('gestionnaire', 'lecteur')
 def material_trash(material_type):
     """
-    Affiche la liste du matériel dans la corbeille
+    Displays the list of items in the bin
     """
-    # Vérifier si le type de matériel est valide
+    # Check if the equipment type is valid
     model = get_model_by_type(material_type)
     if not model:
-        flash(f"Type de matériel '{material_type}' invalide.", 'danger')
+        flash(f"Type of equipment '{material_type}' invalid.", 'danger')
         return redirect(url_for('dashboard'))
 
-    # Récupérer tous les éléments supprimés
+    # Recover all deleted items
     items = model.query.filter_by(is_delete=True).all()
 
-    # Titres pour l'affichage
+    # Titles for display
     titles = {
         'computers': 'Corbeille - Ordinateurs',
         'monitors': 'Corbeille - Moniteurs',
@@ -2947,23 +2954,23 @@ def material_trash(material_type):
 @roles_required('gestionnaire')
 def material_purge(material_type, item_id):
     """
-    Suppression définitive d'un matériel (hard delete)
+    Permanent removal of a device (hard delete)
     """
-    # Vérifier si le type de matériel est valide
+    # Check if the equipment type is valid
     model = get_model_by_type(material_type)
     if not model:
-        flash(f"Type de matériel '{material_type}' invalide.", 'danger')
+        flash(f"Type of equipment '{material_type}' invalid.", 'danger')
         return redirect(url_for('dashboard'))
 
     try:
         item = model.query.get_or_404(item_id)
 
-        # Vérifier si l'élément est dans la corbeille
+        # Check if the item is in the trash
         if not item.is_delete:
-            flash("Ce matériel n'est pas dans la corbeille et ne peut pas être supprimé définitivement.", 'warning')
+            flash("This material is not in the recycle bin and cannot be permanently deleted..", 'warning')
             return redirect(url_for('material_list', material_type=material_type))
 
-        # Supprimer les entrées de l'historique associées à ce matériel
+        # Delete history entries associated with this hardware
         if material_type == 'computers':
             History.query.filter_by(computers_id=item_id).delete()
         elif material_type == 'monitors':
@@ -2973,59 +2980,60 @@ def material_purge(material_type, item_id):
         elif material_type == 'phones':
             History.query.filter_by(phones_id=item_id).delete()
 
-        # Suppression définitive
+        # Permanent deletion
         db.session.delete(item)
         db.session.commit()
 
-        flash(f"Le matériel a été supprimé définitivement.", 'success')
+        flash(f"The item has been permanently removed.", 'success')
     except Exception as e:
         db.session.rollback()
-        flash(f"Erreur lors de la suppression définitive du matériel : {str(e)}", 'danger')
+        app.logger.error(f"Error  during permanent deletion of the item: {e}")
+        flash("Error during permanent deletion of the item : please contact the administrator", 'danger')
 
     return redirect(url_for('material_trash', material_type=material_type))
 
 
-# Route API optimisée pour la recherche d'utilisateurs dans le workflow
+# Optimized API route for user search within the workflow
 @app.route('/api/workflow/search_users')
 @login_required
 @roles_required('gestionnaire')
 def api_workflow_search_users():
     """
-    API optimisée pour la recherche d'utilisateurs dans le workflow
-    Limite les résultats à 10 maximum et recherche uniquement dans les champs pertinents
+    API optimized for searching users in the workflow.
+    Limits results to a maximum of 10 and searches only within relevant fields.
     """
     try:
-        # Récupérer le terme de recherche depuis les paramètres GET
+        # Retrieve the search term from the GET parameters
         search_term = request.args.get('q', '').strip()
 
-        # Vérifier la longueur minimale
+        # Check the minimum length
         if len(search_term) < 4:
             return jsonify({
                 'status': 'success',
                 'users': [],
-                'message': 'Minimum 4 caractères requis'
+                'message': 'Minimum 4 characters required'
             })
 
-        # Recherche optimisée pour le workflow (uniquement dans GivenName, Surname, Username)
+        # Optimized search for workflow (only in GivenName, Surname, Username)
         search_pattern = f"%{search_term}%"
 
         users = Users.query.filter(
             Users.is_delete == False
         ).filter(
-            # Rechercher uniquement dans les champs demandés
+            # Search only in the requested fields
             db.or_(
                 Users.GivenName.ilike(search_pattern),
                 Users.Surname.ilike(search_pattern),
                 Users.Username.ilike(search_pattern)
             )
         ).order_by(
-            # Priorité : correspondance exacte dans Username, puis ordre alphabétique
+            # Priority: exact match in Username, then alphabetical order
             Users.Username.ilike(f"{search_term}%").desc(),
             Users.Surname.asc(),
             Users.GivenName.asc()
-        ).limit(10).all()  # Limiter strictement à 10 résultats
+        ).limit(10).all()  # Strictly limit to 10 results
 
-        # Convertir les utilisateurs en format JSON
+        # Convert users to JSON format
         users_data = []
         for user in users:
             users_data.append({
@@ -3048,61 +3056,61 @@ def api_workflow_search_users():
     except Exception as e:
         return jsonify({
             'status': 'error',
-            'message': f'Erreur lors de la recherche : {str(e)}',
+            'message': f'Error during search : {str(e)}',
             'users': []
         }), 500
 
 
-# Route API optimisée pour la recherche de matériel dans le workflow
+# Optimized API route for hardware search in the workflow
 @app.route('/api/workflow/search_materials')
 @login_required
 @roles_required('gestionnaire')
 def api_workflow_search_materials():
     """
-    API optimisée pour la recherche de matériel dans le workflow
-    Limite les résultats à 10 maximum et recherche uniquement dans name, serial, otherserial
+    API optimized for hardware search within the workflow.
+    Limits results to a maximum of 10 and searches only in name, serial, and other serial numbers.
     """
     try:
-        # Récupérer les paramètres de recherche
+        # Retrieve search parameters
         material_type = request.args.get('material_type', '').strip()
         search_term = request.args.get('q', '').strip()
 
-        # Vérifier que le type de matériel est valide
+        # Verify that the equipment type is valid
         model = get_model_by_type(material_type)
         if not model:
             return jsonify({
                 'status': 'error',
-                'message': f'Type de matériel invalide: {material_type}',
+                'message': f'Invalid equipment type: {material_type}',
                 'materials': []
             }), 400
 
-        # Vérifier la longueur minimale
+        # Check the minimum length
         if len(search_term) < 4:
             return jsonify({
                 'status': 'success',
                 'materials': [],
-                'message': 'Minimum 4 caractères requis'
+                'message': 'Minimum 4 characters required'
             })
 
-        # Recherche optimisée pour le workflow (uniquement dans name, serial, otherserial)
+        # Optimized search for workflow (only in name, serial, otherserial)
         search_pattern = f"%{search_term}%"
 
         materials = model.query.filter(
             model.is_delete == False
         ).filter(
-            # Rechercher uniquement dans les champs demandés
+            # Search only in the requested fields
             db.or_(
                 model.name.ilike(search_pattern),
                 model.serial.ilike(search_pattern),
                 model.otherserial.ilike(search_pattern)
             )
         ).order_by(
-            # Priorité : correspondance exacte dans name, puis ordre alphabétique
+            # Priority: exact match in name, then alphabetical order
             model.name.ilike(f"{search_term}%").desc(),
             model.name.asc()
-        ).limit(10).all()  # Limiter strictement à 10 résultats
+        ).limit(10).all()  # Strictly limit to 10 results
 
-        # Convertir le matériel en format JSON
+        # Convert the material to JSON format
         materials_data = []
         for material in materials:
             materials_data.append({
@@ -3125,37 +3133,37 @@ def api_workflow_search_materials():
     except Exception as e:
         return jsonify({
             'status': 'error',
-            'message': f'Erreur lors de la recherche : {str(e)}',
+            'message': f'Error during search : {str(e)}',
             'materials': []
         }), 500
 
 
-# Route API pour récupérer le matériel lié à un utilisateur spécifique
+# API route to retrieve hardware associated with a specific user
 @app.route('/api/workflow/user_linked_materials/<int:user_id>')
 @login_required
 @roles_required('gestionnaire')
 def api_user_linked_materials(user_id):
     """
-    API pour récupérer tout le matériel lié à un utilisateur spécifique
-    Utilisée dans l'étape de déliance
+    API to retrieve all material related to a specific user
+    Used in the unlink step
     """
     try:
-        # Vérifier que l'utilisateur existe
+        # Verify that the user exists
         user = Users.query.get_or_404(user_id)
 
-        # Récupérer le type de matériel demandé
+        # Retrieve the requested type of equipment
         material_type = request.args.get('material_type', '').strip()
 
-        # Vérifier que le type de matériel est valide
+        # Verify that the equipment type is valid
         model = get_model_by_type(material_type)
         if not model:
             return jsonify({
                 'status': 'error',
-                'message': f'Type de matériel invalide: {material_type}',
+                'message': f'Invalid equipment type: {material_type}',
                 'materials': []
             }), 400
 
-        # Rechercher le matériel lié à cet utilisateur
+        # Search for material related to this user
         materials = model.query.filter(
             model.is_delete == False,
             model.is_linked == True,
@@ -3164,7 +3172,7 @@ def api_user_linked_materials(user_id):
             model.name.asc()
         ).all()
 
-        # Convertir le matériel en format JSON
+        # Convert the material to JSON format
         materials_data = []
         for material in materials:
             materials_data.append({
@@ -3189,280 +3197,33 @@ def api_user_linked_materials(user_id):
     except Exception as e:
         return jsonify({
             'status': 'error',
-            'message': f'Erreur lors de la récupération : {str(e)}',
+            'message': f'Error during retrieval : {str(e)}',
             'materials': []
         }), 500
 
 
-
-
-@app.route('/api/sync_tables', methods=['POST'])
-@login_required
-@roles_required('administrateur')
-def sync_tables():
+def _quote(identifier, driver='mysql'):
     """
-    Route API pour synchroniser les données depuis les bases externes
-    et exécuter les commandes SQL post-import si le fichier post.sql existe
+    Return a safely-quoted SQL identifier for the given driver.
+
+    Args:
+        identify (str): Column or table name to quote.
+        driver (str): Database driver type. 'mysql' uses backticks,
+        'postgresql' uses double-quotes. Defaults to 'mysql'.
+
+    Returns:
+        str: Quoted identifier string.
+
+    Example:
+        ('my_table', 'mysql')
+        '`my_table`'
+        ('my_table', 'postgresql')
+        '"my_table"'
     """
-    try:
-        # Importer le gestionnaire de synchronisation
-        from sync_manager import SyncManager
-
-        # Chemin vers le fichier bdd.json
-        json_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config', 'bdd.json')
-
-        # Créer et exécuter le gestionnaire de synchronisation
-        sync_manager = SyncManager(json_path, current_user.user)
-        results = sync_manager.run_sync()
-
-        # Exécuter les commandes SQL post-import si le fichier post.sql existe
-        post_sql_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config', 'post.sql')
-
-        if os.path.exists(post_sql_path):
-            # Lire le fichier post.sql
-            with open(post_sql_path, 'r', encoding='utf-8') as f:
-                post_sql = f.read()
-
-            # Exécuter les commandes SQL
-            try:
-                # Établir une connexion directe à la base de données
-                connection = mysql.connector.connect(
-                    host=Config.MYSQL_HOST,
-                    user=Config.MYSQL_USER,
-                    password=Config.MYSQL_PASSWORD,
-                    database=Config.MYSQL_DB
-                )
-
-                cursor = connection.cursor()
-
-                # Diviser le fichier en commandes SQL individuelles
-                sql_commands = post_sql.split(';')
-                executed_commands = 0
-
-                for command in sql_commands:
-                    # Ignorer les commandes vides
-                    command = command.strip()
-                    if command:
-                        cursor.execute(command)
-                        executed_commands += 1
-
-                connection.commit()
-                cursor.close()
-                connection.close()
-
-                results['post_sql'] = {
-                    'status': 'success',
-                    'message': f"Exécuté {executed_commands} commandes SQL post-import",
-                    'commands': executed_commands
-                }
-
-            except Exception as e:
-                results['post_sql'] = {
-                    'status': 'error',
-                    'message': f"Erreur lors de l'exécution des commandes SQL post-import: {str(e)}",
-                    'commands': 0
-                }
-        else:
-            results['post_sql'] = {
-                'status': 'warning',
-                'message': "Fichier post.sql non trouvé, aucune commande post-import exécutée",
-                'commands': 0
-            }
-
-        return jsonify(results)
-
-    except Exception as e:
-        return jsonify({
-            'status': 'error',
-            'message': f"Erreur lors de la synchronisation: {str(e)}",
-            'details': {}
-        })
-
-
-# Ajoutez ces fonctions de support
-
-def sync_users(config, admin_user):
-    """Synchronise les utilisateurs depuis la base externe"""
-    try:
-        # Configuration de la base externe
-        ext_config = config['users']['connect']
-        field_mappings = config['users']['fields']
-
-        # Connexion à la base externe
-        ext_conn = mysql.connector.connect(
-            host=ext_config['host'],
-            user=ext_config['user'],
-            password=ext_config['password'],
-            database=ext_config['db']
-        )
-
-        ext_cursor = ext_conn.cursor(dictionary=True)
-
-        # Construction de la requête
-        ext_fields = []
-        for app_field, ext_field in field_mappings.items():
-            ext_fields.append(f"`{ext_field}` as `{app_field}`")
-
-        query = f"SELECT {', '.join(ext_fields)} FROM `{ext_config['table']}`"
-        ext_cursor.execute(query)
-        external_users = ext_cursor.fetchall()
-
-        # Récupération des utilisateurs existants
-        existing_users = {}
-        users_query = Users.query.filter_by(is_delete=False).all()
-        for user in users_query:
-            existing_users[user.Username] = user
-
-        # Compteurs
-        created = 0
-        updated = 0
-        now = datetime.now(timezone.utc)
-
-        # Traitement des utilisateurs
-        for ext_user in external_users:
-            if not ext_user.get('Username'):
-                continue  # Ignorer les entrées sans Username
-
-            username = ext_user['Username']
-
-            if username in existing_users:
-                # Mise à jour
-                user = existing_users[username]
-                user.GivenName = ext_user.get('GivenName', user.GivenName)
-                user.Surname = ext_user.get('Surname', user.Surname)
-                user.Title = ext_user.get('Title', user.Title)
-                user.Department = ext_user.get('Department', user.Department)
-                user.Site = ext_user.get('Site', user.Site)
-                user.date_mod = now
-                user.app_management_user = admin_user
-                updated += 1
-            else:
-                # Création
-                new_user = Users(
-                    GivenName=ext_user.get('GivenName', ''),
-                    Surname=ext_user.get('Surname', ''),
-                    Username=username,
-                    Title=ext_user.get('Title', ''),
-                    Department=ext_user.get('Department', ''),
-                    Site=ext_user.get('Site', ''),
-                    date_create=now,
-                    date_mod=now,
-                    app_management_user=admin_user
-                )
-                db.session.add(new_user)
-                created += 1
-
-        # Validation des changements
-        db.session.commit()
-        ext_conn.close()
-
-        return {
-            'created': created,
-            'updated': updated,
-            'total': len(external_users)
-        }
-
-    except Exception as e:
-        db.session.rollback()
-        raise Exception(f"Erreur lors de la synchronisation des utilisateurs: {str(e)}")
-
-
-def sync_material(config, material_type, admin_user):
-    """Synchronise le matériel spécifié depuis la base externe"""
-    try:
-        # Sélection du modèle approprié
-        model_map = {
-            'computers': Computers,
-            'monitors': Monitors,
-            'peripherals': Peripherals,
-            'phones': Phones
-        }
-
-        if material_type not in model_map:
-            return {'error': f"Type de matériel non reconnu: {material_type}"}
-
-        model = model_map[material_type]
-
-        # Configuration de la base externe
-        ext_config = config[material_type]['connect']
-        field_mappings = config[material_type]['fields']
-
-        # Connexion à la base externe
-        ext_conn = mysql.connector.connect(
-            host=ext_config['host'],
-            user=ext_config['user'],
-            password=ext_config['password'],
-            database=ext_config['db']
-        )
-
-        ext_cursor = ext_conn.cursor(dictionary=True)
-
-        # Construction de la requête
-        ext_fields = []
-        for app_field, ext_field in field_mappings.items():
-            ext_fields.append(f"`{ext_field}` as `{app_field}`")
-
-        query = f"SELECT {', '.join(ext_fields)} FROM `{ext_config['table']}`"
-        ext_cursor.execute(query)
-        external_items = ext_cursor.fetchall()
-
-        # Récupération des éléments existants
-        existing_items = {}
-        items_query = model.query.filter_by(is_delete=False).all()
-        for item in items_query:
-            if item.serial:  # Ignorer les entrées sans numéro de série
-                existing_items[item.serial] = item
-
-        # Compteurs
-        created = 0
-        updated = 0
-        now = datetime.now(timezone.utc)
-
-        # Traitement des éléments
-        for ext_item in external_items:
-            # Vérification des champs obligatoires
-            if not ext_item.get('name'):
-                continue
-
-            serial = ext_item.get('serial')
-            if not serial:
-                # Générer un numéro de série automatique pour les items sans serial
-                serial = f"AUTO_{material_type}_{datetime.now().strftime('%Y%m%d%H%M%S')}_{created + updated}"
-
-            if serial in existing_items:
-                # Mise à jour
-                item = existing_items[serial]
-                item.name = ext_item.get('name')
-                item.otherserial = ext_item.get('otherserial', item.otherserial)
-                item.date_mod = now
-                item.app_management_user = admin_user
-                updated += 1
-            else:
-                # Création
-                new_item = model(
-                    name=ext_item.get('name'),
-                    serial=serial,
-                    otherserial=ext_item.get('otherserial', ''),
-                    date_create=now,
-                    date_mod=now,
-                    app_management_user=admin_user
-                )
-                db.session.add(new_item)
-                created += 1
-
-        # Validation des changements
-        db.session.commit()
-        ext_conn.close()
-
-        return {
-            'created': created,
-            'updated': updated,
-            'total': len(external_items)
-        }
-
-    except Exception as e:
-        db.session.rollback()
-        raise Exception(f"Erreur lors de la synchronisation de {material_type}: {str(e)}")
+    if driver == 'postgresql':
+        return f'"{identifier}"'
+    # Default: MySQL / MariaDB style
+    return f'`{identifier}`'
 
 
 @app.route('/api/import_tables', methods=['POST'])
@@ -3470,67 +3231,63 @@ def sync_material(config, material_type, admin_user):
 @roles_required('administrateur')
 def import_tables():
     """
-    Route API pour importer les données depuis les bases externes
-    et exécuter les commandes SQL post-import si le fichier post.sql existe
+    API route to import data from external databases
+    and execute post-import SQL commands if the post.sql file exists
     """
     try:
-        # Importer le gestionnaire de synchronisation
+        # Import the synchronization manager
         from sync_manager import SyncManager
 
-        # Chemin vers le fichier bdd.json
+        # Path to the bdd.json file
         json_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config', 'bdd.json')
 
-        # Créer et exécuter le gestionnaire de synchronisation
+        # Path to the bdd.json file. Create and run the synchronization manager.
         sync_manager = SyncManager(json_path, current_user.user)
         results = sync_manager.run_sync()
 
-        # Exécuter les commandes SQL post-import si le fichier post.sql existe
+        # Execute the post-import SQL commands if the post.sql file exists.
         post_sql_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config', 'post.sql')
 
         if os.path.exists(post_sql_path):
-            # Lire le fichier post.sql
+            # Read the post.sql file
             with open(post_sql_path, 'r', encoding='utf-8') as f:
                 post_sql = f.read()
 
-            # Exécuter les commandes SQL
+            # Execute SQL commands
             try:
-                # Établir une connexion directe à la base de données
-                connection = mysql.connector.connect(
-                    host=app.config['MYSQL_HOST'],
-                    user=app.config['MYSQL_USER'],
-                    password=app.config['MYSQL_PASSWORD'],
-                    database=app.config['MYSQL_DB']
-                )
-
-                cursor = connection.cursor()
-
-                # Diviser le fichier en commandes SQL individuelles
+                # Split the SQL file into individual statements.
+                # Each statement is separated by a semicolon.
                 sql_commands = post_sql.split(';')
                 executed_commands = 0
 
-                for command in sql_commands:
-                    # Ignorer les commandes vides
-                    command = command.strip()
-                    if command:
-                        cursor.execute(command)
-                        executed_commands += 1
+                # Use SQLAlchemy's engine so no separate MySQL connection
+                # is needed — works with any database backend (PostgreSQL,
+                # MySQL, SQLite…).
+                with db.engine.connect() as conn:
+                    for command in sql_commands:
+                        # Skip empty statements (trailing semicolons, blank lines)
+                        command = command.strip()
+                        if command:
+                            # text() tells SQLAlchemy this is a raw SQL string
+                            conn.execute(text(command))
+                            executed_commands += 1
 
-                connection.commit()
-                cursor.close()
-                connection.close()
+                    # Commit all statements as a single transaction
+                    conn.commit()
 
                 results['post_sql'] = {
                     'status': 'success',
-                    'message': f"Exécuté {executed_commands} commandes SQL post-import",
+                    'message': f"Executed {executed_commands} post-import SQL commands",
                     'commands': executed_commands
                 }
 
             except Exception as e:
                 results['post_sql'] = {
                     'status': 'error',
-                    'message': f"Erreur lors de l'exécution des commandes SQL post-import: {str(e)}",
+                    'message': f"Error executing post-import SQL: {str(e)}",
                     'commands': 0
                 }
+
         else:
             results['post_sql'] = {
                 'status': 'warning',
@@ -3548,15 +3305,264 @@ def import_tables():
         })
 
 
-# Gestion des erreurs
+@app.route('/api/csv/template/<string:table_type>')
+@login_required
+@roles_required('administrateur')
+def csv_template_download(table_type):
+    """
+    Return a CSV template file for the requested table.
+
+    The file contains one header row and one example data row.
+    Auto-managed columns (date_create, date_mod, date_delete, is_delete,
+    is_linked, app_management_user) and the Username link column for material
+    tables are intentionally excluded — they are filled automatically on import.
+
+    Args:
+        table_type (str): One of computers | monitors | peripherals | phones | users.
+
+    Returns:
+        flask.Response: A CSV file as a download attachment, or 404 JSON if
+        the table_type is not recognised.
+    """
+    if table_type not in _TEMPLATE_COLUMNS:
+        return jsonify({'error': f'Unknown table type: {table_type}'}), 404
+
+    columns = _TEMPLATE_COLUMNS[table_type]
+    example = _TEMPLATE_EXAMPLES[table_type]
+
+    # Build CSV content in memory
+    output = io.StringIO()
+    writer = csv.DictWriter(output, fieldnames=columns)
+    writer.writeheader()
+    writer.writerow({col: example.get(col, '') for col in columns})
+
+    # utf-8-sig adds a BOM so Excel recognises the encoding automatically
+    csv_bytes = io.BytesIO(output.getvalue().encode('utf-8-sig'))
+
+    return send_file(
+        csv_bytes,
+        mimetype='text/csv',
+        as_attachment=True,
+        download_name=f'{table_type}_template.csv'
+    )
+
+
+@app.route('/api/csv/import', methods=['POST'])
+@login_required
+@roles_required('administrateur')
+def csv_import():
+    """
+    Import rows from a user-supplied CSV file into the target table.
+
+    Behaviour:
+      - Existing rows are never modified (non-destructive import).
+      - The whole file is scanned for duplicates BEFORE any insertion.
+        If at least one duplicate is found the entire import is aborted
+        and the offending rows are returned to the caller.
+        Duplicate key:
+          - material tables (computers / monitors / peripherals / phones): ``serial``
+          - users table: ``Username``
+      - Columns filled automatically (must NOT appear in the CSV):
+          date_create         → current UTC datetime
+          date_mod            → current UTC datetime
+          date_delete         → NULL
+          is_delete           → False
+          is_linked           → False  (material tables only)
+          app_management_user → current logged-in operator's ``user`` field
+          Username            → NULL / empty  (material tables — set via events)
+
+    Expected multipart/form-data fields:
+        table_type (str):  One of computers | monitors | peripherals | phones | users.
+        csv_file   (file): The CSV file to import.
+
+    Returns:
+        flask.Response: JSON object with keys:
+            success    (bool)
+            message    (str)
+            imported   (int)   — rows inserted (0 on failure)
+            duplicates (list)  — list of duplicate row dicts (empty on success)
+    """
+    # Validate inputs
+    table_type = request.form.get('table_type', '').strip().lower()
+    if table_type not in _TEMPLATE_COLUMNS:
+        return jsonify({
+            'success': False,
+            'message': f"Type de table inconnu : '{table_type}'.",
+            'imported': 0,
+            'duplicates': []
+        }), 400
+
+    if 'csv_file' not in request.files:
+        return jsonify({
+            'success': False,
+            'message': 'Aucun fichier fourni.',
+            'imported': 0,
+            'duplicates': []
+        }), 400
+
+    file = request.files['csv_file']
+    if not file.filename or not file.filename.lower().endswith('.csv'):
+        return jsonify({
+            'success': False,
+            'message': "Le fichier doit avoir l'extension .csv.",
+            'imported': 0,
+            'duplicates': []
+        }), 400
+
+    # Parse the CSV
+    try:
+        # utf-8-sig handles the optional BOM that Excel adds when saving as CSV
+        content = file.read().decode('utf-8-sig')
+        reader  = csv.DictReader(io.StringIO(content))
+        rows    = list(reader)
+    except Exception as exc:
+        return jsonify({
+            'success': False,
+            'message': f'Impossible de lire le fichier CSV : {exc}',
+            'imported': 0,
+            'duplicates': []
+        }), 400
+
+    if not rows:
+        return jsonify({
+            'success': False,
+            'message': 'Le fichier CSV est vide ou ne contient que les en-têtes.',
+            'imported': 0,
+            'duplicates': []
+        }), 400
+
+    #  Map table type to its SQLAlchemy model
+    model_map = {
+        'computers':   Computers,
+        'monitors':    Monitors,
+        'peripherals': Peripherals,
+        'phones':      Phones,
+        'users':       Users,
+    }
+    Model = model_map[table_type]
+
+    # Duplicate check
+    # Choose the uniqueness field depending on the target table
+    unique_field = 'Username' if table_type == 'users' else 'serial'
+
+    # Collect non-empty key values from the CSV rows
+    csv_keys = [
+        row.get(unique_field, '').strip()
+        for row in rows
+        if row.get(unique_field, '').strip()
+    ]
+
+    duplicates = []
+
+    if csv_keys:
+        try:
+            existing_records = db.session.query(
+                getattr(Model, unique_field)
+            ).filter(
+                getattr(Model, unique_field).in_(csv_keys)
+            ).all()
+            existing_values = {rec[0] for rec in existing_records}
+        except Exception as exc:
+            return jsonify({
+                'success': False,
+                'message': f'Error checking for duplicates : {exc}',
+                'imported': 0,
+                'duplicates': []
+            }), 500
+
+        # Collect every row whose key already exists in the database
+        for row in rows:
+            key_value = row.get(unique_field, '').strip()
+            if key_value and key_value in existing_values:
+                duplicates.append(dict(row))
+
+    if duplicates:
+        return jsonify({
+            'success': False,
+            'message': (
+                f"{len(duplicates)} duplicate(s) detected in the field "
+                f"« {unique_field} ». No lines imported."
+            ),
+            'imported': 0,
+            'duplicates': duplicates
+        })
+
+    #  Insert rows
+    now        = datetime.now(timezone.utc)
+    admin_user = current_user.user   # short login name of the logged-in admin
+
+    inserted = 0
+    try:
+        for row in rows:
+            # Strip leading/trailing whitespace from every string value
+            clean = {
+                k: (v.strip() if isinstance(v, str) else v)
+                for k, v in row.items()
+            }
+
+            if table_type == 'users':
+                obj = Users(
+                    GivenName=clean.get('GivenName', ''),
+                    Surname=clean.get('Surname', ''),
+                    Username=clean.get('Username', ''),
+                    Title=clean.get('Title', ''),
+                    Department=clean.get('Department', ''),
+                    Site=clean.get('Site', ''),
+                    # Auto-managed columns
+                    date_create=now,
+                    date_mod=now,
+                    date_delete=None,
+                    is_delete=False,
+                    app_management_user=admin_user,
+                )
+            else:
+                # Material tables: name / serial / otherserial from CSV.
+                # Username (staff link) is left NULL — assigned via events.
+                obj = Model(
+                    name=clean.get('name', ''),
+                    serial=clean.get('serial', ''),
+                    otherserial=clean.get('otherserial', ''),
+                    Username=None,          # set later through link events
+                    # Auto-managed columns
+                    date_create=now,
+                    date_mod=now,
+                    date_delete=None,
+                    is_delete=False,
+                    is_linked=False,
+                    app_management_user=admin_user,
+                )
+
+            db.session.add(obj)
+            inserted += 1
+
+        db.session.commit()
+
+    except Exception as exc:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'message': f"Error during database insertion : {exc}",
+            'imported': 0,
+            'duplicates': []
+        }), 500
+
+    return jsonify({
+        'success': True,
+        'message': f'{inserted} line(s) successfully imported.',
+        'imported': inserted,
+        'duplicates': []
+    })
+
+
+# Error handling
 @app.errorhandler(403)
 def forbidden(e):
     """
-    Gestion de l'erreur 403 - Accès non autorisé
+    Handling error 403 - Unauthorized access
     """
     return render_template('errors/403.html'), 403
 
 
-# Point d'entrée de l'application
+# Application entry point
 if __name__ == '__main__':
-    app.run(debug=True, host='127.0.0.1', port=5000)
+    app.run(debug=False, host='127.0.0.1', port=5000)

@@ -1,32 +1,32 @@
 <!-- templates/users/list.html - Version corrigée avec filtre par service -->
 {% extends "base.html" %}
 
-{% block title %}Liste des utilisateurs{% endblock %}
+{% block title %}{{ _('Users list') }}{% endblock %}
 
 {% block content %}
 <div class="container">
     <div class="d-flex justify-content-between align-items-center mt-4 mb-4">
-        <h2><i class="fas fa-users"></i> Liste des utilisateurs</h2>
+        <h2><i class="fas fa-users"></i> {{ _('Users list') }}</h2>
         <div>
             {% if current_user.has_role('gestionnaire') %}
             <a href="{{ url_for('user_create') }}" class="btn btn-primary">
-                <i class="fas fa-plus"></i> Nouvel utilisateur
+                <i class="fas fa-plus"></i> {{ _('New User') }}
             </a>
             {% endif %}
             <a href="{{ url_for('users_trash') }}" class="btn btn-secondary">
-                <i class="fas fa-trash"></i> Corbeille
+                <i class="fas fa-trash"></i> {{ _('Recycle Bin') }}
             </a>
         </div>
     </div>
 
-    <!-- Filtre par service -->
+    <!-- Filter by servicee -->
     <div class="card mb-4">
         <div class="card-body">
             <form method="GET" action="{{ url_for('users_list') }}" class="row g-3">
                 <div class="col-md-6">
-                    <label for="service" class="form-label">Filtrer par service</label>
+                    <label for="service" class="form-label">{{ _('Filter by department') }}</label>
                     <select class="form-select" id="service" name="service" onchange="this.form.submit()">
-                        <option value="">-- Tous les services --</option>
+                        <option value="">-- {{ _('All departments') }} --</option>
                         {% for service in services %}
                         <option value="{{ service }}" {% if service == selected_service %}selected{% endif %}>
                             {{ service }}
@@ -37,16 +37,16 @@
                 <div class="col-md-6 d-flex align-items-end">
                     {% if selected_service %}
                     <a href="{{ url_for('users_list') }}" class="btn btn-outline-secondary">
-                        <i class="fas fa-times"></i> Effacer le filtre
+                        <i class="fas fa-times"></i> {{ _('Clear filter') }}
                     </a>
                     {% endif %}
                     <div class="ms-3">
                         <span class="badge bg-info">
-                            {{ users|length }} utilisateur(s)
+                            {{ users|length }} {{ _('user(s)') }}
                             {% if selected_service %}
-                                dans le service "{{ selected_service }}"
+                                {{ _('in department') }} "{{ selected_service }}"
                             {% else %}
-                                au total
+                                {{ _('found') }}
                             {% endif %}
                         </span>
                     </div>
@@ -56,18 +56,18 @@
     </div>
 
     {% if users %}
-    <!-- Barre de recherche pour affiner dans les résultats -->
+    <!-- Search bar to refine results -->
     <div class="row mb-3">
         <div class="col-md-8">
             <input type="text" id="searchInput" class="form-control"
-                   placeholder="Rechercher dans les résultats affichés...">
+                   placeholder="{{ _('Search within the displayed results...') }}">
             <small class="form-text text-muted">
-                Recherche en temps réel dans les résultats actuels
+                {{ _('Real-time search in current results') }}
             </small>
         </div>
         <div class="col-md-4">
             <div class="input-group">
-                <span class="input-group-text">Résultats:</span>
+                <span class="input-group-text">{{ _('Results :') }}</span>
                 <span class="form-control" id="resultCount">{{ users|length }}</span>
             </div>
         </div>
@@ -78,26 +78,26 @@
             <thead>
                 <tr>
                     <th>
-                        <i class="fas fa-user"></i> Nom
+                        <i class="fas fa-user"></i> {{ _('Name') }}
                     </th>
                     <th>
-                        <i class="fas fa-user"></i> Prénom
+                        <i class="fas fa-user"></i> {{ _('First Name') }}
                     </th>
                     <th>
-                        <i class="fas fa-id-badge"></i> Identifiant
+                        <i class="fas fa-id-badge"></i> {{ _('Username') }}
                     </th>
                     <th>
-                        <i class="fas fa-briefcase"></i> Fonction
+                        <i class="fas fa-briefcase"></i> {{ _('Job title') }}
                     </th>
                     <th>
-                        <i class="fas fa-building"></i> Service
+                        <i class="fas fa-building"></i> {{ _('Department') }}
                     </th>
                     <th>
                         <i class="fas fa-map-marker-alt"></i> Site
                     </th>
                     {% if current_user.has_role('gestionnaire') %}
                     <th>
-                        <i class="fas fa-cogs"></i> Actions
+                        <i class="fas fa-cogs"></i> {{ _('Manage') }}
                     </th>
                     {% endif %}
                 </tr>
@@ -115,7 +115,7 @@
                         {% if user.Department %}
                             <span class="badge bg-primary">{{ user.Department }}</span>
                         {% else %}
-                            <span class="text-muted">Non renseigné</span>
+                            <span class="text-muted">{{ _('Not specified') }}</span>
                         {% endif %}
                     </td>
                     <td>{{ user.Site or 'N/A' }}</td>
@@ -128,8 +128,10 @@
                             </a>
                             <form action="{{ url_for('user_delete', user_id=user.id) }}"
                                   method="POST" style="display: inline;"
-                                  onsubmit="return confirm('Êtes-vous sûr de vouloir mettre cet utilisateur dans la corbeille ?');">
-                                <button type="submit" class="btn btn-sm btn-danger" title="Mettre dans la corbeille">
+                                  onsubmit="return confirm('{{ _('Are you sure you want to move this user to the recycle Bin?') }}');">
+                                <!-- CSRF token for security -->
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                <button type="submit" class="btn btn-sm btn-danger" title="{{ _('Move to recycle Bin') }}">
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </form>
@@ -145,15 +147,15 @@
     <div class="alert alert-info">
         <i class="fas fa-info-circle"></i>
         {% if selected_service %}
-            Aucun utilisateur trouvé dans le service "{{ selected_service }}".
+            {{ _('No users found in the department') }} "{{ selected_service }}".
         {% else %}
-            Aucun utilisateur trouvé.
+            {{ _('No users found.') }}
         {% endif %}
 
         {% if current_user.has_role('gestionnaire') %}
             <br><br>
             <a href="{{ url_for('user_create') }}" class="btn btn-primary">
-                <i class="fas fa-plus"></i> Créer le premier utilisateur
+                <i class="fas fa-plus"></i> {{ _('Create first user') }}
             </a>
         {% endif %}
     </div>
@@ -161,7 +163,7 @@
 
     <div class="mt-4">
         <a href="{{ url_for('lists') }}" class="btn btn-secondary">
-            <i class="fas fa-arrow-left"></i> Retour aux listes
+            <i class="fas fa-arrow-left"></i> {{ _('Back to lists') }}
         </a>
     </div>
 </div>
@@ -170,7 +172,7 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Fonction de recherche en temps réel dans les résultats affichés
+    // Real-time search function within the displayed results
     const searchInput = document.getElementById('searchInput');
     const table = document.getElementById('usersTable');
     const resultCount = document.getElementById('resultCount');
@@ -201,14 +203,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
 
-            // Mettre à jour le compteur de résultats
+            // Update the results counter
             if (resultCount) {
                 resultCount.textContent = visibleCount;
             }
         });
     }
 
-    // Fonction pour améliorer l'UX du formulaire
+    // Function to improve the form's UX
     const serviceSelect = document.getElementById('service');
     if (serviceSelect) {
         // Ajouter un indicateur de chargement lors du changement
@@ -229,22 +231,22 @@ document.addEventListener('DOMContentLoaded', function() {
 
 {% block extra_css %}
 <style>
-/* Améliorer l'apparence des badges */
+/* Improve the appearance of badges */
 .badge {
     font-size: 0.8em;
 }
 
-/* Style pour les lignes de tableau */
+/* Style for table lines */
 .user-row:hover {
     background-color: #f8f9fa;
 }
 
-/* Style pour les boutons d'action */
+/* Style for action buttons */
 .btn-group .btn {
     margin-right: 2px;
 }
 
-/* Style pour les codes d'identifiant */
+/* Style for identifier codes */
 code {
     background-color: #f8f9fa;
     padding: 2px 4px;
@@ -252,12 +254,12 @@ code {
     font-size: 0.9em;
 }
 
-/* Animation pour les changements */
+/* Animation for the changes */
 .table-responsive {
     transition: opacity 0.3s ease;
 }
 
-/* Style pour le filtre */
+/* Style for the filter */
 .card {
     border-left: 4px solid #007bff;
 }

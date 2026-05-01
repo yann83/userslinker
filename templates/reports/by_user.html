@@ -1,124 +1,126 @@
 <!-- templates/reports/by_user.html -->
 {% extends "base.html" %}
 
-{% block title %}Rapport par utilisateur{% endblock %}
+{% block title %}{{ _('Report by user') }}{% endblock %}
 
 {% block content %}
 <div class="container">
     <div class="d-flex justify-content-between align-items-center mt-4 mb-4">
-        <h2><i class="fas fa-user"></i> Rapport par utilisateur</h2>
+        <h2><i class="fas fa-user"></i> {{ _('Report by user') }}</h2>
         <div>
             {% if user_data %}
             <button class="btn btn-success" onclick="exportToPDF()">
-                <i class="fas fa-file-pdf"></i> Exporter en PDF
+                <i class="fas fa-file-pdf"></i> {{ _('Export to PDF') }}
             </button>
             <button class="btn btn-info" onclick="printReport()">
-                <i class="fas fa-print"></i> Imprimer
+                <i class="fas fa-print"></i> {{ _('Print') }}
             </button>
             {% endif %}
             <a href="{{ url_for('reports') }}" class="btn btn-secondary">
-                <i class="fas fa-arrow-left"></i> Retour aux rapports
+                <i class="fas fa-arrow-left"></i> {{ _('Return to reports') }}
             </a>
         </div>
     </div>
 
-    <!-- Formulaire de sélection d'utilisateur -->
+    <!-- User selection form -->
     <div class="card mb-4">
         <div class="card-header">
-            <h5><i class="fas fa-search"></i> Rechercher un utilisateur</h5>
+            <h5><i class="fas fa-search"></i> {{ _('User search') }}</h5>
         </div>
         <div class="card-body">
             <form method="POST" action="{{ url_for('reports_by_user') }}" id="userReportForm">
-                <!-- Champ de recherche d'utilisateur -->
+                <!-- CSRF token for security -->
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <!-- User search field -->
                 <div class="mb-3">
-                    <label for="user_search" class="form-label">Rechercher un utilisateur</label>
+                    <label for="user_search" class="form-label">{{ _('User search') }}</label>
                     <div class="position-relative">
                         <input type="text" class="form-control" id="user_search"
                                placeholder="Tapez au moins 4 caractères (nom, prénom ou identifiant)..."
                                autocomplete="off">
                         <div class="position-absolute top-100 start-0 w-100" style="z-index: 1050;">
                             <div id="user_search_results" class="list-group" style="display: none; max-height: 400px; overflow-y: auto;">
-                                <!-- Les résultats de recherche apparaîtront ici -->
+                                <!-- The search results will appear here. -->
                             </div>
                         </div>
                     </div>
                     <small class="form-text text-muted">
-                        La recherche se déclenche automatiquement après 4 caractères. Maximum 10 résultats affichés.
+                        {{ _('The search starts automatically after 4 characters. Maximum 10 results displayed.') }}
                     </small>
                 </div>
 
-                <!-- Champ caché pour l'ID utilisateur sélectionné -->
+                <!-- Hidden field for the selected user ID -->
                 <input type="hidden" id="user_id" name="user_id" required>
 
-                <!-- Affichage de l'utilisateur sélectionné -->
+                <!-- Display of the selected user -->
                 <div id="selected_user_display" class="mb-3" style="display: none;">
                     <div class="card bg-light">
                         <div class="card-body">
                             <h6 class="card-title">
-                                <i class="fas fa-user text-success"></i> Utilisateur sélectionné
+                                <i class="fas fa-user text-success"></i> {{ _('Selected user') }}
                             </h6>
                             <div id="selected_user_info">
-                                <!-- Les informations de l'utilisateur sélectionné apparaîtront ici -->
+                                <!-- The selected user's information will appear here. -->
                             </div>
                             <button type="button" class="btn btn-sm btn-outline-secondary mt-2" id="change_user_btn">
-                                <i class="fas fa-edit"></i> Changer d'utilisateur
+                                <i class="fas fa-edit"></i> {{ _('Change user') }}
                             </button>
                         </div>
                     </div>
                 </div>
 
-                <!-- Zone d'état de recherche -->
+                <!-- Search status area -->
                 <div id="search_status" class="mb-3">
                     <div class="text-center text-muted py-3">
                         <i class="fas fa-search fa-2x mb-2"></i>
-                        <p>Commencez à taper pour rechercher un utilisateur</p>
+                        <p>{{ _('Start typing to search for a user') }}</p>
                     </div>
                 </div>
 
-                <!-- Zone de chargement -->
+                <!-- Loading Zone -->
                 <div id="loading_spinner" class="text-center py-3" style="display: none;">
                     <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Recherche en cours...</span>
+                        <span class="visually-hidden">{{ _('Research in progress...') }}</span>
                     </div>
-                    <p class="mt-2 text-muted">Recherche en cours...</p>
+                    <p class="mt-2 text-muted">{{ _('Research in progress...') }}</p>
                 </div>
 
-                <!-- Boutons d'action -->
+                <!-- Action buttons -->
                 <div class="mt-4">
                     <button type="submit" class="btn btn-primary" id="submit_btn" disabled>
-                        <i class="fas fa-chart-line"></i> Générer le rapport
+                        <i class="fas fa-chart-line"></i> {{ _('Generate the report') }}
                     </button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Résultats du rapport -->
+    <!-- Report findings -->
     {% if user_data %}
     <div id="report-content">
-        <!-- En-tête du rapport -->
+        <!-- Report Header -->
         <div class="card mb-4 d-print-block">
             <div class="card-body text-center">
                 <h3>
                     <i class="fas fa-user text-primary"></i>
-                    Rapport pour {{ user_data.user.GivenName }} {{ user_data.user.Surname }}
+                    {{ _('Report for') }} {{ user_data.user.GivenName }} {{ user_data.user.Surname }}
                 </h3>
                 <div class="row mt-3">
                     <div class="col-md-4">
                         <small class="text-muted">
-                            <strong>Date de génération :</strong><br>
+                            <strong>{{ _('Generation date :') }}</strong><br>
                             {{ generation_date.strftime('%d/%m/%Y à %H:%M') }}
                         </small>
                     </div>
                     <div class="col-md-4">
                         <small class="text-muted">
-                            <strong>Identifiant :</strong><br>
+                            <strong>{{ _('Username :') }}</strong><br>
                             {{ user_data.user.Username }}
                         </small>
                     </div>
                     <div class="col-md-4">
                         <small class="text-muted">
-                            <strong>Service :</strong><br>
+                            <strong>{{ _('Department :') }}</strong><br>
                             {{ user_data.user.Department or 'Non renseigné' }}
                         </small>
                     </div>
@@ -126,14 +128,14 @@
             </div>
         </div>
 
-        <!-- Statistiques générales -->
+        <!-- General statistics -->
         <div class="row mb-4">
             <div class="col-md-3">
                 <div class="card text-center">
                     <div class="card-body">
                         <i class="fas fa-desktop fa-2x text-success mb-2"></i>
                         <h4>{{ user_data.statistics.total_materials }}</h4>
-                        <small class="text-muted">Matériel(s) lié(s)</small>
+                        <small class="text-muted">{{ _('Linked material(s)') }}</small>
                     </div>
                 </div>
             </div>
@@ -142,7 +144,7 @@
                     <div class="card-body">
                         <i class="fas fa-history fa-2x text-info mb-2"></i>
                         <h4>{{ user_data.statistics.total_movements }}</h4>
-                        <small class="text-muted">Mouvement(s) total</small>
+                        <small class="text-muted">{{ _('Total movement') }}</small>
                     </div>
                 </div>
             </div>
@@ -157,7 +159,7 @@
                                 N/A
                             {% endif %}
                         </h4>
-                        <small class="text-muted">Dernière activité</small>
+                        <small class="text-muted">{{ _('Last activity') }}</small>
                     </div>
                 </div>
             </div>
@@ -172,65 +174,65 @@
                                 N/A
                             {% endif %}
                         </h4>
-                        <small class="text-muted">Première activité</small>
+                        <small class="text-muted">{{ _('First activity') }}</small>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Informations utilisateur et matériel lié -->
+        <!-- User information and related materials -->
         <div class="row mb-4">
-            <!-- Informations utilisateur -->
+            <!-- User information -->
             <div class="col-md-4">
                 <div class="card h-100">
                     <div class="card-header">
-                        <h5><i class="fas fa-id-card text-primary"></i> Informations personnelles</h5>
+                        <h5><i class="fas fa-id-card text-primary"></i> {{ _('Personal informations') }}</h5>
                     </div>
                     <div class="card-body">
                         <table class="table table-borderless table-sm">
                             <tr>
-                                <td><strong>Nom :</strong></td>
+                                <td><strong>{{ _('Name :') }}</strong></td>
                                 <td>{{ user_data.user.Surname }}</td>
                             </tr>
                             <tr>
-                                <td><strong>Prénom :</strong></td>
+                                <td><strong>{{ _('First Name :') }}</strong></td>
                                 <td>{{ user_data.user.GivenName }}</td>
                             </tr>
                             <tr>
-                                <td><strong>Identifiant :</strong></td>
+                                <td><strong>{{ _('Username :') }}</strong></td>
                                 <td>{{ user_data.user.Username }}</td>
                             </tr>
                             <tr>
-                                <td><strong>Fonction :</strong></td>
-                                <td>{{ user_data.user.Title or 'Non renseigné' }}</td>
+                                <td><strong>{{ _('Job title :') }}</strong></td>
+                                <td>{{ user_data.user.Title or _('Not specified') }}</td>
                             </tr>
                             <tr>
-                                <td><strong>Service :</strong></td>
-                                <td>{{ user_data.user.Department or 'Non renseigné' }}</td>
+                                <td><strong>{{ _('Department :') }}</strong></td>
+                                <td>{{ user_data.user.Department or _('Not specified') }}</td>
                             </tr>
                             <tr>
-                                <td><strong>Site :</strong></td>
-                                <td>{{ user_data.user.Site or 'Non renseigné' }}</td>
+                                <td><strong>{{ _('Site :') }}</strong></td>
+                                <td>{{ user_data.user.Site or _('Not specified') }}</td>
                             </tr>
                         </table>
                     </div>
                 </div>
             </div>
 
-            <!-- Matériel lié -->
+            <!-- Related materials -->
             <div class="col-md-8">
                 <div class="card h-100">
                     <div class="card-header">
-                        <h5><i class="fas fa-link text-success"></i> Matériel actuellement lié</h5>
+                        <h5><i class="fas fa-link text-success"></i> {{ _('Material currently linked :') }}</h5>
                     </div>
                     <div class="card-body">
                         {% set has_material = false %}
 
-                        <!-- Ordinateurs -->
+                        <!-- Computers -->
                         {% if user_data.materials.computers %}
                             {% set has_material = true %}
                             <div class="mb-3">
-                                <h6><i class="fas fa-laptop text-primary"></i> Ordinateurs ({{ user_data.materials.computers|length }})</h6>
+                                <h6><i class="fas fa-laptop text-primary"></i> {{ _('Computers') }} ({{ user_data.materials.computers|length }})</h6>
                                 <ul class="list-group list-group-flush">
                                     {% for computer in user_data.materials.computers %}
                                     <li class="list-group-item d-flex justify-content-between align-items-center px-0">
@@ -241,18 +243,18 @@
                                                 {% if computer.otherserial %}• Inv: {{ computer.otherserial }}{% endif %}
                                             </small>
                                         </div>
-                                        <span class="badge bg-success">Lié</span>
+                                        <span class="badge bg-success">{{ _('Linked') }}</span>
                                     </li>
                                     {% endfor %}
                                 </ul>
                             </div>
                         {% endif %}
 
-                        <!-- Moniteurs -->
+                        <!-- Monitors -->
                         {% if user_data.materials.monitors %}
                             {% set has_material = true %}
                             <div class="mb-3">
-                                <h6><i class="fas fa-desktop text-primary"></i> Moniteurs ({{ user_data.materials.monitors|length }})</h6>
+                                <h6><i class="fas fa-desktop text-primary"></i> {{ _('Monitors') }} ({{ user_data.materials.monitors|length }})</h6>
                                 <ul class="list-group list-group-flush">
                                     {% for monitor in user_data.materials.monitors %}
                                     <li class="list-group-item d-flex justify-content-between align-items-center px-0">
@@ -263,18 +265,18 @@
                                                 {% if monitor.otherserial %}• Inv: {{ monitor.otherserial }}{% endif %}
                                             </small>
                                         </div>
-                                        <span class="badge bg-success">Lié</span>
+                                        <span class="badge bg-success">{{ _('Linked') }}</span>
                                     </li>
                                     {% endfor %}
                                 </ul>
                             </div>
                         {% endif %}
 
-                        <!-- Périphériques -->
+                        <!-- Peripherals -->
                         {% if user_data.materials.peripherals %}
                             {% set has_material = true %}
                             <div class="mb-3">
-                                <h6><i class="fas fa-keyboard text-primary"></i> Périphériques ({{ user_data.materials.peripherals|length }})</h6>
+                                <h6><i class="fas fa-keyboard text-primary"></i> {{ _('Peripherals') }} ({{ user_data.materials.peripherals|length }})</h6>
                                 <ul class="list-group list-group-flush">
                                     {% for peripheral in user_data.materials.peripherals %}
                                     <li class="list-group-item d-flex justify-content-between align-items-center px-0">
@@ -285,18 +287,18 @@
                                                 {% if peripheral.otherserial %}• Inv: {{ peripheral.otherserial }}{% endif %}
                                             </small>
                                         </div>
-                                        <span class="badge bg-success">Lié</span>
+                                        <span class="badge bg-success">{{ _('Linked') }}</span>
                                     </li>
                                     {% endfor %}
                                 </ul>
                             </div>
                         {% endif %}
 
-                        <!-- Téléphones -->
+                        <!-- Phones -->
                         {% if user_data.materials.phones %}
                             {% set has_material = true %}
                             <div class="mb-3">
-                                <h6><i class="fas fa-mobile-alt text-primary"></i> Téléphones ({{ user_data.materials.phones|length }})</h6>
+                                <h6><i class="fas fa-mobile-alt text-primary"></i> {{ _('Phones') }} ({{ user_data.materials.phones|length }})</h6>
                                 <ul class="list-group list-group-flush">
                                     {% for phone in user_data.materials.phones %}
                                     <li class="list-group-item d-flex justify-content-between align-items-center px-0">
@@ -307,7 +309,7 @@
                                                 {% if phone.otherserial %}• Inv: {{ phone.otherserial }}{% endif %}
                                             </small>
                                         </div>
-                                        <span class="badge bg-success">Lié</span>
+                                        <span class="badge bg-success">{{ _('Linked') }}</span>
                                     </li>
                                     {% endfor %}
                                 </ul>
@@ -316,7 +318,7 @@
 
                         {% if not has_material %}
                             <div class="alert alert-info">
-                                <i class="fas fa-info-circle"></i> Aucun matériel actuellement lié à cet utilisateur.
+                                <i class="fas fa-info-circle"></i> {{ _('No material is currently linked to this user.') }}
                             </div>
                         {% endif %}
                     </div>
@@ -324,10 +326,10 @@
             </div>
         </div>
 
-        <!-- Historique complet -->
+        <!-- Full history -->
         <div class="card">
             <div class="card-header">
-                <h5><i class="fas fa-history text-info"></i> Historique complet des mouvements</h5>
+                <h5><i class="fas fa-history text-info"></i> {{ _('Complete history of the movements.') }}</h5>
             </div>
             <div class="card-body">
                 {% if user_data.history %}
@@ -337,11 +339,11 @@
                             <div class="flex-shrink-0 me-3">
                                 {% if history_item.entry.is_linked %}
                                     <span class="badge bg-success fs-6">
-                                        <i class="fas fa-link"></i> Lié
+                                        <i class="fas fa-link"></i> {{ _('Linked') }}
                                     </span>
                                 {% else %}
                                     <span class="badge bg-danger fs-6">
-                                        <i class="fas fa-unlink"></i> Délié
+                                        <i class="fas fa-unlink"></i> {{ _('Unlinked') }}
                                     </span>
                                 {% endif %}
                             </div>
@@ -358,13 +360,13 @@
                                         {% if history_item.material_info %}
                                         <div class="small text-muted mb-2">
                                             {% if history_item.material_info.serial %}
-                                                <strong>N° série :</strong> {{ history_item.material_info.serial }}
+                                                <strong>{{ _('Serial number :') }}</strong> {{ history_item.material_info.serial }}
                                             {% endif %}
                                             {% if history_item.material_info.otherserial %}
-                                                • <strong>N° inventaire :</strong> {{ history_item.material_info.otherserial }}
+                                                • <strong>{{ _('Inventory number') }}</strong> {{ history_item.material_info.otherserial }}
                                             {% endif %}
                                             {% if history_item.material_info.is_deleted %}
-                                                <span class="badge bg-warning ms-2">Matériel supprimé</span>
+                                                <span class="badge bg-warning ms-2">{{ _('Object deleted') }}</span>
                                             {% endif %}
                                         </div>
                                         {% endif %}
@@ -385,7 +387,7 @@
                     </div>
                 {% else %}
                     <div class="alert alert-info">
-                        <i class="fas fa-info-circle"></i> Aucun mouvement enregistré dans l'historique pour cet utilisateur.
+                        <i class="fas fa-info-circle"></i> {{ _('No activity was recorded in the history for this user.') }}
                     </div>
                 {% endif %}
             </div>
@@ -428,7 +430,7 @@
         background-color: #dc3545;
     }
 
-    /* Styles pour l'impression */
+    /* Styles for printing */
     @media print {
         .btn, .card-header {
             -webkit-print-color-adjust: exact;
@@ -475,8 +477,18 @@
 
 {% block extra_js %}
 <script>
+// Translated strings for use in JS template literals
+const I18N = {
+    departmentNotSpecified: {{ _('Department not specified') | tojson }},
+    materials:              {{ _('Material(s)') | tojson }},
+    movements:              {{ _('Movement(s)') | tojson }},
+    linkedMaterials:        {{ _('Linked material(s)') | tojson }},
+    totalMovement:          {{ _('Total movement') | tojson }},
+    searchError:            {{ _('Search error') | tojson }}
+};
+
 document.addEventListener('DOMContentLoaded', function() {
-    // Éléments du DOM
+    // Elements of the DOM
     const userSearch = document.getElementById('user_search');
     const userSearchResults = document.getElementById('user_search_results');
     const userIdInput = document.getElementById('user_id');
@@ -487,30 +499,30 @@ document.addEventListener('DOMContentLoaded', function() {
     const loadingSpinner = document.getElementById('loading_spinner');
     const submitBtn = document.getElementById('submit_btn');
 
-    // Variables de contrôle
+    // Control variables
     let searchTimeout;
     let selectedUser = null;
 
-    // Fonction pour afficher l'état de chargement
+    // Function to display the loading status
     function showLoading() {
         loadingSpinner.style.display = 'block';
         searchStatus.style.display = 'none';
         userSearchResults.style.display = 'none';
     }
 
-    // Fonction pour masquer le chargement
+    // Function to hide loading
     function hideLoading() {
         loadingSpinner.style.display = 'none';
     }
 
-    // Fonction pour afficher l'état de démarrage
+    // Function to display the startup status
     function showStartState() {
         searchStatus.style.display = 'block';
         userSearchResults.style.display = 'none';
         hideLoading();
     }
 
-    // Fonction pour échapper le HTML (sécurité)
+    // Function to escape HTML (security)
     function escapeHtml(unsafe) {
         if (typeof unsafe !== 'string') return '';
         return unsafe
@@ -521,7 +533,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .replace(/'/g, "&#039;");
     }
 
-    // Fonction pour afficher les résultats de recherche
+    // Function to display search results
     function displaySearchResults(users) {
         hideLoading();
 
@@ -551,9 +563,9 @@ document.addEventListener('DOMContentLoaded', function() {
                                 ${user.Title ? '• <strong>Fonction:</strong> ' + escapeHtml(user.Title) : ''}
                             </p>
                             <small class="text-muted">
-                                ${user.Department ? escapeHtml(user.Department) : 'Service non renseigné'}
-                                • <span class="badge bg-info">${user.total_materials} matériel(s)</span>
-                                • <span class="badge bg-secondary">${user.total_history} mouvement(s)</span>
+                                ${user.Department ? escapeHtml(user.Department) : I18N.departmentNotSpecified}
+                                • <span class="badge bg-info">${user.total_materials} ${I18N.materials}</span>
+                                • <span class="badge bg-secondary">${user.total_history} ${I18N.movements}</span>
                             </small>
                         </div>
                         <div>
@@ -562,7 +574,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                 `;
 
-                // Ajouter l'événement de clic
+                // Add the click event
                 resultItem.addEventListener('click', function() {
                     selectUser(user);
                 });
@@ -575,16 +587,16 @@ document.addEventListener('DOMContentLoaded', function() {
         searchStatus.style.display = 'none';
     }
 
-    // Fonction pour sélectionner un utilisateur
+    // Function to select a user
     function selectUser(user) {
         selectedUser = user;
         userIdInput.value = user.id;
 
-        // Effacer le champ de recherche et masquer les résultats
+        // Clear the search field and hide the results
         userSearch.value = '';
         userSearchResults.style.display = 'none';
 
-        // Afficher les informations de l'utilisateur sélectionné
+        // Display information for the selected user
         selectedUserInfo.innerHTML = `
             <div class="row">
                 <div class="col-md-6">
@@ -595,14 +607,14 @@ document.addEventListener('DOMContentLoaded', function() {
                         <small class="text-muted">
                             <strong>Identifiant:</strong> ${escapeHtml(user.Username)}<br>
                             ${user.Title ? '<strong>Fonction:</strong> ' + escapeHtml(user.Title) + '<br>' : ''}
-                            ${user.Department ? '<strong>Service:</strong> ' + escapeHtml(user.Department) : 'Service non renseigné'}
+                            ${user.Department ? '<strong>Service:</strong> ' + escapeHtml(user.Department) : I18N.departmentNotSpecified}
                         </small>
                     </p>
                 </div>
                 <div class="col-md-6">
                     <div class="text-end">
-                        <span class="badge bg-success fs-6">${user.total_materials} matériel(s) lié(s)</span><br>
-                        <span class="badge bg-info fs-6 mt-1">${user.total_history} mouvement(s) total</span>
+                        <span class="badge bg-success fs-6">${user.total_materials} ${I18N.linkedMaterials}</span><br>
+                        <span class="badge bg-info fs-6 mt-1">${user.total_history} ${I18N.totalMovement}</span>
                     </div>
                 </div>
             </div>
@@ -611,11 +623,11 @@ document.addEventListener('DOMContentLoaded', function() {
         selectedUserDisplay.style.display = 'block';
         submitBtn.disabled = false;
 
-        // Masquer l'état de démarrage
+        // Hide startup status
         searchStatus.style.display = 'none';
     }
 
-    // Fonction pour effectuer la recherche
+    // Function to perform the search
     function performSearch(searchTerm) {
         if (searchTerm.length < 4) {
             showStartState();
@@ -624,7 +636,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         showLoading();
 
-        // Requête AJAX pour rechercher les utilisateurs
+        // AJAX request to search for users
         fetch(`{{ url_for('api_reports_search_users') }}?q=${encodeURIComponent(searchTerm)}`, {
             method: 'GET',
             headers: {
@@ -649,27 +661,27 @@ document.addEventListener('DOMContentLoaded', function() {
             hideLoading();
             userSearchResults.innerHTML = `
                 <div class="list-group-item text-danger text-center">
-                    <i class="fas fa-exclamation-triangle"></i> Erreur lors de la recherche
+                    <i class="fas fa-exclamation-triangle"></i> ${I18N.searchError}
                 </div>
             `;
             userSearchResults.style.display = 'block';
         });
     }
 
-    // Gestionnaire d'événements pour la recherche en temps réel
+    // Event manager for real-time search
     userSearch.addEventListener('input', function() {
         const searchTerm = this.value.trim();
 
-        // Annuler le timeout précédent
+        // Cancel the previous timeout
         clearTimeout(searchTimeout);
 
-        // Définir un nouveau timeout pour éviter trop de requêtes
+        // Set a new timeout to avoid too many requests.
         searchTimeout = setTimeout(() => {
             performSearch(searchTerm);
         }, 300);
     });
 
-    // Gestionnaire pour le bouton "Changer d'utilisateur"
+    // Manager for the "Switch User" button
     changeUserBtn.addEventListener('click', function() {
         selectedUser = null;
         userIdInput.value = '';
@@ -679,7 +691,7 @@ document.addEventListener('DOMContentLoaded', function() {
         userSearch.focus();
     });
 
-    // Masquer les résultats quand on clique ailleurs
+    // Hide results when you click elsewhere
     document.addEventListener('click', function(event) {
         if (!userSearch.contains(event.target) && !userSearchResults.contains(event.target)) {
             if (!selectedUser) {
@@ -688,14 +700,14 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Focus sur le champ de recherche quand on clique dessus
+    // Focus on the search field when you click on it
     userSearch.addEventListener('focus', function() {
         if (this.value.length >= 4) {
             performSearch(this.value);
         }
     });
 
-    // Validation du formulaire
+    // Form validation
     document.getElementById('userReportForm').addEventListener('submit', function(e) {
         if (!selectedUser || !userIdInput.value) {
             e.preventDefault();
@@ -704,16 +716,16 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Initialiser l'état de démarrage
+    // Initialize the startup state
     showStartState();
 });
 
-// Fonction pour imprimer le rapport
+// Function to print the report
 function printReport() {
     window.print();
 }
 
-// Fonction pour exporter en PDF
+// Function to export to PDF
 function exportToPDF() {
     window.print();
 }

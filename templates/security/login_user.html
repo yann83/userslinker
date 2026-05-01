@@ -1,7 +1,7 @@
 <!-- templates/security/login_user.html -->
 {% extends "base.html" %}
 
-{% block title %}Connexion{% endblock %}
+{% block title %}{{ _('Login') }}{% endblock %}
 
 {% block content %}
 <div class="container">
@@ -10,15 +10,17 @@
             <h2>
                 <i class="fas fa-users text-primary"></i> UsersLinker
             </h2>
-            <p class="text-muted">Connectez-vous à votre compte</p>
+            <p class="text-muted">{{ _('Log in to your account') }}</p>
         </div>
 
         <form action="{{ url_for_security('login') }}" method="POST" name="login_user_form">
+            <!-- CSRF token for security -->
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
             {{ login_user_form.hidden_tag() }}
 
             <div class="mb-3">
                 {{ login_user_form.email.label(class="form-label") }}
-                {{ login_user_form.email(class="form-control", placeholder="Email") }}
+                {{ login_user_form.email(class="form-control", placeholder=_('Email')) }}
                 {% if login_user_form.email.errors %}
                     <div class="invalid-feedback d-block">
                         {% for error in login_user_form.email.errors %}
@@ -30,7 +32,7 @@
 
             <div class="mb-3">
                 {{ login_user_form.password.label(class="form-label") }}
-                {{ login_user_form.password(class="form-control", placeholder="Mot de passe") }}
+                {{ login_user_form.password(class="form-control", placeholder=_('Password')) }}
                 {% if login_user_form.password.errors %}
                     <div class="invalid-feedback d-block">
                         {% for error in login_user_form.password.errors %}
@@ -51,7 +53,7 @@
         </form>
 
         <div class="text-center mt-4">
-            <small class="text-muted">UsersLinker v1.0</small>
+            <small class="text-muted">UsersLinker v2.0</small>
         </div>
     </div>
 </div>

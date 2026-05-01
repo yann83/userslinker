@@ -1,12 +1,12 @@
 <!-- templates/users/edit.html -->
 {% extends "base.html" %}
 
-{% block title %}Modifier un utilisateur{% endblock %}
+{% block title %}{{ _('Edit an user') }}{% endblock %}
 
 {% block content %}
 <div class="container">
     <h2 class="mt-4 mb-4">
-        <i class="fas fa-user-edit"></i> Modifier l'utilisateur
+        <i class="fas fa-user-edit"></i> {{ _('Edit user') }}
     </h2>
 
     <div class="row">
@@ -14,17 +14,19 @@
             <div class="card">
                 <div class="card-body">
                     <form method="POST" action="{{ url_for('user_edit', user_id=user.id) }}">
+                        <!-- CSRF token for security -->
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="given_name" class="form-label">Prénom <span class="text-danger">*</span></label>
+                                    <label for="given_name" class="form-label">{{ _('First Name') }} <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control" id="given_name" name="given_name" 
                                            value="{{ user.GivenName }}" required>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="surname" class="form-label">Nom <span class="text-danger">*</span></label>
+                                    <label for="surname" class="form-label">{{ _('Name') }} <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control" id="surname" name="surname" 
                                            value="{{ user.Surname }}" required>
                                 </div>
@@ -32,35 +34,35 @@
                         </div>
 
                         <div class="mb-3">
-                            <label for="username" class="form-label">Identifiant <span class="text-danger">*</span></label>
+                            <label for="username" class="form-label">{{ _('Username') }} <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="username" name="username" 
                                    value="{{ user.Username }}" required>
                         </div>
 
                         <div class="mb-3">
-                            <label for="title" class="form-label">Fonction</label>
+                            <label for="title" class="form-label">{{ _('Job title') }}</label>
                             <input type="text" class="form-control" id="title" name="title" 
                                    value="{{ user.Title }}">
                         </div>
 
                         <div class="mb-3">
-                            <label for="department" class="form-label">Service</label>
+                            <label for="department" class="form-label">{{ _('Department') }}</label>
                             <input type="text" class="form-control" id="department" name="department" 
                                    value="{{ user.Department }}">
                         </div>
 
                         <div class="mb-3">
-                            <label for="site" class="form-label">Site</label>
+                            <label for="site" class="form-label">{{ _('Site') }}</label>
                             <input type="text" class="form-control" id="site" name="site" 
                                    value="{{ user.Site }}">
                         </div>
 
                         <div class="mt-4">
                             <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save"></i> Enregistrer les modifications
+                                <i class="fas fa-save"></i> {{ _('Save change') }}
                             </button>
                             <a href="{{ url_for('users_list') }}" class="btn btn-secondary">
-                                <i class="fas fa-times"></i> Annuler
+                                <i class="fas fa-times"></i> {{ _('Cancel') }}
                             </a>
                         </div>
                     </form>
@@ -71,13 +73,13 @@
         <div class="col-md-4">
             <div class="card bg-light">
                 <div class="card-body">
-                    <h5 class="card-title">Informations sur l'utilisateur</h5>
+                    <h5 class="card-title">{{ _('About the user') }}</h5>
                     <p class="card-text">
                         <small>
                             <strong>ID :</strong> {{ user.id }}<br>
-                            <strong>Créé le :</strong> {{ user.date_create.strftime('%d/%m/%Y %H:%M') if user.date_create else 'N/A' }}<br>
-                            <strong>Dernière modification :</strong> {{ user.date_mod.strftime('%d/%m/%Y %H:%M') if user.date_mod else 'N/A' }}<br>
-                            <strong>Par :</strong> {{ user.app_management_user }}
+                            <strong>{{ _('Created on :') }}</strong> {{ user.date_create.strftime('%d/%m/%Y %H:%M') if user.date_create else 'N/A' }}<br>
+                            <strong>{{ _('Last modified :') }}</strong> {{ user.date_mod.strftime('%d/%m/%Y %H:%M') if user.date_mod else 'N/A' }}<br>
+                            <strong>{{ _('By :') }}</strong> {{ user.app_management_user }}
                         </small>
                     </p>
 
@@ -86,9 +88,9 @@
                     <h6>Notes</h6>
                     <p class="card-text">
                         <small>
-                            • Les modifications seront effectives immédiatement.<br>
-                            • Les champs marqués d'un <span class="text-danger">*</span> sont obligatoires.<br>
-                            • L'historique des modifications est conservé.
+                            • {{ _('The changes will be effective immediately.') }}<br>
+                            • <span class="text-danger">*</span> {{ _('Fields marked with an asterisk  are required.') }}<br>
+                            •{{ _(' The change history is preserved.') }}
                         </small>
                     </p>
                 </div>

@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>UsersLinker - {% block title %}{{ config['SECURITY_EMAIL_SUBJECT_REGISTER'] | default('Application') }}{% endblock %}</title>
 
     <!-- Bootstrap 5 -->
@@ -41,7 +42,7 @@
     {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <!-- Navbar (visible seulement si connecté) -->
+    <!-- Navbar (visible only when logged in) -->
     {% if current_user.is_authenticated %}
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container">
@@ -55,43 +56,43 @@
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('dashboard') }}">
-                            <i class="fas fa-home"></i> Accueil
+                            <i class="fas fa-home"></i> {{ _('Home') }}
                         </a>
                     </li>
 
-                    <!-- Menu Administrateur -->
+                    <!-- Administrator Menu -->
                     {% if current_user.has_role('administrateur') %}
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-cog"></i> Administration
+                            <i class="fas fa-cog"></i> {{ _('Administration') }}
                         </a>
                         <ul class="dropdown-menu">
                             <li><a class="dropdown-item" href="{{ url_for('admin_users') }}">
-                                <i class="fas fa-users"></i> Gérer les utilisateurs
+                                <i class="fas fa-users"></i> {{ _('Users management') }}
                             </a></li>
                         </ul>
                     </li>
                     {% endif %}
 
-                    <!-- Menu Gestionnaire -->
+                    <!-- Manager Menu -->
                     {% if current_user.has_role('gestionnaire') %}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('create_event') }}">
-                            <i class="fas fa-plus-circle"></i> Créer un événement
+                            <i class="fas fa-plus-circle"></i> {{ _('Create an event') }}
                         </a>
                     </li>
                     {% endif %}
 
-                    <!-- Menu accessible aux gestionnaires et lecteurs -->
+                    <!-- Menu accessible to managers and readers -->
                     {% if current_user.has_role('gestionnaire') or current_user.has_role('lecteur') %}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('lists') }}">
-                            <i class="fas fa-list"></i> Listes
+                            <i class="fas fa-list"></i> {{ _('Lists') }}
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('reports') }}">
-                            <i class="fas fa-chart-pie"></i> Rapports
+                            <i class="fas fa-chart-pie"></i> {{ _('Reports') }}
                         </a>
                     </li>
                     {% endif %}
@@ -103,11 +104,11 @@
                         </a>
                         <ul class="dropdown-menu">
                             <li><a class="dropdown-item" href="{{ url_for('user_profile') }}">
-                                <i class="fas fa-user-edit"></i> Mon profil
+                                <i class="fas fa-user-edit"></i> {{ _('My profil') }}
                             </a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="{{ url_for('security.logout') }}">
-                                <i class="fas fa-sign-out-alt"></i> Déconnexion
+                                <i class="fas fa-sign-out-alt"></i> {{ _('Logout') }}
                             </a></li>
                         </ul>
                     </li>
@@ -117,7 +118,7 @@
     </nav>
     {% endif %}
 
-    <!-- Messages flash -->
+    <!-- Flash messages -->
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             <div class="container mt-3">
@@ -131,7 +132,7 @@
         {% endif %}
     {% endwith %}
 
-    <!-- Contenu principal -->
+    <!-- Main content -->
     <main>
         {% block content %}{% endblock %}
     </main>

@@ -1,0 +1,98 @@
+<!-- templates/install/step1.html -->
+<!-- Step 1 – PostgreSQL connection settings.
+   The form posts to /install/step1; on success the user is redirected to step 2.-->
+
+{% extends 'install/base_install.html' %}
+
+{% block title_suffix %} — Step 1: Database{% endblock %}
+
+{% block content %}
+<div class="install-card">
+
+    <h2><i class="fa-solid fa-database me-2 text-primary"></i>{{ _('Database connection') }}</h2>
+    <p class="step-desc">
+        {{ _('Enter the credentials for your PostgreSQL server.') }}
+        {{ _('The database') }} <strong>bd_userslinker</strong> {{ _('or the name you choose and the') }} <code>app</code> {{ _('schema must already exist.') }}<br>
+        <small class="text-muted">
+            {{ _('Not sure? Run') }} <code>postgresql_step1.sql</code> {{ _('and') }} <code>postgresql_step2.sql</code>
+            {{ _('in pgAdmin first.') }}
+        </small>
+    </p>
+
+    <form method="POST" action="{{ url_for('install.step1') }}" novalidate>
+        {# CSRF is disabled during install; the lock file prevents replay attacks #}
+
+        <p class="section-label"><i class="fa-solid fa-server me-1"></i>{{ _('Server') }}</p>
+
+        <div class="row g-3 mb-3">
+            <div class="col-8">
+                <label for="pg_host" class="form-label fw-semibold">{{ _('Host') }}</label>
+                <input type="text" class="form-control" id="pg_host" name="pg_host"
+                       value="{{ pg_host }}" placeholder="localhost" required>
+                <div class="form-text">{{ _('IP address or hostname of the PostgreSQL server.') }}</div>
+            </div>
+            <div class="col-4">
+                <label for="pg_port" class="form-label fw-semibold">{{ _('Port') }}</label>
+                <input type="number" class="form-control" id="pg_port" name="pg_port"
+                       value="{{ pg_port }}" placeholder="5432" min="1" max="65535" required>
+            </div>
+        </div>
+
+        <p class="section-label mt-3"><i class="fa-solid fa-user me-1"></i>{{ _('Credentials') }}</p>
+
+        <div class="row g-3 mb-3">
+            <div class="col-6">
+                <label for="pg_user" class="form-label fw-semibold">{{ _('Username') }}</label>
+                <input type="text" class="form-control" id="pg_user" name="pg_user"
+                       value="{{ pg_user }}" placeholder="userslinker_app" required>
+            </div>
+            <div class="col-6">
+                <label for="pg_password" class="form-label fw-semibold">{{ _('Password') }}</label>
+                <div class="input-group">
+                    <input type="password" class="form-control" id="pg_password" name="pg_password"
+                           value="{{ pg_password }}" autocomplete="current-password">
+                    <button class="btn btn-outline-secondary" type="button" id="togglePwd"
+                            title="Show / hide password">
+                        <i class="fa-solid fa-eye" id="eyeIcon"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <p class="section-label mt-3"><i class="fa-solid fa-circle-nodes me-1"></i>{{ _('Database') }}</p>
+
+        <div class="mb-4">
+            <label for="pg_db" class="form-label fw-semibold">{{ _('Database name') }}</label>
+            <input type="text" class="form-control" id="pg_db" name="pg_db"
+                   value="{{ pg_db }}" placeholder="bd_userslinker" required>
+            <div class="form-text">
+                {{ _('The database must already exist. Tables will be created inside its') }} <code>app</code> {{ _('schema in Step 2.') }}
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-end">
+            <button type="submit" class="btn btn-primary px-4">
+                {{ _('Test connection and continue') }}
+                <i class="fa-solid fa-arrow-right ms-2"></i>
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    /* Toggle password visibility */
+    document.getElementById('togglePwd').addEventListener('click', function () {
+        const input   = document.getElementById('pg_password');
+        const eyeIcon = document.getElementById('eyeIcon');
+        if (input.type === 'password') {
+            input.type = 'text';
+            eyeIcon.classList.replace('fa-eye', 'fa-eye-slash');
+        } else {
+            input.type = 'password';
+            eyeIcon.classList.replace('fa-eye-slash', 'fa-eye');
+        }
+    });
+</script>
+{% endblock %}

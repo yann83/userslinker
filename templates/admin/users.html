@@ -1,37 +1,37 @@
 <!-- templates/admin/users.html -->
 {% extends "base.html" %}
 
-{% block title %}Gestion des utilisateurs{% endblock %}
+{% block title %}{{ _('User management') }}{% endblock %}
 
 {% block content %}
 <div class="container">
     <div class="d-flex justify-content-between align-items-center mt-4 mb-4">
-        <h2><i class="fas fa-users-cog"></i> Gestion des utilisateurs</h2>
+        <h2><i class="fas fa-users-cog"></i> {{ _('User management') }}</h2>
         <div>
             <a href="{{ url_for('export_users') }}" class="btn btn-success">
-                <i class="fas fa-file-export"></i> Exporter
+                <i class="fas fa-file-export"></i> {{ _('Export') }}
             </a>
             <a href="{{ url_for('import_users') }}" class="btn btn-warning">
-                <i class="fas fa-file-import"></i> Importer
+                <i class="fas fa-file-import"></i> {{ _('Import') }}
             </a>
             <a href="{{ url_for('users_stats') }}" class="btn btn-info">
-                <i class="fas fa-chart-bar"></i> Statistiques
+                <i class="fas fa-chart-bar"></i> {{ _('Statistics') }}
             </a>
             <a href="{{ url_for('create_user') }}" class="btn btn-primary">
-                <i class="fas fa-plus"></i> Nouvel utilisateur
+                <i class="fas fa-plus"></i> {{ _('New user') }}
             </a>
         </div>
     </div>
 
     {% if users %}
-    <!-- Barre de recherche et filtres -->
+    <!-- Search bar and filters -->
     <div class="row mb-3">
         <div class="col-md-6">
-            <input type="text" id="searchInput" class="form-control" placeholder="Rechercher un utilisateur...">
+            <input type="text" id="searchInput" class="form-control" placeholder="{{ _('Search for a user...') }}">
         </div>
         <div class="col-md-3">
             <select id="roleFilter" class="form-select">
-                <option value="">Tous les rôles</option>
+                <option value="">{{ _('All roles') }}</option>
                 <option value="administrateur">Administrateur</option>
                 <option value="gestionnaire">Gestionnaire</option>
                 <option value="lecteur">Lecteur</option>
@@ -39,9 +39,9 @@
         </div>
         <div class="col-md-3">
             <select id="statusFilter" class="form-select">
-                <option value="">Tous les statuts</option>
-                <option value="active">Actifs uniquement</option>
-                <option value="inactive">Inactifs uniquement</option>
+                <option value="">{{ _('All status') }}</option>
+                <option value="active">{{ _('Active roles') }}</option>
+                <option value="inactive">{{ _('Inactive roles') }}</option>
             </select>
         </div>
     </div>
@@ -50,12 +50,12 @@
         <table class="table table-striped" id="usersTable">
             <thead>
                 <tr>
-                    <th>Nom</th>
-                    <th>Email</th>
-                    <th>Nom d'utilisateur</th>
-                    <th>Rôles</th>
-                    <th>Statut</th>
-                    <th>Actions</th>
+                    <th>{{ _('Name') }}</th>
+                    <th>{{ _('Email') }}</th>
+                    <th>{{ _('Username') }}</th>
+                    <th>{{ _('Role') }}</th>
+                    <th>{{ _('Status') }}</th>
+                    <th>{{ _('Actions') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -78,11 +78,11 @@
                     <td>
                         {% if user.active %}
                             <span class="badge bg-success">
-                                <i class="fas fa-check-circle"></i> Actif
+                                <i class="fas fa-check-circle"></i> {{ _('Active') }}
                             </span>
                         {% else %}
                             <span class="badge bg-danger">
-                                <i class="fas fa-times-circle"></i> Inactif
+                                <i class="fas fa-times-circle"></i> {{ _('Inactive') }}
                             </span>
                         {% endif %}
                     </td>
@@ -91,10 +91,12 @@
                             <i class="fas fa-edit"></i>
                         </a>
 
-                        <!-- Empêcher la suppression de soi-même -->
+                        <!-- Preventing self-destruction -->
                         {% if user.id != current_user.id %}
                         <form action="{{ url_for('delete_user', user_id=user.id) }}" method="POST" style="display: inline;"
-                              onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?');">
+                              onsubmit="return confirm('{{ _('Are you sure you want to delete this user?') }}');">
+                            <!-- CSRF token for security -->
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                             <button type="submit" class="btn btn-sm btn-danger">
                                 <i class="fas fa-trash"></i>
                             </button>
@@ -108,13 +110,13 @@
     </div>
     {% else %}
     <div class="alert alert-info">
-        <i class="fas fa-info-circle"></i> Aucun utilisateur trouvé.
+        <i class="fas fa-info-circle"></i> {{ _('No users found.') }}
     </div>
     {% endif %}
 
     <div class="mt-4">
         <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
-            <i class="fas fa-arrow-left"></i> Retour au tableau de bord
+            <i class="fas fa-arrow-left"></i> {{ _('Return to dashboard') }}
         </a>
     </div>
 </div>
@@ -122,7 +124,7 @@
 
 {% block extra_js %}
 <script>
-    // Fonction de recherche et filtrage
+    // Search and filtering function
     function filterTable() {
         const searchInput = document.getElementById('searchInput').value.toLowerCase();
         const roleFilter = document.getElementById('roleFilter').value.toLowerCase();
@@ -151,7 +153,7 @@
         }
     }
 
-    // Ajouter les événements
+    // Add events
     document.getElementById('searchInput').addEventListener('keyup', filterTable);
     document.getElementById('roleFilter').addEventListener('change', filterTable);
     document.getElementById('statusFilter').addEventListener('change', filterTable);

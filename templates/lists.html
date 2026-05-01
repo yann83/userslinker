@@ -10,19 +10,19 @@
     </h2>
 
     <div class="alert alert-info">
-        <i class="fas fa-info-circle"></i> Cette page est accessible aux gestionnaires et aux lecteurs.
+        <i class="fas fa-info-circle"></i> {{ _('This page is accessible to managers and readers.') }}
     </div>
 
     <div class="row">
         <div class="col-md-6">
             <div class="card mb-4 card-hover">
                 <div class="card-header">
-                    <h5><i class="fas fa-users"></i> Utilisateurs</h5>
+                    <h5><i class="fas fa-users"></i> {{ _('Users.') }}</h5>
                 </div>
                 <div class="card-body">
-                    <p>Liste des utilisateurs de l'organisation</p>
+                    <p>{{ _('List of users in the organization.') }}</p>
                     <a href="{{ url_for('users_list') }}" class="btn btn-primary">
-                        <i class="fas fa-list"></i> Afficher la liste
+                        <i class="fas fa-list"></i> {{ _('Display list.') }}
                     </a>
                 </div>
             </div>
@@ -31,21 +31,21 @@
         <div class="col-md-6">
             <div class="card mb-4 card-hover">
                 <div class="card-header">
-                    <h5><i class="fas fa-desktop"></i> Matériel</h5>
+                    <h5><i class="fas fa-desktop"></i> {{ _('Materials.') }}</h5>
                 </div>
                 <div class="card-body">
                     <div class="list-group mb-3">
                         <a href="{{ url_for('material_list', material_type='computers') }}" class="list-group-item list-group-item-action">
-                            <i class="fas fa-laptop"></i> Ordinateurs
+                            <i class="fas fa-laptop"></i> {{ _('Computers.') }}
                         </a>
                         <a href="{{ url_for('material_list', material_type='monitors') }}" class="list-group-item list-group-item-action">
-                            <i class="fas fa-desktop"></i> Moniteurs
+                            <i class="fas fa-desktop"></i> {{ _('Monitors.') }}
                         </a>
                         <a href="{{ url_for('material_list', material_type='peripherals') }}" class="list-group-item list-group-item-action">
-                            <i class="fas fa-keyboard"></i> Périphériques
+                            <i class="fas fa-keyboard"></i> {{ _('Peripherals.') }}
                         </a>
                         <a href="{{ url_for('material_list', material_type='phones') }}" class="list-group-item list-group-item-action">
-                            <i class="fas fa-mobile-alt"></i> Téléphones
+                            <i class="fas fa-mobile-alt"></i> {{ _('Phone.') }}
                         </a>
                     </div>
                 </div>
@@ -55,7 +55,7 @@
 
     <div class="mt-4">
         <a href="{{ url_for('dashboard') }}" class="btn btn-primary">
-            <i class="fas fa-arrow-left"></i> Retour au tableau de bord
+            <i class="fas fa-arrow-left"></i> {{ _('Back to dashboard.') }}
         </a>
     </div>
 </div>

@@ -93,16 +93,19 @@ pip install -r requirements.txt
 In the  `setup` folder update this values
 
 ```
-MYSQL_HOST=localhost
-MYSQL_USER=root
-MYSQL_PASSWORD=your_password_here
-MYSQL_DB=bd_userslinker
+PG_HOST=localhost
+PG_USER=userslinker_app
+PG_PASSWORD=userslinker
+PG_DB=bd_userslinker
+PG_PORT=5432
 ``` 
 
-Create a MySQL database named `bd_userslinker` and configure your connection settings.
+Configure a Psql database and configure your connection settings.
 
 ```sql
-CREATE DATABASE bd_userslinker;
+postgresql_step1.sql
+postgresql_step2.sql
+postgresql_step3.sql
 ```
 
 ### 5. Configure External Databases (Optional)
@@ -149,13 +152,17 @@ Create a `bdd.json` file in the root directory (outside web-accessible folder) w
 
 ### 6. Initialize Database Tables
 
+❌ error not use 
+
 ```bash
-python manage.py db init
-python manage.py db migrate
-python manage.py db upgrade
+python db_setup.py db init
+python db_setup.py db migrate
+python db_setup.py db upgrade
 ```
 
 ### 7. Create Initial Administrator
+
+❌ error not functionnal
 
 ```bash
 python create_admin.py
@@ -163,17 +170,24 @@ python create_admin.py
 
 ### 8. Run the Application
 
+❌ export FLASK_ENV=development don't work
+
 ```bash
 # Development mode
 export FLASK_ENV=development
 python app.py
+```
 
-# Production mode
-export FLASK_ENV=production
+
+### 8. Run the Application
+
+```bash
 python app.py
 ```
 
 The application will be available at `http://localhost:5000`
+
+
 
 ## 📊 Database Schema
 

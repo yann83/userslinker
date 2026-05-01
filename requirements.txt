@@ -1,33 +1,31 @@
-
-# Dépendances pour l'application Flask avec Flask-Security
-
-# Flask et extensions
+# Flask and extensions
 Flask==2.3.3
 Flask-SQLAlchemy==3.0.5
 Flask-Security-Too==5.3.0
+Flask-Babel
 
-# Base de données
-PyMySQL==1.1.1
-mysql-connector-python==8.2.0
+# Database
+psycopg2-binary
 
-# Sécurité et authentification - versions compatibles
+# Security and authentication - compatible versions
 Flask-WTF==1.2.1
 Flask-Bcrypt==1.0.1
 bcrypt==4.0.1
 passlib==1.7.4
 email-validator==2.1.0.post1
 
-# Utilitaires
+# Utilities
 python-dotenv==1.0.0
 
-# Pour la sérialisation des sessions
+# For session serialization
 Flask-Session==0.5.0
 
-# Templates et interface
+# Templates and interface
 Bootstrap-Flask==2.3.3
 
-# Export PDF (pour les rapports)
+# Export PDF (for reports)
 reportlab==4.0.7
 
-# Pour les graphiques
+# For the graphs
 matplotlib==3.8.2
+

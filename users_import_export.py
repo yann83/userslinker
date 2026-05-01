@@ -1,6 +1,6 @@
 # users_import_export.py
 """
-Fonctions d'import/export des utilisateurs
+User import/export functions
 """
 
 import csv
@@ -12,15 +12,15 @@ from flask_security import hash_password
 
 def export_users_csv():
     """
-    Exporte la liste des utilisateurs au format CSV
+    Exports the user list in CSV format
     """
     output = io.StringIO()
     writer = csv.writer(output)
 
-    # En-têtes
+    # Headers
     writer.writerow(['Prénom', 'Nom', 'Email', 'Nom d\'utilisateur', 'Rôles', 'Statut'])
 
-    # Données
+    # Datas
     users = AppManagement.query.all()
     for user in users:
         roles = ', '.join([role.name for role in user.roles])
@@ -34,7 +34,7 @@ def export_users_csv():
             status
         ])
 
-    # Créer le fichier à télécharger
+    # Create the file to be downloaded
     output.seek(0)
     return send_file(
         io.BytesIO(output.getvalue().encode('utf-8')),
@@ -46,7 +46,7 @@ def export_users_csv():
 
 def import_users_csv(file_stream):
     """
-    Importe des utilisateurs depuis un fichier CSV
+    Import users from a CSV file
     """
     try:
         csv_input = io.StringIO(file_stream.read().decode('utf-8'))
@@ -57,28 +57,28 @@ def import_users_csv(file_stream):
 
         for row_num, row in enumerate(reader, start=2):  # Start at 2 because of header
             try:
-                # Vérifier si l'utilisateur existe déjà
+                # Check if the user already exists
                 existing_user = AppManagement.query.filter_by(email=row['Email']).first()
                 if existing_user:
-                    errors.append(f"Ligne {row_num}: L'utilisateur avec l'email {row['Email']} existe déjà")
+                    errors.append(f"Line {row_num}: he user with the email address {row['Email']} already exists")
                     continue
 
-                # Générer un identifiant unique requis par Flask-Security
+                # Generate a unique identifier required by Flask-Security
                 import uuid
                 fs_uniquifier = str(uuid.uuid4())
 
-                # Créer le nouvel utilisateur
+                # Create the new user
                 new_user = AppManagement(
                     GivenName=row['Prénom'],
                     Surname=row['Nom'],
                     email=row['Email'],
                     user=row['Nom d\'utilisateur'],
-                    password=hash_password('password123'),  # Mot de passe par défaut
+                    password=hash_password('password123'),  # Default password
                     active=row.get('Statut', 'Actif') == 'Actif',
-                    fs_uniquifier=fs_uniquifier  # Identifiant unique requis par Flask-Security
+                    fs_uniquifier=fs_uniquifier  # Unique identifier required by Flask-Security
                 )
 
-                # Ajouter les rôles
+                # Add the roles
                 if row.get('Rôles'):
                     roles = [r.strip() for r in row['Rôles'].split(',')]
                     for role_name in roles:
@@ -90,9 +90,9 @@ def import_users_csv(file_stream):
                 imported_count += 1
 
             except KeyError as e:
-                errors.append(f"Ligne {row_num}: Colonne manquante {str(e)}")
+                errors.append(f"Line {row_num}: Missing column {str(e)}")
             except Exception as e:
-                errors.append(f"Ligne {row_num}: Erreur {str(e)}")
+                errors.append(f"Line {row_num}: Error {str(e)}")
 
         db.session.commit()
 
@@ -100,4 +100,4 @@ def import_users_csv(file_stream):
 
     except Exception as e:
         db.session.rollback()
-        return 0, [f"Erreur générale: {str(e)}"]
+        return 0, [f"Global error: {str(e)}"]

@@ -14,40 +14,42 @@
             <div class="card">
                 <div class="card-body">
                     <form method="POST" action="{{ url_for('material_edit', material_type=material_type, item_id=item.id) }}">
+                        <!-- CSRF token for security -->
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                         <div class="mb-3">
-                            <label for="name" class="form-label">Nom <span class="text-danger">*</span></label>
+                            <label for="name" class="form-label">{{ _('Name') }} <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="name" name="name" value="{{ item.name }}" required>
                         </div>
 
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="serial" class="form-label">Numéro de série</label>
+                                    <label for="serial" class="form-label">{{ _('Serial number') }}</label>
                                     <input type="text" class="form-control" id="serial" name="serial" value="{{ item.serial }}">
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="otherserial" class="form-label">Numéro d'inventaire</label>
+                                    <label for="otherserial" class="form-label">{{ _('Inventory number') }}</label>
                                     <input type="text" class="form-control" id="otherserial" name="otherserial" value="{{ item.otherserial }}">
                                 </div>
                             </div>
                         </div>
 
                         <div class="mb-3">
-                            <label for="username" class="form-label">Utilisateur</label>
-                            <input type="text" class="form-control" id="username" name="username" value="{{ item.Username }}" placeholder="Non attribué">
+                            <label for="username" class="form-label">{{ _('Username') }}</label>
+                            <input type="text" class="form-control" id="username" name="username" value="{{ item.Username }}" placeholder="{{ _('Not assigned') }}">
                             <small class="form-text text-muted">
-                                Si vous modifiez l'utilisateur, il est préférable d'utiliser le workflow d'événements.
+                                {{ _('If you are changing the user, it is best to use the event workflow.') }}
                             </small>
                         </div>
 
                         <div class="mt-4">
                             <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save"></i> Enregistrer les modifications
+                                <i class="fas fa-save"></i> {{ _('Save settings') }}
                             </button>
                             <a href="{{ url_for('material_list', material_type=material_type) }}" class="btn btn-secondary">
-                                <i class="fas fa-times"></i> Annuler
+                                <i class="fas fa-times"></i> {{ _('Cancel') }}
                             </a>
                         </div>
                     </form>
@@ -58,25 +60,25 @@
         <div class="col-md-4">
             <div class="card bg-light">
                 <div class="card-body">
-                    <h5 class="card-title">Informations sur le matériel</h5>
+                    <h5 class="card-title">{{ _('Informations') }}</h5>
                     <p class="card-text">
                         <small>
                             <strong>ID :</strong> {{ item.id }}<br>
-                            <strong>Lié :</strong> {% if item.is_linked %}Oui{% else %}Non{% endif %}<br>
-                            <strong>Créé le :</strong> {{ item.date_create.strftime('%d/%m/%Y %H:%M') if item.date_create else 'N/A' }}<br>
-                            <strong>Dernière modification :</strong> {{ item.date_mod.strftime('%d/%m/%Y %H:%M') if item.date_mod else 'N/A' }}<br>
-                            <strong>Par :</strong> {{ item.app_management_user }}
+                            <strong>{{ _('Link : ') }}</strong> {% if item.is_linked %}Oui{% else %}Non{% endif %}<br>
+                            <strong>{{ _('Created on : ') }}</strong> {{ item.date_create.strftime('%d/%m/%Y %H:%M') if item.date_create else 'N/A' }}<br>
+                            <strong>{{ _('Last change : ') }}</strong> {{ item.date_mod.strftime('%d/%m/%Y %H:%M') if item.date_mod else 'N/A' }}<br>
+                            <strong>{{ _('By : ') }}</strong> {{ item.app_management_user }}
                         </small>
                     </p>
 
                     <hr>
 
-                    <h6>Notes</h6>
+                    <h6>{{ _('Notes') }}</h6>
                     <p class="card-text">
                         <small>
-                            • Les modifications seront effectives immédiatement.<br>
-                            • Les champs marqués d'un <span class="text-danger">*</span> sont obligatoires.<br>
-                            • L'historique des modifications est conservé.
+                            • {{ _('The changes will be effective immediately.') }}<br>
+                            • <span class="text-danger">*</span> {{ _('Fields marked with an asterisk are required.') }}<br>
+                            • {{ _('The change history is preserved.') }}
                         </small>
                     </p>
                 </div>

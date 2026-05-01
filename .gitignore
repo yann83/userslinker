@@ -20,3 +20,25 @@ READMEfr.md
 csrf_fix.py
 .env
 
+admin.txt
+db_connector.py
+sync_manager.py
+config/empty.txt
+installed.lock
+obsoletes/config/bdd.json
+obsoletes/setup/setup.py
+obsoletes/templates/db_check.html
+obsoletes/csrf_fix.py
+obsoletes/db_connector.py
+obsoletes/sync_manager.py
+setup/babel.md
+setup/messagepo_copy_msgid_to_msgstr.py
+postgresql.md
+prod_userslinker.docx
+READMEnew.md
+test.py
+ToDo.md
+tuto_userslinker.docx
+translations/de/
+translations/es/
+translations/it/

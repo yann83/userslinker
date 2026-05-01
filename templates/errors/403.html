@@ -1,7 +1,7 @@
 <!-- templates/errors/403.html -->
 {% extends "base.html" %}
 
-{% block title %}Accès non autorisé{% endblock %}
+{% block title %}{{ _('Unauthorized access') }}{% endblock %}
 
 {% block content %}
 <div class="container">
@@ -10,22 +10,22 @@
             <div class="card">
                 <div class="card-body">
                     <i class="fas fa-lock fa-5x text-danger mb-4"></i>
-                    <h2 class="text-danger">Accès non autorisé</h2>
-                    <p class="lead">Vous n'avez pas les permissions nécessaires pour accéder à cette page.</p>
+                    <h2 class="text-danger">{{ _('Unauthorized access') }}</h2>
+                    <p class="lead">{{ _('You do not have the necessary permissions to access this page.') }}</p>
 
                     <div class="alert alert-warning">
-                        <i class="fas fa-info-circle"></i> Cette page nécessite le rôle :
+                        <i class="fas fa-info-circle"></i> {{ _('This page requires the following role :') }}
                         <strong>{{ required_role | default('spécifique') }}</strong>
                     </div>
 
-                    <p>Vos rôles actuels :</p>
+                    <p>{{ _('Your current roles:') }}</p>
                     {% for role in current_user.roles %}
                         <span class="badge bg-primary">{{ role.name.upper() }}</span>
                     {% endfor %}
 
                     <div class="mt-4">
                         <a href="{{ url_for('dashboard') }}" class="btn btn-primary">
-                            <i class="fas fa-home"></i> Retour à l'accueil
+                            <i class="fas fa-home"></i> {{ _('Back to home') }}
                         </a>
                     </div>
                 </div>

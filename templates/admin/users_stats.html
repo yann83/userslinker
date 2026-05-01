@@ -89,7 +89,7 @@
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    // Graphique en camembert pour les rôles
+    // Pie chart for roles
     const roleCtx = document.getElementById('roleChart').getContext('2d');
     new Chart(roleCtx, {
         type: 'pie',
@@ -110,7 +110,7 @@
         }
     });
 
-    // Graphique en barre pour le statut
+    // Bar chart for status
     const statusCtx = document.getElementById('statusChart').getContext('2d');
     new Chart(statusCtx, {
         type: 'doughnut',

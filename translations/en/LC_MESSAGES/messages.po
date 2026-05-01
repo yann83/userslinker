@@ -1,0 +1,2138 @@
+# translations/en/LC_MESSAGES/messages.po
+# English translations for PROJECT.
+# Copyright (C) 2026 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2026-04-12 15:17+0200\n"
+"PO-Revision-Date: 2026-04-12 11:21+0200\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: en\n"
+"Language-Team: en <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: templates/base.html:58
+msgid "Home"
+msgstr "Home"
+
+#: templates/base.html:66 templates/dashboard.html:59
+msgid "Administration"
+msgstr "Administration"
+
+#: templates/base.html:70
+msgid "Users management"
+msgstr "Users management"
+
+#: templates/base.html:80 templates/dashboard.html:20
+#: templates/events/create.html:9
+msgid "Create an event"
+msgstr "Create an event"
+
+#: templates/base.html:89 templates/dashboard.html:34
+msgid "Lists"
+msgstr "Lists"
+
+#: templates/base.html:94 templates/dashboard.html:45 templates/reports.html:4
+#: templates/reports.html:9
+msgid "Reports"
+msgstr "Reports"
+
+#: templates/base.html:106
+msgid "My profil"
+msgstr "My profil"
+
+#: templates/base.html:110
+msgid "Logout"
+msgstr "Logout"
+
+#: templates/dashboard.html:4
+msgid "Dashboard"
+msgstr "Dashboard"
+
+#: templates/dashboard.html:10
+#, python-format
+msgid "Hello %(name)s, welcome to UsersLinker"
+msgstr "Hello %(name)s, welcome to UsersLinker"
+
+#: templates/dashboard.html:21
+msgid "Manage links between users and hardware."
+msgstr "Manage links between users and hardware."
+
+#: templates/dashboard.html:22
+msgid "Start"
+msgstr "Start"
+
+#: templates/dashboard.html:35
+msgid "Consult the users and the equipment."
+msgstr "Consult the users and the equipment."
+
+#: templates/dashboard.html:36
+msgid "Access"
+msgstr "Access"
+
+#: templates/dashboard.html:46
+msgid "Generate reports and statistics."
+msgstr "Generate reports and statistics."
+
+#: templates/dashboard.html:47
+msgid "Consult"
+msgstr "Consult"
+
+#: templates/dashboard.html:60
+msgid "Manage application users."
+msgstr "Manage application users."
+
+#: templates/dashboard.html:61 templates/users/list.html:100
+msgid "Manage"
+msgstr "Manage"
+
+#: templates/dashboard.html:73
+msgid "Your roles"
+msgstr "Your roles"
+
+#: templates/dashboard.html:90
+msgid "CSV Data Management"
+msgstr "CSV Data Management"
+
+#: templates/dashboard.html:98
+msgid "Download a template"
+msgstr "Download a template"
+
+#: templates/dashboard.html:103
+msgid "Choose a template"
+msgstr "Choose a template"
+
+#: templates/dashboard.html:106
+msgid "Template list"
+msgstr "Template list"
+
+#: templates/dashboard.html:108
+msgid "💻 Computers"
+msgstr "💻 Computers"
+
+#: templates/dashboard.html:111
+msgid "🖥️ Monitors"
+msgstr "🖥️ Monitors"
+
+#: templates/dashboard.html:114
+msgid "⌨️ Peripherals"
+msgstr "⌨️ Peripherals"
+
+#: templates/dashboard.html:117
+msgid "📱 Phones"
+msgstr "📱 Phones"
+
+#: templates/dashboard.html:120
+msgid "👥 Users"
+msgstr "👥 Users"
+
+#: templates/dashboard.html:126
+msgid "Download"
+msgstr "Download"
+
+#: templates/dashboard.html:132
+msgid "The template contains headers and an example row."
+msgstr "The template contains headers and an example row."
+
+#: templates/dashboard.html:140
+msgid "Import datas"
+msgstr "Import datas"
+
+#: templates/dashboard.html:150
+#: templates/events/select_material_to_link.html:31
+#: templates/events/select_material_to_unlink.html:31
+#: templates/events/summary.html:50 templates/reports/by_user.html:233
+msgid "Computers"
+msgstr "Computers"
+
+#: templates/dashboard.html:158
+#: templates/events/select_material_to_link.html:36
+#: templates/events/select_material_to_unlink.html:36
+#: templates/events/summary.html:55 templates/reports/by_user.html:255
+msgid "Monitors"
+msgstr "Monitors"
+
+#: templates/dashboard.html:166
+#: templates/events/select_material_to_link.html:41
+#: templates/events/select_material_to_unlink.html:41
+#: templates/events/summary.html:60 templates/reports/by_user.html:277
+msgid "Peripherals"
+msgstr "Peripherals"
+
+#: templates/dashboard.html:174
+#: templates/events/select_material_to_link.html:46
+#: templates/events/select_material_to_unlink.html:46
+#: templates/events/summary.html:65 templates/reports/by_user.html:299
+msgid "Phones"
+msgstr "Phones"
+
+#: templates/dashboard.html:182 templates/reports/by_material_type.html:127
+msgid "Users"
+msgstr "Users"
+
+#: templates/dashboard.html:191
+msgid "CSV File"
+msgstr "CSV File"
+
+#: templates/dashboard.html:198
+msgid "Import Datas"
+msgstr "Import Datas"
+
+#: templates/lists.html:13 templates/reports.html:13
+msgid "This page is accessible to managers and readers."
+msgstr "This page is accessible to managers and readers."
+
+#: templates/lists.html:20
+msgid "Users."
+msgstr "Users."
+
+#: templates/lists.html:23
+msgid "List of users in the organization."
+msgstr "List of users in the organization."
+
+#: templates/lists.html:25
+msgid "Display list."
+msgstr "Display list."
+
+#: templates/lists.html:34
+msgid "Materials."
+msgstr "Materials."
+
+#: templates/lists.html:39
+msgid "Computers."
+msgstr "Computers."
+
+#: templates/lists.html:42
+msgid "Monitors."
+msgstr "Monitors."
+
+#: templates/lists.html:45
+msgid "Peripherals."
+msgstr "Peripherals."
+
+#: templates/lists.html:48
+msgid "Phone."
+msgstr "Phone."
+
+#: templates/lists.html:58
+msgid "Back to dashboard."
+msgstr "Back to dashboard."
+
+#: templates/profile.html:4 templates/profile.html:9
+msgid "My Profile."
+msgstr "My Profile."
+
+#: templates/profile.html:17
+msgid "Personal information."
+msgstr "Personal information."
+
+#: templates/events/summary.html:29 templates/profile.html:22
+#: templates/reports/by_user.html:192
+msgid "Name :"
+msgstr "Name :"
+
+#: templates/profile.html:26
+msgid "Fist name :"
+msgstr "Fist name :"
+
+#: templates/profile.html:30
+msgid "Email :"
+msgstr "Email :"
+
+#: templates/events/summary.html:31 templates/profile.html:34
+#: templates/reports/activity.html:341 templates/reports/by_service.html:174
+#: templates/reports/by_user.html:115 templates/reports/by_user.html:200
+msgid "Username :"
+msgstr "Username :"
+
+#: templates/profile.html:38
+msgid "Role :"
+msgstr "Role :"
+
+#: templates/profile.html:56
+msgid "This information can only be modified by an administrator. Contact your system administrator if any changes are needed. :"
+msgstr "This information can only be modified by an administrator. Contact your system administrator if any changes are needed. :"
+
+#: templates/profile.html:67
+msgid "Change your password"
+msgstr "Change your password"
+
+#: templates/profile.html:76
+msgid "Current password :"
+msgstr "Current password :"
+
+#: templates/profile.html:89
+msgid "New password :"
+msgstr "New password :"
+
+#: templates/admin/create_user.html:81 templates/profile.html:99
+msgid "The password must contain at least 6 characters."
+msgstr "The password must contain at least 6 characters."
+
+#: templates/profile.html:105
+msgid "Confirm the new password"
+msgstr "Confirm the new password"
+
+#: templates/profile.html:118
+msgid "Password strength :"
+msgstr "Password strength :"
+
+#: templates/profile.html:125
+msgid "Type your new password to see its strength"
+msgstr "Type your new password to see its strength"
+
+#: templates/profile.html:131
+msgid "Change password"
+msgstr "Change password"
+
+#: templates/profile.html:134
+msgid "Go back"
+msgstr "Go back"
+
+#: templates/profile.html:144
+msgid "Safety tips :"
+msgstr "Safety tips :"
+
+#: templates/profile.html:148
+msgid "Use a password of at least 8 characters"
+msgstr "Use a password of at least 8 characters"
+
+#: templates/profile.html:149
+msgid "Mix uppercase letters, lowercase letters, numbers, and symbols"
+msgstr "Mix uppercase letters, lowercase letters, numbers, and symbols"
+
+#: templates/profile.html:150
+msgid "Avoid dictionary words or personal information"
+msgstr "Avoid dictionary words or personal information"
+
+#: templates/profile.html:151
+msgid "Do not reuse this password on other websites"
+msgstr "Do not reuse this password on other websites"
+
+#: templates/profile.html:152
+msgid "Change your password regularly"
+msgstr "Change your password regularly"
+
+#: templates/reports.html:21 templates/reports/by_service.html:4
+#: templates/reports/by_service.html:9
+msgid "Report by department"
+msgstr "Report by department"
+
+#: templates/reports.html:24
+msgid "Generates a detailed report of users and their equipment by department."
+msgstr "Generates a detailed report of users and their equipment by department."
+
+#: templates/reports.html:26
+msgid "Filter by department (required)"
+msgstr "Filter by department (required)"
+
+#: templates/reports.html:27
+msgid "Filter by time period (optional)"
+msgstr "Filter by time period (optional)"
+
+#: templates/reports.html:28
+msgid "Display of linked equipment"
+msgstr "Display of linked equipment"
+
+#: templates/reports.html:29
+msgid "Movement history"
+msgstr "Movement history"
+
+#: templates/reports.html:32 templates/reports.html:53
+#: templates/reports.html:74 templates/reports.html:95
+#: templates/reports/by_material_type.html:51 templates/reports/by_user.html:89
+msgid "Generate the report"
+msgstr "Generate the report"
+
+#: templates/reports.html:42 templates/reports/by_user.html:4
+#: templates/reports/by_user.html:9
+msgid "Report by user"
+msgstr "Report by user"
+
+#: templates/reports.html:45
+msgid "Generates a detailed report for a specific user."
+msgstr "Generates a detailed report for a specific user."
+
+#: templates/reports.html:47
+msgid "Dynamic user search"
+msgstr "Dynamic user search"
+
+#: templates/reports.html:48
+msgid "Full history (all dates)"
+msgstr "Full history (all dates)"
+
+#: templates/reports.html:49
+msgid "Currently linked hardware"
+msgstr "Currently linked hardware"
+
+#: templates/reports.html:50 templates/reports.html:69
+msgid "Detailed statistics"
+msgstr "Detailed statistics"
+
+#: templates/reports.html:63 templates/reports/by_material_type.html:4
+#: templates/reports/by_material_type.html:9
+msgid "Report by equipment type"
+msgstr "Report by equipment type"
+
+#: templates/reports.html:66
+msgid "Analysis of distribution and usage by equipment type."
+msgstr "Analysis of distribution and usage by equipment type."
+
+#: templates/reports.html:68
+msgid "Pie charts"
+msgstr "Pie charts"
+
+#: templates/reports.html:70
+msgid "Utilization rates"
+msgstr "Utilization rates"
+
+#: templates/reports.html:71 templates/reports/by_material_type.html:166
+msgid "Breakdown by department"
+msgstr "Breakdown by department"
+
+#: templates/reports.html:84 templates/reports/activity.html:4
+#: templates/reports/activity.html:9
+msgid "Activity Report"
+msgstr "Activity Report"
+
+#: templates/events/create.html:53 templates/events/select_user.html:114
+#: templates/reports.html:103
+msgid "Return to the dashboard"
+msgstr "Return to the dashboard"
+
+#: templates/admin/create_user.html:4 templates/admin/create_user.html:9
+#: templates/admin/create_user.html:62 templates/users/create.html:4
+msgid "Create an user"
+msgstr "Create an user"
+
+#: templates/admin/create_user.html:21 templates/admin/edit_user.html:21
+#: templates/users/create.html:20 templates/users/edit.html:20
+#: templates/users/list.html:84 templates/users/trash.html:30
+msgid "First Name"
+msgstr "First Name"
+
+#: templates/admin/create_user.html:27 templates/admin/edit_user.html:28
+#: templates/admin/users.html:53
+#: templates/events/select_material_to_link.html:100
+#: templates/events/select_material_to_link.html:164
+#: templates/events/select_material_to_link.html:224
+#: templates/events/select_material_to_link.html:284
+#: templates/events/select_material_to_unlink.html:107
+#: templates/events/select_material_to_unlink.html:182
+#: templates/events/select_material_to_unlink.html:252
+#: templates/events/select_material_to_unlink.html:322
+#: templates/events/summary.html:79 templates/events/summary.html:113
+#: templates/events/summary.html:147 templates/events/summary.html:181
+#: templates/material/create.html:18 templates/material/edit.html:18
+#: templates/material/list.html:115 templates/material/trash.html:29
+#: templates/users/create.html:26 templates/users/edit.html:27
+#: templates/users/list.html:81 templates/users/trash.html:29
+msgid "Name"
+msgstr "Name"
+
+#: templates/admin/create_user.html:34 templates/admin/edit_user.html:36
+#: templates/admin/users.html:54 templates/security/login_user.html:21
+msgid "Email"
+msgstr "Email"
+
+#: templates/admin/create_user.html:40 templates/admin/edit_user.html:43
+#: templates/admin/users.html:55 templates/install/step1.html:45
+#: templates/install/step3.html:39 templates/material/create.html:38
+#: templates/material/edit.html:38 templates/material/list.html:118
+#: templates/material/trash.html:32 templates/users/create.html:33
+#: templates/users/edit.html:35 templates/users/list.html:87
+#: templates/users/trash.html:31
+msgid "Username"
+msgstr "Username"
+
+#: templates/admin/create_user.html:45 templates/install/step1.html:50
+#: templates/install/step3.html:60 templates/security/login_user.html:33
+msgid "Password"
+msgstr "Password"
+
+#: templates/admin/create_user.html:51 templates/admin/edit_user.html:55
+#: templates/admin/users.html:56
+msgid "Role"
+msgstr "Role"
+
+#: templates/admin/create_user.html:53
+msgid "Select a role"
+msgstr "Select a role"
+
+#: templates/admin/create_user.html:65 templates/admin/edit_user.html:97
+#: templates/events/select_user.html:105 templates/material/create.html:50
+#: templates/material/edit.html:50 templates/users/create.html:57
+#: templates/users/edit.html:63
+msgid "Cancel"
+msgstr "Cancel"
+
+#: templates/admin/create_user.html:76 templates/material/create.html:61
+#: templates/material/edit.html:61 templates/users/create.html:68
+msgid "Informations"
+msgstr "Informations"
+
+#: templates/admin/create_user.html:79 templates/material/create.html:64
+#: templates/material/edit.html:78
+msgid "Fields marked with an asterisk are required."
+msgstr "Fields marked with an asterisk are required."
+
+#: templates/admin/create_user.html:80
+msgid "Email will be used to log in to the application."
+msgstr "Email will be used to log in to the application."
+
+#: templates/admin/create_user.html:82
+msgid "You can assign a role immediately or do it later."
+msgstr "You can assign a role immediately or do it later."
+
+#: templates/admin/edit_user.html:4 templates/admin/edit_user.html:9
+#: templates/users/edit.html:4
+msgid "Edit an user"
+msgstr "Edit an user"
+
+#: templates/admin/edit_user.html:49
+msgid "New password"
+msgstr "New password"
+
+#: templates/admin/edit_user.html:73
+msgid "Active account"
+msgstr "Active account"
+
+#: templates/admin/edit_user.html:76
+msgid "An inactive account cannot log in to the application."
+msgstr "An inactive account cannot log in to the application."
+
+#: templates/admin/edit_user.html:82
+msgid "Current status:"
+msgstr "Current status:"
+
+#: templates/admin/edit_user.html:84 templates/admin/users.html:81
+msgid "Active"
+msgstr "Active"
+
+#: templates/admin/edit_user.html:85
+msgid "The user can log in"
+msgstr "The user can log in"
+
+#: templates/admin/edit_user.html:88
+msgid "The user cannot log in"
+msgstr "The user cannot log in"
+
+#: templates/admin/edit_user.html:94
+msgid "Save changes"
+msgstr "Save changes"
+
+#: templates/admin/edit_user.html:108 templates/events/summary.html:24
+msgid "User information"
+msgstr "User information"
+
+#: templates/admin/edit_user.html:111
+msgid "Created on:"
+msgstr "Created on:"
+
+#: templates/admin/edit_user.html:111
+msgid "Yes"
+msgstr "Yes"
+
+#: templates/admin/edit_user.html:113
+msgid "Current roles:"
+msgstr "Current roles:"
+
+#: templates/admin/edit_user.html:122 templates/material/edit.html:74
+msgid "Notes"
+msgstr "Notes"
+
+#: templates/admin/edit_user.html:125 templates/material/edit.html:77
+#: templates/users/edit.html:89
+msgid "The changes will be effective immediately."
+msgstr "The changes will be effective immediately."
+
+#: templates/admin/edit_user.html:126
+msgid "The user will need to log in again if the password is changed."
+msgstr "The user will need to log in again if the password is changed."
+
+#: templates/admin/edit_user.html:127
+msgid "A user can have multiple roles."
+msgstr "A user can have multiple roles."
+
+#: templates/admin/edit_user.html:140
+msgid "- The user can log in"
+msgstr "- The user can log in"
+
+#: templates/admin/edit_user.html:141
+msgid "- The user cannot log in"
+msgstr "- The user cannot log in"
+
+#: templates/admin/users.html:4 templates/admin/users.html:9
+msgid "User management"
+msgstr "User management"
+
+#: templates/admin/users.html:12
+msgid "Export"
+msgstr "Export"
+
+#: templates/admin/users.html:15
+msgid "Import"
+msgstr "Import"
+
+#: templates/admin/users.html:18
+msgid "Statistics"
+msgstr "Statistics"
+
+#: templates/admin/users.html:21
+msgid "New user"
+msgstr "New user"
+
+#: templates/admin/users.html:30
+msgid "Search for a user..."
+msgstr "Search for a user..."
+
+#: templates/admin/users.html:34
+msgid "All roles"
+msgstr "All roles"
+
+#: templates/admin/users.html:42
+msgid "All status"
+msgstr "All status"
+
+#: templates/admin/users.html:43
+msgid "Active roles"
+msgstr "Active roles"
+
+#: templates/admin/users.html:44
+msgid "Inactive roles"
+msgstr "Inactive roles"
+
+#: templates/admin/users.html:57
+#: templates/events/select_material_to_link.html:103
+#: templates/events/select_material_to_link.html:167
+#: templates/events/select_material_to_link.html:227
+#: templates/events/select_material_to_link.html:287
+#: templates/material/list.html:119
+msgid "Status"
+msgstr "Status"
+
+#: templates/admin/users.html:58 templates/material/list.html:121
+#: templates/material/trash.html:34 templates/users/trash.html:35
+msgid "Actions"
+msgstr "Actions"
+
+#: templates/admin/users.html:85
+msgid "Inactive"
+msgstr "Inactive"
+
+#: templates/admin/users.html:97
+msgid "Are you sure you want to delete this user?"
+msgstr "Are you sure you want to delete this user?"
+
+#: templates/admin/users.html:111 templates/users/list.html:150
+msgid "No users found."
+msgstr "No users found."
+
+#: templates/admin/users.html:117
+msgid "Return to dashboard"
+msgstr "Return to dashboard"
+
+#: templates/errors/403.html:4 templates/errors/403.html:13
+msgid "Unauthorized access"
+msgstr "Unauthorized access"
+
+#: templates/errors/403.html:14
+msgid "You do not have the necessary permissions to access this page."
+msgstr "You do not have the necessary permissions to access this page."
+
+#: templates/errors/403.html:17
+msgid "This page requires the following role :"
+msgstr "This page requires the following role :"
+
+#: templates/errors/403.html:21
+msgid "Your current roles:"
+msgstr "Your current roles:"
+
+#: templates/errors/403.html:28
+msgid "Back to home"
+msgstr "Back to home"
+
+#: templates/events/create.html:13
+msgid "This page is accessible only to managers."
+msgstr "This page is accessible only to managers."
+
+#: templates/events/create.html:20
+msgid "Event creation workflow."
+msgstr "Event creation workflow."
+
+#: templates/events/create.html:25
+msgid "Welcome to the event creation workflow."
+msgstr "Welcome to the event creation workflow."
+
+#: templates/events/create.html:26
+msgid "This process will guide you in linking or unlinking material to a user."
+msgstr "This process will guide you in linking or unlinking material to a user."
+
+#: templates/events/create.html:31
+msgid "Workflow steps:"
+msgstr "Workflow steps:"
+
+#: templates/events/create.html:33
+msgid "User selection"
+msgstr "User selection"
+
+#: templates/events/create.html:34
+msgid "Choice of action link/unlink"
+msgstr "Choice of action link/unlink"
+
+#: templates/events/create.html:35
+msgid "Equipment selection"
+msgstr "Equipment selection"
+
+#: templates/events/create.html:36
+msgid "Validation and timestamping"
+msgstr "Validation and timestamping"
+
+#: templates/events/create.html:43
+msgid "Start the workflow"
+msgstr "Start the workflow"
+
+#: templates/events/select_material_to_link.html:4
+#: templates/events/select_material_to_link.html:9
+msgid "Select the material to link"
+msgstr "Select the material to link"
+
+#: templates/events/select_material_to_link.html:14
+#: templates/events/select_material_to_unlink.html:14
+#: templates/events/select_user.html:14 templates/events/select_user.html:20
+#: templates/events/summary.html:14
+msgid "Step"
+msgstr "Step"
+
+#: templates/events/select_material_to_link.html:19
+#: templates/events/select_material_to_unlink.html:19
+msgid "Selected user :"
+msgstr "Selected user :"
+
+#: templates/events/select_material_to_link.html:24
+msgid "Search and select equipment"
+msgstr "Search and select equipment"
+
+#: templates/events/select_material_to_link.html:60
+msgid "Type at least 4 characters : name, serial number, inventory"
+msgstr "Type at least 4 characters : name, serial number, inventory"
+
+#: templates/events/select_material_to_link.html:67
+msgid "Search by name, serial number, and inventory number"
+msgstr "Search by name, serial number, and inventory number"
+
+#: templates/events/select_material_to_link.html:71
+#: templates/events/select_material_to_link.html:139
+#: templates/events/select_material_to_link.html:199
+#: templates/events/select_material_to_link.html:259
+#: templates/events/select_material_to_unlink.html:71
+#: templates/events/select_material_to_unlink.html:151
+#: templates/events/select_material_to_unlink.html:221
+#: templates/events/select_material_to_unlink.html:291
+msgid "0 selected"
+msgstr "0 selected"
+
+#: templates/events/select_material_to_link.html:79
+msgid "Type at least 4 characters to search for computers"
+msgstr "Type at least 4 characters to search for computers"
+
+#: templates/events/select_material_to_link.html:86
+#: templates/events/select_material_to_link.html:88
+#: templates/events/select_material_to_link.html:152
+#: templates/events/select_material_to_link.html:212
+#: templates/events/select_material_to_link.html:272
+msgid "Search in progress..."
+msgstr "Search in progress..."
+
+#: templates/events/select_material_to_link.html:101
+#: templates/events/select_material_to_link.html:165
+#: templates/events/select_material_to_link.html:225
+#: templates/events/select_material_to_link.html:285
+#: templates/events/select_material_to_unlink.html:108
+#: templates/events/select_material_to_unlink.html:183
+#: templates/events/select_material_to_unlink.html:253
+#: templates/events/select_material_to_unlink.html:323
+#: templates/events/summary.html:80 templates/events/summary.html:114
+#: templates/events/summary.html:148 templates/events/summary.html:182
+#: templates/material/create.html:25 templates/material/edit.html:25
+#: templates/material/list.html:116 templates/material/trash.html:30
+msgid "Serial number"
+msgstr "Serial number"
+
+#: templates/events/select_material_to_link.html:102
+#: templates/events/select_material_to_link.html:166
+#: templates/events/select_material_to_link.html:226
+#: templates/events/select_material_to_link.html:286
+#: templates/events/select_material_to_unlink.html:109
+#: templates/events/select_material_to_unlink.html:184
+#: templates/events/select_material_to_unlink.html:254
+#: templates/events/select_material_to_unlink.html:324
+#: templates/events/summary.html:81 templates/events/summary.html:115
+#: templates/events/summary.html:149 templates/events/summary.html:183
+#: templates/material/create.html:31 templates/material/edit.html:31
+#: templates/material/list.html:117 templates/material/trash.html:31
+#: templates/reports/by_user.html:364
+msgid "Inventory number"
+msgstr "Inventory number"
+
+#: templates/events/select_material_to_link.html:115
+#: templates/events/select_material_to_link.html:177
+#: templates/events/select_material_to_link.html:237
+#: templates/events/select_material_to_link.html:297
+msgid "Selected equipment:"
+msgstr "Selected equipment:"
+
+#: templates/events/select_material_to_link.html:146
+msgid "Type at least 4 characters to search for monitors"
+msgstr "Type at least 4 characters to search for monitors"
+
+#: templates/events/select_material_to_link.html:206
+msgid "Type at least 4 characters to search for peripherals"
+msgstr "Type at least 4 characters to search for peripherals"
+
+#: templates/events/select_material_to_link.html:266
+msgid "Type at least 4 characters to search for phones"
+msgstr "Type at least 4 characters to search for phones"
+
+#: templates/events/select_material_to_link.html:315
+msgid "Link the selected material"
+msgstr "Link the selected material"
+
+#: templates/events/select_material_to_link.html:318
+#: templates/events/select_material_to_unlink.html:361
+msgid "Return to user selection"
+msgstr "Return to user selection"
+
+#: templates/events/select_material_to_unlink.html:4
+#: templates/events/select_material_to_unlink.html:9
+msgid "Select the material to unlink"
+msgstr "Select the material to unlink"
+
+#: templates/events/select_material_to_unlink.html:24
+msgid "Search for material currently linked to this user"
+msgstr "Search for material currently linked to this user"
+
+#: templates/events/select_material_to_unlink.html:67
+msgid "Optional filter to search within already linked material"
+msgstr "Optional filter to search within already linked material"
+
+#: templates/events/select_material_to_unlink.html:78
+msgid "Computers linked to this user"
+msgstr "Computers linked to this user"
+
+#: templates/events/select_material_to_unlink.html:80
+#: templates/events/select_material_to_unlink.html:159
+#: templates/events/select_material_to_unlink.html:229
+#: templates/events/select_material_to_unlink.html:299
+msgid "Load"
+msgstr "Load"
+
+#: templates/events/select_material_to_unlink.html:87
+#: templates/events/select_material_to_unlink.html:165
+#: templates/events/select_material_to_unlink.html:235
+#: templates/events/select_material_to_unlink.html:305
+msgid "Loading..."
+msgstr "Loading..."
+
+#: templates/events/select_material_to_unlink.html:89
+msgid "Loading related material..."
+msgstr "Loading related material..."
+
+#: templates/events/select_material_to_unlink.html:95
+msgid "Click Load to see the computers linked to this user"
+msgstr "Click Load to see the computers linked to this user"
+
+#: templates/events/select_material_to_unlink.html:110
+#: templates/events/select_material_to_unlink.html:185
+#: templates/events/select_material_to_unlink.html:255
+#: templates/events/select_material_to_unlink.html:325
+msgid "Date of connection"
+msgstr "Date of connection"
+
+#: templates/events/select_material_to_unlink.html:122
+msgid "This user has no linked computers."
+msgstr "This user has no linked computers."
+
+#: templates/events/select_material_to_unlink.html:128
+#: templates/events/select_material_to_unlink.html:200
+#: templates/events/select_material_to_unlink.html:270
+#: templates/events/select_material_to_unlink.html:340
+msgid "Materials selected for unlinking :"
+msgstr "Materials selected for unlinking :"
+
+#: templates/events/select_material_to_unlink.html:143
+#: templates/events/select_material_to_unlink.html:213
+#: templates/events/select_material_to_unlink.html:283
+msgid "Search among related material optional..."
+msgstr "Search among related material optional..."
+
+#: templates/events/select_material_to_unlink.html:157
+msgid "Monitors linked to this user"
+msgstr "Monitors linked to this user"
+
+#: templates/events/select_material_to_unlink.html:171
+msgid "Click Load to see the monitors linked to this user."
+msgstr "Click Load to see the monitors linked to this user."
+
+#: templates/events/select_material_to_unlink.html:195
+msgid "This user has no linked monitors."
+msgstr "This user has no linked monitors."
+
+#: templates/events/select_material_to_unlink.html:227
+msgid "Peripherals linked to this user"
+msgstr "Peripherals linked to this user"
+
+#: templates/events/select_material_to_unlink.html:241
+msgid "Click Load to see the peripherals linked to this user"
+msgstr "Click Load to see the peripherals linked to this user"
+
+#: templates/events/select_material_to_unlink.html:265
+msgid "This user has no linked peripherals."
+msgstr "This user has no linked peripherals."
+
+#: templates/events/select_material_to_unlink.html:297
+msgid "Phones linked to this user"
+msgstr "Phones linked to this user"
+
+#: templates/events/select_material_to_unlink.html:311
+msgid "Click Load to see the phones linked to this user."
+msgstr "Click Load to see the phones linked to this user."
+
+#: templates/events/select_material_to_unlink.html:335
+msgid "This user has no linked phones."
+msgstr "This user has no linked phones."
+
+#: templates/events/select_material_to_unlink.html:358
+msgid "Unlink the selected material"
+msgstr "Unlink the selected material"
+
+#: templates/events/select_user.html:4 templates/events/select_user.html:9
+msgid "Select a user"
+msgstr "Select a user"
+
+#: templates/events/select_user.html:20
+msgid "User and action selection"
+msgstr "User and action selection"
+
+#: templates/events/select_user.html:24
+msgid "Search for and select a user, then choose the action to perform."
+msgstr "Search for and select a user, then choose the action to perform."
+
+#: templates/events/select_user.html:30
+msgid "Search for a user"
+msgstr "Search for a user"
+
+#: templates/events/select_user.html:33
+msgid "Type at least 4 characters : name, surname or username..."
+msgstr "Type at least 4 characters : name, surname or username..."
+
+#: templates/events/select_user.html:42
+msgid "The search is triggered automatically after 4 characters"
+msgstr "The search is triggered automatically after 4 characters"
+
+#: templates/events/select_user.html:54 templates/reports/by_user.html:58
+msgid "Selected user"
+msgstr "Selected user"
+
+#: templates/events/select_user.html:60 templates/reports/by_user.html:64
+msgid "Change user"
+msgstr "Change user"
+
+#: templates/events/select_user.html:68
+msgid "Action to be performed"
+msgstr "Action to be performed"
+
+#: templates/events/select_user.html:72
+msgid "Link hardware to this user"
+msgstr "Link hardware to this user"
+
+#: templates/events/select_user.html:78
+msgid "Unlink hardware to this user"
+msgstr "Unlink hardware to this user"
+
+#: templates/events/select_user.html:87 templates/reports/by_user.html:74
+msgid "Start typing to search for a user"
+msgstr "Start typing to search for a user"
+
+#: templates/events/select_user.html:94 templates/events/select_user.html:96
+#: templates/material/list.html:80 templates/reports/by_user.html:81
+#: templates/reports/by_user.html:83
+msgid "Research in progress..."
+msgstr "Research in progress..."
+
+#: templates/events/select_user.html:102
+msgid "Next"
+msgstr "Next"
+
+#: templates/events/summary.html:4 templates/events/summary.html:9
+msgid "Event summary"
+msgstr "Event summary"
+
+#: templates/events/summary.html:19
+msgid "The incident was successfully handled."
+msgstr "The incident was successfully handled."
+
+#: templates/events/summary.html:30 templates/reports/by_user.html:196
+msgid "First Name :"
+msgstr "First Name :"
+
+#: templates/events/summary.html:34 templates/reports/by_service.html:176
+#: templates/reports/by_user.html:204
+msgid "Job title :"
+msgstr "Job title :"
+
+#: templates/events/summary.html:35 templates/reports/by_user.html:121
+#: templates/reports/by_user.html:208
+msgid "Department :"
+msgstr "Department :"
+
+#: templates/events/summary.html:36 templates/reports/by_user.html:212
+msgid "Site :"
+msgstr "Site :"
+
+#: templates/events/summary.html:44
+msgid "Materials currently linked to this user"
+msgstr "Materials currently linked to this user"
+
+#: templates/events/summary.html:82 templates/events/summary.html:116
+#: templates/events/summary.html:150 templates/events/summary.html:184
+#: templates/material/list.html:120
+msgid "Last change"
+msgstr "Last change"
+
+#: templates/events/summary.html:99
+msgid "No computer are linked to this user."
+msgstr "No computer are linked to this user."
+
+#: templates/events/summary.html:133
+msgid "No monitor are linked to this user."
+msgstr "No monitor are linked to this user."
+
+#: templates/events/summary.html:167
+msgid "No peripheral are linked to this user."
+msgstr "No peripheral are linked to this user."
+
+#: templates/events/summary.html:201
+msgid "No phone are linked to this user."
+msgstr "No phone are linked to this user."
+
+#: templates/events/summary.html:212
+msgid "Recent history of events"
+msgstr "Recent history of events"
+
+#: templates/events/summary.html:220
+msgid "Date"
+msgstr "Date"
+
+#: templates/events/summary.html:221
+msgid "Object"
+msgstr "Object"
+
+#: templates/events/summary.html:222
+msgid "Type"
+msgstr "Type"
+
+#: templates/events/summary.html:223
+msgid "Action"
+msgstr "Action"
+
+#: templates/events/summary.html:224
+msgid "Last change by"
+msgstr "Last change by"
+
+#: templates/events/summary.html:263 templates/material/list.html:53
+msgid "Link"
+msgstr "Link"
+
+#: templates/events/summary.html:265 templates/material/list.html:54
+msgid "Unlink"
+msgstr "Unlink"
+
+#: templates/events/summary.html:276
+msgid "No recent history for this user."
+msgstr "No recent history for this user."
+
+#: templates/events/summary.html:285
+msgid "New workflow"
+msgstr "New workflow"
+
+#: templates/events/summary.html:290
+msgid "Link more material"
+msgstr "Link more material"
+
+#: templates/events/summary.html:293
+msgid "Unlink material"
+msgstr "Unlink material"
+
+#: templates/events/summary.html:300
+msgid "Back to dashboard"
+msgstr "Back to dashboard"
+
+#: templates/install/finish.html:19
+msgid "Installation complete!"
+msgstr "Installation complete!"
+
+#: templates/install/finish.html:21
+msgid "has been configured successfully."
+msgstr "has been configured successfully."
+
+#: templates/install/finish.html:29
+msgid "file written with your database credentials\n and auto-generated security keys."
+msgstr "file written with your database credentials\n and auto-generated security keys."
+
+#: templates/install/finish.html:36
+msgid "All application tables created inside the"
+msgstr "All application tables created inside the"
+
+#: templates/install/finish.html:36
+msgid "schema."
+msgstr "schema."
+
+#: templates/install/finish.html:42
+msgid "Three roles seeded:"
+msgstr "Three roles seeded:"
+
+#: templates/install/finish.html:49
+msgid "Administrator account created."
+msgstr "Administrator account created."
+
+#: templates/install/finish.html:55
+msgid "sentinel created — this page\n will no longer be accessible after you restart the server."
+msgstr "sentinel created — this page\n will no longer be accessible after you restart the server."
+
+#: templates/install/finish.html:65
+msgid "Required: restart the Flask server"
+msgstr "Required: restart the Flask server"
+
+#: templates/install/finish.html:68
+msgid "Stop and restart Flask so the new"
+msgstr "Stop and restart Flask so the new"
+
+#: templates/install/finish.html:68
+msgid "settings including the SECRET_KEY are loaded and the"
+msgstr "settings including the SECRET_KEY are loaded and the"
+
+#: templates/install/finish.html:69
+msgid "route is disabled."
+msgstr "route is disabled."
+
+#: templates/install/finish.html:70
+msgid "In PyCharm or VS Code: stop the current run and press"
+msgstr "In PyCharm or VS Code: stop the current run and press"
+
+#: templates/install/finish.html:70
+msgid "again or"
+msgstr "again or"
+
+#: templates/install/finish.html:75
+msgid "Go to login"
+msgstr "Go to login"
+
+#: templates/install/step1.html:12
+msgid "Database connection"
+msgstr "Database connection"
+
+#: templates/install/step1.html:14
+msgid "Enter the credentials for your PostgreSQL server."
+msgstr "Enter the credentials for your PostgreSQL server."
+
+#: templates/install/step1.html:15
+msgid "The database"
+msgstr "The database"
+
+#: templates/install/step1.html:15
+msgid "or the name you choose and the"
+msgstr "or the name you choose and the"
+
+#: templates/install/step1.html:15
+msgid "schema must already exist."
+msgstr "schema must already exist."
+
+#: templates/install/step1.html:17
+msgid "Not sure? Run"
+msgstr "Not sure? Run"
+
+#: templates/install/step1.html:17
+msgid "and"
+msgstr "and"
+
+#: templates/install/step1.html:18
+msgid "in pgAdmin first."
+msgstr "in pgAdmin first."
+
+#: templates/install/step1.html:25
+msgid "Server"
+msgstr "Server"
+
+#: templates/install/step1.html:29
+msgid "Host"
+msgstr "Host"
+
+#: templates/install/step1.html:32
+msgid "IP address or hostname of the PostgreSQL server."
+msgstr "IP address or hostname of the PostgreSQL server."
+
+#: templates/install/step1.html:35
+msgid "Port"
+msgstr "Port"
+
+#: templates/install/step1.html:41
+msgid "Credentials"
+msgstr "Credentials"
+
+#: templates/install/step1.html:62
+msgid "Database"
+msgstr "Database"
+
+#: templates/install/step1.html:65
+msgid "Database name"
+msgstr "Database name"
+
+#: templates/install/step1.html:69
+msgid "The database must already exist. Tables will be created inside its"
+msgstr "The database must already exist. Tables will be created inside its"
+
+#: templates/install/step1.html:69
+msgid "schema in Step 2."
+msgstr "schema in Step 2."
+
+#: templates/install/step1.html:75
+msgid "Test connection and continue"
+msgstr "Test connection and continue"
+
+#: templates/install/step2.html:12 templates/install/step2.html:73
+msgid "Create tables"
+msgstr "Create tables"
+
+#: templates/install/step2.html:14
+msgid "The wizard will now create all application tables inside the"
+msgstr "The wizard will now create all application tables inside the"
+
+#: templates/install/step2.html:16
+msgid "schema of"
+msgstr "schema of"
+
+#: templates/install/step2.html:16
+msgid "and seed the three default roles."
+msgstr "and seed the three default roles."
+
+#: templates/install/step2.html:19
+msgid "This operation is"
+msgstr "This operation is"
+
+#: templates/install/step2.html:19
+msgid "it is safe to run even if the tables already exist."
+msgstr "it is safe to run even if the tables already exist."
+
+#: templates/install/step2.html:24
+msgid "What will be created"
+msgstr "What will be created"
+
+#: templates/install/step2.html:46
+msgid "Roles that will be seeded"
+msgstr "Roles that will be seeded"
+
+#: templates/install/step3.html:7
+msgid "Admin account"
+msgstr "Admin account"
+
+#: templates/install/step3.html:12
+msgid "Administrator account"
+msgstr "Administrator account"
+
+#: templates/install/step3.html:14
+msgid "Create the first administrator account. You will use these credentials to log in after the installation is complete."
+msgstr "Create the first administrator account. You will use these credentials to log in after the installation is complete."
+
+#: templates/install/step3.html:17
+msgid "This is the only account with the"
+msgstr "This is the only account with the"
+
+#: templates/install/step3.html:17
+msgid "role. Additional accounts can be created from the admin panel after login."
+msgstr "role. Additional accounts can be created from the admin panel after login."
+
+#: templates/install/step3.html:23
+msgid "Personal information"
+msgstr "Personal information"
+
+#: templates/install/step3.html:24
+msgid "optional"
+msgstr "optional"
+
+#: templates/install/step3.html:29
+msgid "First name"
+msgstr "First name"
+
+#: templates/install/step3.html:34
+msgid "Last name"
+msgstr "Last name"
+
+#: templates/install/step3.html:42
+msgid "Short login name. Defaults to the part before @ in your email."
+msgstr "Short login name. Defaults to the part before @ in your email."
+
+#: templates/install/step3.html:46
+msgid "Login credentials"
+msgstr "Login credentials"
+
+#: templates/install/step3.html:54
+msgid "Used as the login identifier."
+msgstr "Used as the login identifier."
+
+#: templates/install/step3.html:73
+msgid "Confirm password"
+msgstr "Confirm password"
+
+#: templates/install/step3.html:91
+msgid "Enter a password to see its strength."
+msgstr "Enter a password to see its strength."
+
+#: templates/install/step3.html:96
+msgid "Back"
+msgstr "Back"
+
+#: templates/install/step3.html:99
+msgid "Create account and finish"
+msgstr "Create account and finish"
+
+#: templates/material/create.html:39 templates/material/edit.html:39
+msgid "Not assigned"
+msgstr "Not assigned"
+
+#: templates/material/create.html:41
+msgid "If you already know the user who will have this equipment, you can indicate it here."
+msgstr "If you already know the user who will have this equipment, you can indicate it here."
+
+#: templates/material/create.html:47
+#, fuzzy
+msgid "Create"
+msgstr "Created on:"
+
+#: templates/material/create.html:65
+msgid "The serial number must be unique."
+msgstr "The serial number must be unique."
+
+#: templates/material/create.html:66
+msgid "If you do not know the serial number, you can leave the field blank."
+msgstr "If you do not know the serial number, you can leave the field blank."
+
+#: templates/material/create.html:67
+msgid "If you assign a user, the hardware will automatically be marked as linked."
+msgstr "If you assign a user, the hardware will automatically be marked as linked."
+
+#: templates/material/create.html:76
+#, fuzzy
+msgid "Help - Computers"
+msgstr "Help - Computers"
+
+#: templates/material/create.html:79
+msgid "The recommended name is the model name, e.g., HP EliteBook 840 G5."
+msgstr "The recommended name is the model name, e.g., HP EliteBook 840 G5."
+
+#: templates/material/create.html:80
+msgid "The serial number is usually located under the device or in the system information."
+msgstr "The serial number is usually located under the device or in the system information."
+
+#: templates/material/create.html:88
+#, fuzzy
+msgid "Help - Monitors"
+msgstr "Help - Monitors"
+
+#: templates/material/create.html:91
+msgid "The recommended name is the model name, e.g., Dell P2419H."
+msgstr "The recommended name is the model name, e.g., Dell P2419H."
+
+#: templates/material/create.html:92
+msgid "The serial number is usually located on the back of the screen."
+msgstr "The serial number is usually located on the back of the screen."
+
+#: templates/material/create.html:100
+#, fuzzy
+msgid "Help - Peripherals"
+msgstr "Help - Peripherals"
+
+#: templates/material/create.html:103
+msgid "The name should include the device type,e.g. Logitech K120 Keyboard."
+msgstr "The name should include the device type,e.g. Logitech K120 Keyboard."
+
+#: templates/material/create.html:104
+msgid "Devices without a serial number can be identified by an internal inventory number."
+msgstr "Devices without a serial number can be identified by an internal inventory number."
+
+#: templates/material/create.html:112
+#, fuzzy
+msgid "Help - Phones"
+msgstr "Help - Phones"
+
+#: templates/material/create.html:115
+msgid "The recommended name is the model name, e.g., iPhone 12 Pro."
+msgstr "The recommended name is the model name, e.g., iPhone 12 Pro."
+
+#: templates/material/create.html:116
+msgid "For mobile phones, the IMEI can be used as a serial number."
+msgstr "For mobile phones, the IMEI can be used as a serial number."
+
+#: templates/material/create.html:117
+msgid "For landline phones, the extension number can be used as an identifier."
+msgstr "For landline phones, the extension number can be used as an identifier."
+
+#: templates/material/edit.html:41
+msgid "If you are changing the user, it is best to use the event workflow."
+msgstr "If you are changing the user, it is best to use the event workflow."
+
+#: templates/material/edit.html:47
+msgid "Save settings"
+msgstr "Save settings"
+
+#: templates/material/edit.html:65
+msgid "Link : "
+msgstr "Link : "
+
+#: templates/material/edit.html:66
+msgid "Created on : "
+msgstr "Created on : "
+
+#: templates/material/edit.html:67
+msgid "Last change : "
+msgstr "Last change : "
+
+#: templates/material/edit.html:68
+msgid "By : "
+msgstr "By : "
+
+#: templates/material/edit.html:79
+msgid "The change history is preserved."
+msgstr "The change history is preserved."
+
+#: templates/material/list.html:24
+msgid "New"
+msgstr "New"
+
+#: templates/material/list.html:28
+#, fuzzy
+msgid "Recycle bin"
+msgstr "Recycle Bin"
+
+#: templates/material/list.html:40
+#, fuzzy
+msgid "Type at least 4 characters to search..."
+msgstr "Type at least 4 characters to search for phones"
+
+#: templates/material/list.html:47
+#, fuzzy
+msgid "Search in: name, serial number, inventory number, user"
+msgstr "Search by name, serial number, and inventory number"
+
+#: templates/material/list.html:52
+#, fuzzy
+msgid "All statuses"
+msgstr "All status"
+
+#: templates/material/list.html:59
+#, fuzzy
+msgid "All users"
+msgstr "👥 Users"
+
+#: templates/material/list.html:66
+#, fuzzy
+msgid "Type to search"
+msgstr "User search"
+
+#: templates/material/list.html:69
+msgid "Show all"
+msgstr "Show all"
+
+#: templates/material/list.html:86
+#, fuzzy
+msgid "Search for"
+msgstr "Search error"
+
+#: templates/material/list.html:88
+#, fuzzy
+msgid "Use the search bar above to find equipment."
+msgstr "Consult the users and the equipment."
+
+#: templates/material/list.html:89
+#, fuzzy
+msgid "Type at least 4 characters to start the search."
+msgstr "Type at least 4 characters to search for phones"
+
+#: templates/material/list.html:94
+msgid "Tip :"
+msgstr "Tip :"
+
+#: templates/material/list.html:94
+msgid "You can also filter by status or user"
+msgstr "You can also filter by status or user"
+
+#: templates/material/list.html:102
+#, fuzzy
+msgid "No results found"
+msgstr "No users found."
+
+#: templates/material/list.html:104
+msgid "No equipment matches your search."
+msgstr "No equipment matches your search."
+
+#: templates/material/list.html:105
+msgid "Try using different keywords or modify the filters."
+msgstr "Try using different keywords or modify the filters."
+
+#: templates/material/list.html:135 templates/reports/activity.html:280
+#: templates/reports/by_material_type.html:100
+msgid "Total"
+msgstr "Total"
+
+#: templates/material/list.html:143 templates/reports/activity.html:322
+#: templates/reports/by_material_type.html:109
+#: templates/reports/by_service.html:225 templates/reports/by_user.html:244
+#: templates/reports/by_user.html:266 templates/reports/by_user.html:288
+#: templates/reports/by_user.html:310 templates/reports/by_user.html:340
+msgid "Linked"
+msgstr "Linked"
+
+#: templates/material/list.html:151 templates/reports/activity.html:326
+#: templates/reports/by_service.html:227 templates/reports/by_user.html:344
+msgid "Unlinked"
+msgstr "Unlinked"
+
+#: templates/material/list.html:159
+#, fuzzy
+msgid "Unique users"
+msgstr "New User"
+
+#: templates/material/list.html:171 templates/users/trash.html:77
+msgid "Back to list"
+msgstr "Back to list"
+
+#: templates/material/list.html:343
+#, fuzzy
+msgid "Edit"
+msgstr "Edit user"
+
+#: templates/material/list.html:347
+#, fuzzy
+msgid "Are you sure you want to move this hardware to the trash?"
+msgstr "Are you sure you want to move this user to the recycle Bin?"
+
+#: templates/material/list.html:348
+msgid "Move to trash"
+msgstr "Move to trash"
+
+#: templates/material/list.html:435 templates/reports/by_user.html:485
+msgid "Search error"
+msgstr "Search error"
+
+#: templates/material/trash.html:12
+msgid "List"
+msgstr "List"
+
+#: templates/material/trash.html:19
+msgid "Warning: Permanently deleted items cannot be recovered."
+msgstr "Warning: Permanently deleted items cannot be recovered."
+
+#: templates/material/trash.html:33 templates/users/trash.html:34
+msgid "Deletion date"
+msgstr "Deletion date"
+
+#: templates/material/trash.html:53
+msgid "Are you sure you want to permanently delete this material? This action is irreversible."
+msgstr "Are you sure you want to permanently delete this material? This action is irreversible."
+
+#: templates/material/trash.html:54 templates/users/trash.html:56
+msgid "Delete permanently"
+msgstr "Delete permanently"
+
+#: templates/material/trash.html:67
+msgid "No material in the bin."
+msgstr "No material in the bin."
+
+#: templates/material/trash.html:75
+msgid "Back to list."
+msgstr "Back to list."
+
+#: templates/reports/activity.html:13
+#: templates/reports/by_material_type.html:13
+#: templates/reports/by_service.html:13 templates/reports/by_user.html:13
+msgid "Export to PDF"
+msgstr "Export to PDF"
+
+#: templates/reports/activity.html:16
+#: templates/reports/by_material_type.html:16
+#: templates/reports/by_service.html:16 templates/reports/by_user.html:16
+msgid "Print"
+msgstr "Print"
+
+#: templates/reports/activity.html:20
+#: templates/reports/by_material_type.html:20
+#: templates/reports/by_service.html:20 templates/reports/by_user.html:20
+msgid "Return to reports"
+msgstr "Return to reports"
+
+#: templates/reports/activity.html:28 templates/reports/by_service.html:28
+msgid "Report filters"
+msgstr "Report filters"
+
+#: templates/reports/activity.html:35
+msgid "Start date"
+msgstr "Start date"
+
+#: templates/reports/activity.html:42
+msgid "End date"
+msgstr "End date"
+
+#: templates/reports/activity.html:49
+msgid "Manager (optional)"
+msgstr "Manager (optional)"
+
+#: templates/reports/activity.html:51
+msgid "All Managers"
+msgstr "All Managers"
+
+#: templates/reports/activity.html:63
+msgid "Action type (optional)"
+msgstr "Action type (optional)"
+
+#: templates/reports/activity.html:65
+msgid "All actions"
+msgstr "All actions"
+
+#: templates/reports/activity.html:66 templates/reports/activity.html:110
+#: templates/reports/activity.html:231 templates/reports/activity.html:281
+#: templates/reports/activity.html:559 templates/reports/activity.html:605
+msgid "Links"
+msgstr "Links"
+
+#: templates/reports/activity.html:67 templates/reports/activity.html:110
+#: templates/reports/activity.html:232 templates/reports/activity.html:282
+#: templates/reports/activity.html:559 templates/reports/activity.html:609
+msgid "Unlinks"
+msgstr "Unlinks"
+
+#: templates/reports/activity.html:75
+msgid "Generate the activity report"
+msgstr "Generate the activity report"
+
+#: templates/reports/activity.html:89
+msgid "Activity report"
+msgstr "Activity report"
+
+#: templates/reports/activity.html:93 templates/reports/by_service.html:96
+msgid "Period :"
+msgstr "Period :"
+
+#: templates/reports/activity.html:94 templates/reports/by_service.html:98
+msgid "From"
+msgstr "From"
+
+#: templates/reports/activity.html:94 templates/reports/by_service.html:98
+#: templates/reports/by_service.html:102
+msgid "to"
+msgstr "to"
+
+#: templates/reports/activity.html:99
+#: templates/reports/by_material_type.html:73
+#: templates/reports/by_service.html:84 templates/reports/by_user.html:109
+msgid "Generation date :"
+msgstr "Generation date :"
+
+#: templates/reports/activity.html:105
+msgid "Filters applied :"
+msgstr "Filters applied :"
+
+#: templates/reports/activity.html:107
+msgid "Manager:"
+msgstr "Manager:"
+
+#: templates/reports/activity.html:110
+msgid "Actions:"
+msgstr "Actions:"
+
+#: templates/reports/activity.html:112
+msgid "All actions:"
+msgstr "All actions:"
+
+#: templates/reports/activity.html:127
+msgid "Total activity(ies)"
+msgstr "Total activity(ies)"
+
+#: templates/reports/activity.html:136
+msgid "Link(s)"
+msgstr "Link(s)"
+
+#: templates/reports/activity.html:145
+msgid "Unlink(s)"
+msgstr "Unlink(s)"
+
+#: templates/reports/activity.html:154
+msgid "Affected user(s)"
+msgstr "Affected user(s)"
+
+#: templates/reports/activity.html:166
+msgid "Evolution of activities per day"
+msgstr "Evolution of activities per day"
+
+#: templates/reports/activity.html:178
+msgid "Breakdown by type of action"
+msgstr "Breakdown by type of action"
+
+#: templates/reports/activity.html:193
+msgid "Activities by type of equipment"
+msgstr "Activities by type of equipment"
+
+#: templates/reports/activity.html:205
+msgid "Activities per manager"
+msgstr "Activities per manager"
+
+#: templates/reports/activity.html:219
+msgid "Top 10 most impacted users"
+msgstr "Top 10 most impacted users"
+
+#: templates/reports/activity.html:227
+#: templates/reports/by_material_type.html:208
+msgid "Rank"
+msgstr "Rank"
+
+#: templates/reports/activity.html:228
+#: templates/reports/by_material_type.html:209
+msgid "User"
+msgstr "User"
+
+#: templates/reports/activity.html:229
+#: templates/reports/by_material_type.html:210
+#: templates/reports/by_service.html:35 templates/reports/by_service.html:157
+#: templates/users/create.html:43 templates/users/edit.html:47
+#: templates/users/list.html:93 templates/users/trash.html:33
+msgid "Department"
+msgstr "Department"
+
+#: templates/reports/activity.html:230
+msgid "Activities"
+msgstr "Activities"
+
+#: templates/reports/activity.html:260
+msgid "No user data is available for the selected period."
+msgstr "No user data is available for the selected period."
+
+#: templates/reports/activity.html:271
+msgid "Statistics by manager."
+msgstr "Statistics by manager."
+
+#: templates/reports/activity.html:279
+msgid "Manager"
+msgstr "Manager"
+
+#: templates/reports/activity.html:283
+msgid "Average/day"
+msgstr "Average/day"
+
+#: templates/reports/activity.html:301
+msgid "No manager data available."
+msgstr "No manager data available."
+
+#: templates/reports/activity.html:312
+msgid "Timeline of recent activities (50 most recent)"
+msgstr "Timeline of recent activities (50 most recent)"
+
+#: templates/reports/activity.html:345
+msgid "User not found"
+msgstr "User not found"
+
+#: templates/reports/activity.html:351 templates/reports/by_user.html:361
+msgid "Serial number :"
+msgstr "Serial number :"
+
+#: templates/reports/activity.html:354
+msgid "Inventory number :"
+msgstr "Inventory number :"
+
+#: templates/reports/activity.html:375
+msgid "No activity found for the selected period."
+msgstr "No activity found for the selected period."
+
+#: templates/reports/activity.html:384
+msgid "Use the form above to generate an activity report. Select a date range to begin."
+msgstr "Use the form above to generate an activity report. Select a date range to begin."
+
+#: templates/reports/activity.html:488
+msgid "The end date must be later than the start date."
+msgstr "The end date must be later than the start date."
+
+#: templates/reports/activity.html:515
+msgid "Total activities"
+msgstr "Total activities"
+
+#: templates/reports/by_material_type.html:28
+msgid "Equipment type selection"
+msgstr "Equipment type selection"
+
+#: templates/reports/by_material_type.html:35
+msgid "Type of equipment"
+msgstr "Type of equipment"
+
+#: templates/reports/by_material_type.html:37
+msgid "Select a type of equipment"
+msgstr "Select a type of equipment"
+
+#: templates/reports/by_material_type.html:68
+msgid "Analysis report :"
+msgstr "Analysis report :"
+
+#: templates/reports/by_material_type.html:79
+msgid "Type analyzed :"
+msgstr "Type analyzed :"
+
+#: templates/reports/by_material_type.html:85
+msgid "Total number of items :"
+msgstr "Total number of items :"
+
+#: templates/reports/by_material_type.html:118
+msgid "Free"
+msgstr "Free"
+
+#: templates/reports/by_material_type.html:139
+msgid "Breakdown by status"
+msgstr "Breakdown by status"
+
+#: templates/reports/by_material_type.html:179
+#: templates/reports/by_user.html:481
+msgid "Material(s)"
+msgstr "Material(s)"
+
+#: templates/reports/by_material_type.html:186
+msgid "No material linked to users with specified service."
+msgstr "No material linked to users with specified service."
+
+#: templates/reports/by_material_type.html:200
+msgid "Top 10 users"
+msgstr "Top 10 users"
+
+#: templates/reports/by_material_type.html:211
+msgid "Quantity"
+msgstr "Quantity"
+
+#: templates/reports/by_material_type.html:241
+msgid "No user has any linked hardware."
+msgstr "No user has any linked hardware."
+
+#: templates/reports/by_material_type.html:252
+msgid "Recent movements"
+msgstr "Recent movements"
+
+#: templates/reports/by_material_type.html:286
+msgid "No movement recorded."
+msgstr "No movement recorded."
+
+#: templates/reports/by_service.html:37
+msgid "Select a department"
+msgstr "Select a department"
+
+#: templates/reports/by_service.html:49
+msgid "Start date (optional)"
+msgstr "Start date (optional)"
+
+#: templates/reports/by_service.html:56
+msgid "End date (optional)"
+msgstr "End date (optional)"
+
+#: templates/reports/by_service.html:65
+msgid "Generate"
+msgstr "Generate"
+
+#: templates/reports/by_service.html:80
+msgid "Department report :"
+msgstr "Department report :"
+
+#: templates/reports/by_service.html:90
+msgid "Number of users :"
+msgstr "Number of users :"
+
+#: templates/reports/by_service.html:100
+msgid "Since"
+msgstr "Since"
+
+#: templates/reports/by_service.html:104
+msgid "All datas"
+msgstr "All datas"
+
+#: templates/reports/by_service.html:126
+msgid "User(s)"
+msgstr "User(s)"
+
+#: templates/reports/by_service.html:135 templates/reports/by_user.html:136
+#: templates/reports/by_user.html:483
+msgid "Linked material(s)"
+msgstr "Linked material(s)"
+
+#: templates/reports/by_service.html:148 templates/reports/by_user.html:482
+msgid "Movement(s)"
+msgstr "Movement(s)"
+
+#: templates/reports/by_service.html:183
+msgid "Material currently linked"
+msgstr "Material currently linked"
+
+#: templates/reports/by_service.html:191
+msgid "Computers :"
+msgstr "Computers :"
+
+#: templates/reports/by_service.html:193
+msgid "Monitors :"
+msgstr "Monitors :"
+
+#: templates/reports/by_service.html:195
+msgid "Peripherals :"
+msgstr "Peripherals :"
+
+#: templates/reports/by_service.html:197
+msgid "Phones :"
+msgstr "Phones :"
+
+#: templates/reports/by_service.html:212
+msgid "No material currently linked"
+msgstr "No material currently linked"
+
+#: templates/reports/by_service.html:218
+msgid "History of the movements"
+msgstr "History of the movements"
+
+#: templates/reports/by_service.html:249
+msgid "Other(s) movement(s)"
+msgstr "Other(s) movement(s)"
+
+#: templates/reports/by_service.html:254
+msgid "No transactions were recorded for the selected period."
+msgstr "No transactions were recorded for the selected period."
+
+#: templates/reports/by_service.html:267
+msgid "Use the form above to generate a report. Select a service and optionally a time period."
+msgstr "Use the form above to generate a report. Select a service and optionally a time period."
+
+#: templates/reports/by_service.html:334
+msgid "The end date must be later than the start date"
+msgstr "The end date must be later than the start date"
+
+#: templates/reports/by_user.html:28 templates/reports/by_user.html:34
+msgid "User search"
+msgstr "User search"
+
+#: templates/reports/by_user.html:46
+msgid "The search starts automatically after 4 characters. Maximum 10 results displayed."
+msgstr "The search starts automatically after 4 characters. Maximum 10 results displayed."
+
+#: templates/reports/by_user.html:104
+msgid "Report for"
+msgstr "Report for"
+
+#: templates/reports/by_user.html:145 templates/reports/by_user.html:484
+msgid "Total movement"
+msgstr "Total movement"
+
+#: templates/reports/by_user.html:160
+msgid "Last activity"
+msgstr "Last activity"
+
+#: templates/reports/by_user.html:175
+msgid "First activity"
+msgstr "First activity"
+
+#: templates/reports/by_user.html:187
+msgid "Personal informations"
+msgstr "Personal informations"
+
+#: templates/reports/by_user.html:205 templates/reports/by_user.html:209
+#: templates/reports/by_user.html:213 templates/users/list.html:118
+msgid "Not specified"
+msgstr "Not specified"
+
+#: templates/reports/by_user.html:224
+msgid "Material currently linked :"
+msgstr "Material currently linked :"
+
+#: templates/reports/by_user.html:319
+msgid "No material is currently linked to this user."
+msgstr "No material is currently linked to this user."
+
+#: templates/reports/by_user.html:330
+msgid "Complete history of the movements."
+msgstr "Complete history of the movements."
+
+#: templates/reports/by_user.html:367
+msgid "Object deleted"
+msgstr "Object deleted"
+
+#: templates/reports/by_user.html:388
+msgid "No activity was recorded in the history for this user."
+msgstr "No activity was recorded in the history for this user."
+
+#: templates/reports/by_user.html:480
+msgid "Department not specified"
+msgstr "Department not specified"
+
+#: templates/security/login_user.html:4
+msgid "Login"
+msgstr "Login"
+
+#: templates/security/login_user.html:13
+msgid "Log in to your account"
+msgstr "Log in to your account"
+
+#: templates/users/create.html:9
+msgid "Create a new user"
+msgstr "Create a new user"
+
+#: templates/users/create.html:38 templates/users/edit.html:41
+#: templates/users/list.html:90 templates/users/trash.html:32
+msgid "Job title"
+msgstr "Job title"
+
+#: templates/users/create.html:48 templates/users/edit.html:53
+msgid "Site"
+msgstr "Site"
+
+#: templates/users/create.html:54
+msgid "Create user"
+msgstr "Create user"
+
+#: templates/users/create.html:71 templates/users/edit.html:90
+msgid "Fields marked with an asterisk  are required."
+msgstr "Fields marked with an asterisk  are required."
+
+#: templates/users/create.html:72
+msgid "The identifier must be unique within the system."
+msgstr "The identifier must be unique within the system."
+
+#: templates/users/create.html:73
+msgid "This information can be modified later."
+msgstr "This information can be modified later."
+
+#: templates/users/create.html:74
+msgid "This user will be used to associate hardware."
+msgstr "This user will be used to associate hardware."
+
+#: templates/users/edit.html:9
+msgid "Edit user"
+msgstr "Edit user"
+
+#: templates/users/edit.html:60
+msgid "Save change"
+msgstr "Save change"
+
+#: templates/users/edit.html:74
+msgid "About the user"
+msgstr "About the user"
+
+#: templates/users/edit.html:78
+msgid "Created on :"
+msgstr "Created on :"
+
+#: templates/users/edit.html:79
+msgid "Last modified :"
+msgstr "Last modified :"
+
+#: templates/users/edit.html:80
+msgid "By :"
+msgstr "By :"
+
+#: templates/users/edit.html:91
+msgid " The change history is preserved."
+msgstr " The change history is preserved."
+
+#: templates/users/list.html:4 templates/users/list.html:9
+#: templates/users/trash.html:12
+msgid "Users list"
+msgstr "Users list"
+
+#: templates/users/list.html:13
+msgid "New User"
+msgstr "New User"
+
+#: templates/users/list.html:17
+msgid "Recycle Bin"
+msgstr "Recycle Bin"
+
+#: templates/users/list.html:27
+msgid "Filter by department"
+msgstr "Filter by department"
+
+#: templates/users/list.html:29
+msgid "All departments"
+msgstr "All departments"
+
+#: templates/users/list.html:40
+msgid "Clear filter"
+msgstr "Clear filter"
+
+#: templates/users/list.html:45
+msgid "user(s)"
+msgstr "user(s)"
+
+#: templates/users/list.html:47
+msgid "in department"
+msgstr "in department"
+
+#: templates/users/list.html:49
+msgid "found"
+msgstr "found"
+
+#: templates/users/list.html:63
+msgid "Search within the displayed results..."
+msgstr "Search within the displayed results..."
+
+#: templates/users/list.html:65
+msgid "Real-time search in current results"
+msgstr "Real-time search in current results"
+
+#: templates/users/list.html:70
+msgid "Results :"
+msgstr "Results :"
+
+#: templates/users/list.html:131
+msgid "Are you sure you want to move this user to the recycle Bin?"
+msgstr "Are you sure you want to move this user to the recycle Bin?"
+
+#: templates/users/list.html:132
+msgid "Move to recycle Bin"
+msgstr "Move to recycle Bin"
+
+#: templates/users/list.html:148
+msgid "No users found in the department"
+msgstr "No users found in the department"
+
+#: templates/users/list.html:156
+msgid "Create first user"
+msgstr "Create first user"
+
+#: templates/users/list.html:164
+msgid "Back to lists"
+msgstr "Back to lists"
+
+#: templates/users/trash.html:4 templates/users/trash.html:9
+msgid "Recycle Bin - Users"
+msgstr "Recycle Bin - Users"
+
+#: templates/users/trash.html:19
+msgid "Warning: Users who have been permanently deleted cannot be recovered."
+msgstr "Warning: Users who have been permanently deleted cannot be recovered."
+
+#: templates/users/trash.html:50
+msgid "Restore"
+msgstr "Restore"
+
+#: templates/users/trash.html:55
+msgid "Are you sure you want to permanently delete this user? This action is irreversible."
+msgstr "Are you sure you want to permanently delete this user? This action is irreversible."
+
+#: templates/users/trash.html:69
+msgid "No users in the recycle bin"
+msgstr "No users in the recycle bin"
+

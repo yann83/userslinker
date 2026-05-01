@@ -1,0 +1,79 @@
+<!-- templates/install/finish.html -->
+<!-- Final page shown after the installation wizard completes successfully.
+   The installed.lock file has already been written at this point. -->
+
+{% extends 'install/base_install.html' %}
+
+{% block title_suffix %} — Complete{% endblock %}
+
+{% block content %}
+<div class="install-card text-center">
+
+    <!-- Success icon -->
+    <div class="mb-3">
+        <span style="font-size:4rem; color:#16a34a;">
+            <i class="fa-solid fa-circle-check"></i>
+        </span>
+    </div>
+
+    <h2 class="text-success mb-1">{{ _('Installation complete!') }}</h2>
+    <p class="text-muted mb-4">
+        UsersLinker {{ _('has been configured successfully.') }}
+    </p>
+
+    <!-- Summary of what was done -->
+    <ul class="list-group list-group-flush text-start mb-4">
+        <li class="list-group-item d-flex gap-2 px-0">
+            <i class="fa-solid fa-check-circle text-success mt-1 fa-fw"></i>
+            <span>
+                <strong>.env</strong> {{ _('file written with your database credentials
+                and auto-generated security keys.') }}
+            </span>
+        </li>
+        <li class="list-group-item d-flex gap-2 px-0">
+            <i class="fa-solid fa-check-circle text-success mt-1 fa-fw"></i>
+            <span>
+                {{ _('All application tables created inside the') }} <code>app</code> {{ _('schema.') }}
+            </span>
+        </li>
+        <li class="list-group-item d-flex gap-2 px-0">
+            <i class="fa-solid fa-check-circle text-success mt-1 fa-fw"></i>
+            <span>
+                {{ _('Three roles seeded:') }} <code>administrateur</code>,
+                <code>gestionnaire</code>, <code>lecteur</code>.
+            </span>
+        </li>
+        <li class="list-group-item d-flex gap-2 px-0">
+            <i class="fa-solid fa-check-circle text-success mt-1 fa-fw"></i>
+            <span>
+                {{ _('Administrator account created.') }}
+            </span>
+        </li>
+        <li class="list-group-item d-flex gap-2 px-0">
+            <i class="fa-solid fa-check-circle text-success mt-1 fa-fw"></i>
+            <span>
+                <strong>installed.lock</strong> {{ _('sentinel created — this page
+                will no longer be accessible after you restart the server.') }}
+            </span>
+        </li>
+    </ul>
+
+    <!-- Next steps -->
+    <div class="alert alert-warning text-start" role="alert">
+        <p class="mb-2 fw-bold">
+            <i class="fa-solid fa-triangle-exclamation me-1"></i>
+            {{ _('Required: restart the Flask server') }}
+        </p>
+        <p class="mb-0 small">
+            {{ _('Stop and restart Flask so the new') }} <code>.env</code> {{ _('settings including the SECRET_KEY are loaded and the') }}
+            <code>/install</code> {{ _('route is disabled.') }}<br>
+            {{ _('In PyCharm or VS Code: stop the current run and press') }} <kbd>Run</kbd> {{ _('again or') }} <kbd>F5</kbd>.
+        </p>
+    </div>
+
+    <a href="{{ url_for('security.login') }}" class="btn btn-success btn-lg px-5 mt-2">
+        <i class="fa-solid fa-right-to-bracket me-2"></i>{{ _('Go to login') }}
+    </a>
+
+</div>
+{% endblock %}

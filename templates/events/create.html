@@ -6,41 +6,41 @@
 {% block content %}
 <div class="container">
     <h2 class="mt-4 mb-4">
-        <i class="fas fa-plus-circle"></i> Créer un événement
+        <i class="fas fa-plus-circle"></i> {{ _('Create an event') }}
     </h2>
 
     <div class="alert alert-info">
-        <i class="fas fa-info-circle"></i> Cette page est accessible uniquement aux gestionnaires.
+        <i class="fas fa-info-circle"></i> {{ _('This page is accessible only to managers.') }}
     </div>
 
     <div class="row">
         <div class="col-md-8 offset-md-2">
             <div class="card">
                 <div class="card-header">
-                    <h5>Workflow de création d'événement</h5>
+                    <h5>{{ _('Event creation workflow.') }}</h5>
                 </div>
                 <div class="card-body">
                     <div class="text-center mb-4">
                         <i class="fas fa-sitemap fa-3x text-primary mb-3"></i>
-                        <h4>Bienvenue dans le workflow de création d'événement</h4>
-                        <p class="lead">Ce processus vous guidera pour lier ou délier du matériel à un utilisateur.</p>
+                        <h4>{{ _('Welcome to the event creation workflow.') }}</h4>
+                        <p class="lead">{{ _('This process will guide you in linking or unlinking material to a user.') }}</p>
                     </div>
 
                     <div class="row mt-4">
                         <div class="col-md-12">
-                            <h5>Étapes du workflow :</h5>
+                            <h5>{{ _('Workflow steps:') }}</h5>
                             <ol>
-                                <li>Sélection d'un utilisateur</li>
-                                <li>Choix de l'action (lier/délier)</li>
-                                <li>Sélection du matériel</li>
-                                <li>Validation et horodatage</li>
+                                <li>{{ _('User selection') }}</li>
+                                <li>{{ _('Choice of action link/unlink') }}</li>
+                                <li>{{ _('Equipment selection') }}</li>
+                                <li>{{ _('Validation and timestamping') }}</li>
                             </ol>
                         </div>
                     </div>
 
                     <div class="text-center mt-4">
                         <a href="{{ url_for('select_user') }}" class="btn btn-primary btn-lg">
-                            <i class="fas fa-play-circle"></i> Commencer le workflow
+                            <i class="fas fa-play-circle"></i> {{ _('Start the workflow') }}
                         </a>
                     </div>
                 </div>
@@ -50,7 +50,7 @@
 
     <div class="mt-4">
         <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
-            <i class="fas fa-arrow-left"></i> Retour au tableau de bord
+            <i class="fas fa-arrow-left"></i> {{ _('Return to the dashboard') }}
         </a>
     </div>
 </div>

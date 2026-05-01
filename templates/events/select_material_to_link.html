@@ -1,94 +1,94 @@
 <!-- templates/events/select_material_to_link.html - Version avec recherche dynamique -->
 {% extends "base.html" %}
 
-{% block title %}Sélectionner le matériel à lier{% endblock %}
+{% block title %}{{ _('Select the material to link') }}{% endblock %}
 
 {% block content %}
 <div class="container">
     <h2 class="mt-4 mb-4">
-        <i class="fas fa-link"></i> Sélectionner le matériel à lier
+        <i class="fas fa-link"></i> {{ _('Select the material to link') }}
     </h2>
 
     <div class="progress mb-4">
         <div class="progress-bar bg-primary" role="progressbar" style="width: 50%;" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100">
-            Étape 2/4
+            {{ _('Step') }} 2/4
         </div>
     </div>
 
     <div class="alert alert-info">
-        <i class="fas fa-info-circle"></i> Utilisateur sélectionné : <strong>{{ user.GivenName }} {{ user.Surname }}</strong> ({{ user.Username }})
+        <i class="fas fa-info-circle"></i> {{ _('Selected user :') }} <strong>{{ user.GivenName }} {{ user.Surname }}</strong> ({{ user.Username }})
     </div>
 
     <div class="card">
         <div class="card-header">
-            <h5>Rechercher et sélectionner du matériel</h5>
+            <h5>{{ _('Search and select equipment') }} </h5>
         </div>
         <div class="card-body">
-            <!-- Onglets pour les types de matériel -->
+            <!-- Tabs for equipment types -->
             <ul class="nav nav-tabs" id="materialTab" role="tablist">
                 <li class="nav-item" role="presentation">
                     <button class="nav-link active" id="computers-tab" data-bs-toggle="tab" data-bs-target="#computers" type="button" role="tab">
-                        <i class="fas fa-laptop"></i> Ordinateurs
+                        <i class="fas fa-laptop"></i> {{ _('Computers') }}
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
                     <button class="nav-link" id="monitors-tab" data-bs-toggle="tab" data-bs-target="#monitors" type="button" role="tab">
-                        <i class="fas fa-desktop"></i> Moniteurs
+                        <i class="fas fa-desktop"></i> {{ _('Monitors') }}
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
                     <button class="nav-link" id="peripherals-tab" data-bs-toggle="tab" data-bs-target="#peripherals" type="button" role="tab">
-                        <i class="fas fa-keyboard"></i> Périphériques
+                        <i class="fas fa-keyboard"></i> {{ _('Peripherals') }}
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
                     <button class="nav-link" id="phones-tab" data-bs-toggle="tab" data-bs-target="#phones" type="button" role="tab">
-                        <i class="fas fa-mobile-alt"></i> Téléphones
+                        <i class="fas fa-mobile-alt"></i> {{ _('Phones') }}
                     </button>
                 </li>
             </ul>
 
-            <!-- Contenu des onglets -->
+            <!-- Tab contents -->
             <div class="tab-content" id="materialTabContent">
-                <!-- Onglet Ordinateurs -->
+                <!-- Computers tab -->
                 <div class="tab-pane fade show active" id="computers" role="tabpanel">
                     <div class="material-search-panel" data-material-type="computers">
                         <div class="row mt-3">
                             <div class="col-md-8">
                                 <div class="input-group">
                                     <input type="text" class="form-control material-search-input"
-                                           placeholder="Tapez au moins 4 caractères (nom, numéro de série, inventaire)..."
+                                           placeholder="{{ _('Type at least 4 characters : name, serial number, inventory') }}"
                                            autocomplete="off">
                                     <button class="btn btn-outline-secondary clear-search-btn" type="button">
                                         <i class="fas fa-times"></i>
                                     </button>
                                 </div>
                                 <small class="form-text text-muted">
-                                    Recherche dans le nom, numéro de série et numéro d'inventaire
+                                    {{ _('Search by name, serial number, and inventory number') }}
                                 </small>
                             </div>
                             <div class="col-md-4">
-                                <span class="badge bg-info selected-count">0 sélectionné(s)</span>
+                                <span class="badge bg-info selected-count">{{ _('0 selected') }}</span>
                             </div>
                         </div>
 
-                        <!-- Zone d'état -->
+                        <!-- State zone -->
                         <div class="search-state mt-3">
                             <div class="text-center text-muted py-4">
                                 <i class="fas fa-search fa-2x mb-2"></i>
-                                <p>Tapez au moins 4 caractères pour rechercher des ordinateurs</p>
+                                <p>{{ _('Type at least 4 characters to search for computers') }}</p>
                             </div>
                         </div>
 
-                        <!-- Zone de chargement -->
+                        <!-- Loading Zone -->
                         <div class="loading-spinner text-center py-3" style="display: none;">
                             <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">Recherche en cours...</span>
+                                <span class="visually-hidden">{{ _('Search in progress...') }}</span>
                             </div>
-                            <p class="mt-2 text-muted">Recherche en cours...</p>
+                            <p class="mt-2 text-muted">{{ _('Search in progress...') }}</p>
                         </div>
 
-                        <!-- Résultats de recherche -->
+                        <!-- Search results -->
                         <div class="search-results mt-3" style="display: none;">
                             <div class="table-responsive">
                                 <table class="table table-striped table-hover">
@@ -97,33 +97,33 @@
                                             <th width="50px">
                                                 <input type="checkbox" class="form-check-input select-all-checkbox">
                                             </th>
-                                            <th>Nom</th>
-                                            <th>N° de série</th>
-                                            <th>N° inventaire</th>
-                                            <th>Statut</th>
+                                            <th>{{ _('Name') }}</th>
+                                            <th>{{ _('Serial number') }}</th>
+                                            <th>{{ _('Inventory number') }}</th>
+                                            <th>{{ _('Status') }}</th>
                                         </tr>
                                     </thead>
                                     <tbody class="results-tbody">
-                                        <!-- Les résultats apparaîtront ici -->
+                                        <!-- The results will appear here. -->
                                     </tbody>
                                 </table>
                             </div>
                         </div>
 
-                        <!-- Matériel sélectionné -->
+                        <!-- Selected equipment -->
                         <div class="selected-materials mt-3" style="display: none;">
-                            <h6><i class="fas fa-check-circle text-success"></i> Matériel sélectionné :</h6>
+                            <h6><i class="fas fa-check-circle text-success"></i> {{ _('Selected equipment:') }}</h6>
                             <div class="selected-items-list">
-                                <!-- Les éléments sélectionnés apparaîtront ici -->
+                                <!-- The selected items will appear here -->
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Répéter la même structure pour les autres onglets -->
+                <!-- Repeat the same structure for the other tabs. -->
                 <div class="tab-pane fade" id="monitors" role="tabpanel">
                     <div class="material-search-panel" data-material-type="monitors">
-                        <!-- Même structure que computers -->
+                        <!-- Same structure as computers -->
                         <div class="row mt-3">
                             <div class="col-md-8">
                                 <div class="input-group">
@@ -136,20 +136,20 @@
                                 </div>
                             </div>
                             <div class="col-md-4">
-                                <span class="badge bg-info selected-count">0 sélectionné(s)</span>
+                                <span class="badge bg-info selected-count">{{ _('0 selected') }}</span>
                             </div>
                         </div>
 
                         <div class="search-state mt-3">
                             <div class="text-center text-muted py-4">
                                 <i class="fas fa-search fa-2x mb-2"></i>
-                                <p>Tapez au moins 4 caractères pour rechercher des moniteurs</p>
+                                <p>{{ _('Type at least 4 characters to search for monitors') }}</p>
                             </div>
                         </div>
 
                         <div class="loading-spinner text-center py-3" style="display: none;">
                             <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">Recherche en cours...</span>
+                                <span class="visually-hidden">{{ _('Search in progress...') }}</span>
                             </div>
                         </div>
 
@@ -161,10 +161,10 @@
                                             <th width="50px">
                                                 <input type="checkbox" class="form-check-input select-all-checkbox">
                                             </th>
-                                            <th>Nom</th>
-                                            <th>N° de série</th>
-                                            <th>N° inventaire</th>
-                                            <th>Statut</th>
+                                            <th>{{ _('Name') }}</th>
+                                            <th>{{ _('Serial number') }}</th>
+                                            <th>{{ _('Inventory number') }}</th>
+                                            <th>{{ _('Status') }}</th>
                                         </tr>
                                     </thead>
                                     <tbody class="results-tbody">
@@ -174,7 +174,7 @@
                         </div>
 
                         <div class="selected-materials mt-3" style="display: none;">
-                            <h6><i class="fas fa-check-circle text-success"></i> Matériel sélectionné :</h6>
+                            <h6><i class="fas fa-check-circle text-success"></i> {{ _('Selected equipment:') }}</h6>
                             <div class="selected-items-list">
                             </div>
                         </div>
@@ -183,7 +183,7 @@
 
                 <div class="tab-pane fade" id="peripherals" role="tabpanel">
                     <div class="material-search-panel" data-material-type="peripherals">
-                        <!-- Même structure -->
+                        <!-- Same structure -->
                         <div class="row mt-3">
                             <div class="col-md-8">
                                 <div class="input-group">
@@ -196,20 +196,20 @@
                                 </div>
                             </div>
                             <div class="col-md-4">
-                                <span class="badge bg-info selected-count">0 sélectionné(s)</span>
+                                <span class="badge bg-info selected-count">{{ _('0 selected') }}</span>
                             </div>
                         </div>
 
                         <div class="search-state mt-3">
                             <div class="text-center text-muted py-4">
                                 <i class="fas fa-search fa-2x mb-2"></i>
-                                <p>Tapez au moins 4 caractères pour rechercher des périphériques</p>
+                                <p>{{ _('Type at least 4 characters to search for peripherals') }}</p>
                             </div>
                         </div>
 
                         <div class="loading-spinner text-center py-3" style="display: none;">
                             <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">Recherche en cours...</span>
+                                <span class="visually-hidden">{{ _('Search in progress...') }}</span>
                             </div>
                         </div>
 
@@ -221,10 +221,10 @@
                                             <th width="50px">
                                                 <input type="checkbox" class="form-check-input select-all-checkbox">
                                             </th>
-                                            <th>Nom</th>
-                                            <th>N° de série</th>
-                                            <th>N° inventaire</th>
-                                            <th>Statut</th>
+                                            <th>{{ _('Name') }}</th>
+                                            <th>{{ _('Serial number') }}</th>
+                                            <th>{{ _('Inventory number') }}</th>
+                                            <th>{{ _('Status') }}</th>
                                         </tr>
                                     </thead>
                                     <tbody class="results-tbody">
@@ -234,7 +234,7 @@
                         </div>
 
                         <div class="selected-materials mt-3" style="display: none;">
-                            <h6><i class="fas fa-check-circle text-success"></i> Matériel sélectionné :</h6>
+                            <h6><i class="fas fa-check-circle text-success"></i> {{ _('Selected equipment:') }}</h6>
                             <div class="selected-items-list">
                             </div>
                         </div>
@@ -243,7 +243,7 @@
 
                 <div class="tab-pane fade" id="phones" role="tabpanel">
                     <div class="material-search-panel" data-material-type="phones">
-                        <!-- Même structure -->
+                        <!-- Same structure -->
                         <div class="row mt-3">
                             <div class="col-md-8">
                                 <div class="input-group">
@@ -256,20 +256,20 @@
                                 </div>
                             </div>
                             <div class="col-md-4">
-                                <span class="badge bg-info selected-count">0 sélectionné(s)</span>
+                                <span class="badge bg-info selected-count">{{ _('0 selected') }}</span>
                             </div>
                         </div>
 
                         <div class="search-state mt-3">
                             <div class="text-center text-muted py-4">
                                 <i class="fas fa-search fa-2x mb-2"></i>
-                                <p>Tapez au moins 4 caractères pour rechercher des téléphones</p>
+                                <p>{{ _('Type at least 4 characters to search for phones') }}</p>
                             </div>
                         </div>
 
                         <div class="loading-spinner text-center py-3" style="display: none;">
                             <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">Recherche en cours...</span>
+                                <span class="visually-hidden">{{ _('Search in progress...') }}</span>
                             </div>
                         </div>
 
@@ -281,10 +281,10 @@
                                             <th width="50px">
                                                 <input type="checkbox" class="form-check-input select-all-checkbox">
                                             </th>
-                                            <th>Nom</th>
-                                            <th>N° de série</th>
-                                            <th>N° inventaire</th>
-                                            <th>Statut</th>
+                                            <th>{{ _('Name') }}</th>
+                                            <th>{{ _('Serial number') }}</th>
+                                            <th>{{ _('Inventory number') }}</th>
+                                            <th>{{ _('Status') }}</th>
                                         </tr>
                                     </thead>
                                     <tbody class="results-tbody">
@@ -294,7 +294,7 @@
                         </div>
 
                         <div class="selected-materials mt-3" style="display: none;">
-                            <h6><i class="fas fa-check-circle text-success"></i> Matériel sélectionné :</h6>
+                            <h6><i class="fas fa-check-circle text-success"></i> {{ _('Selected equipment:') }}</h6>
                             <div class="selected-items-list">
                             </div>
                         </div>
@@ -304,18 +304,20 @@
         </div>
     </div>
 
-    <!-- Formulaire pour l'envoi des données -->
+    <!-- Data submission form -->
     <form method="POST" action="{{ url_for('select_material_to_link', user_id=user.id) }}" id="materialSelectionForm">
+        <!-- CSRF token for security -->
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
         <input type="hidden" name="material_type" id="current_material_type" value="computers">
-        <!-- Les IDs du matériel sélectionné seront ajoutés ici dynamiquement -->
+        <!-- The IDs of the selected hardware will be added here dynamically. -->
         <div id="hidden_material_ids"></div>
 
         <div class="mt-4">
             <button type="submit" class="btn btn-primary" id="submit_btn" disabled>
-                <i class="fas fa-link"></i> Lier le matériel sélectionné
+                <i class="fas fa-link"></i> {{ _('Link the selected material') }}
             </button>
             <a href="{{ url_for('select_user') }}" class="btn btn-secondary">
-                <i class="fas fa-arrow-left"></i> Retour à la sélection d'utilisateur
+                <i class="fas fa-arrow-left"></i> {{ _('Return to user selection') }}
             </a>
         </div>
     </form>
@@ -325,17 +327,17 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Variables globales
+    // Global variables
     let searchTimeouts = {}; // Un timeout par type de matériel
     let selectedMaterials = {}; // Matériel sélectionné par type
     let currentMaterialType = 'computers';
 
-    // Initialiser les structures de données pour chaque type
+    // Initialize the data structures for each type
     ['computers', 'monitors', 'peripherals', 'phones'].forEach(type => {
         selectedMaterials[type] = new Map();
     });
 
-    // Fonction pour échapper le HTML (sécurité)
+    // Function to escape HTML (security)
     function escapeHtml(unsafe) {
         if (typeof unsafe !== 'string') return '';
         return unsafe
@@ -346,12 +348,12 @@ document.addEventListener('DOMContentLoaded', function() {
             .replace(/'/g, "&#039;");
     }
 
-    // Fonction pour obtenir le panneau de recherche actif
+    // Function to get the search panel active
     function getCurrentPanel() {
         return document.querySelector('.material-search-panel[data-material-type="' + currentMaterialType + '"]');
     }
 
-    // Fonction pour mettre à jour le compteur d'éléments sélectionnés
+    // Function to update the selected item counter
     function updateSelectedCount() {
         const panel = getCurrentPanel();
         const countBadge = panel.querySelector('.selected-count');
@@ -363,7 +365,7 @@ document.addEventListener('DOMContentLoaded', function() {
         updateSubmitButton();
     }
 
-    // Fonction pour mettre à jour le bouton de soumission
+    // Function to update the submit button
     function updateSubmitButton() {
         const submitBtn = document.getElementById('submit_btn');
         let totalSelected = 0;
@@ -373,26 +375,26 @@ document.addEventListener('DOMContentLoaded', function() {
         submitBtn.disabled = totalSelected === 0;
     }
 
-    // Fonction pour afficher l'état de chargement
+    // Function to display the loading status
     function showLoading(panel) {
         panel.querySelector('.search-state').style.display = 'none';
         panel.querySelector('.loading-spinner').style.display = 'block';
         panel.querySelector('.search-results').style.display = 'none';
     }
 
-    // Fonction pour masquer le chargement
+    // Function to hide loading
     function hideLoading(panel) {
         panel.querySelector('.loading-spinner').style.display = 'none';
     }
 
-    // Fonction pour afficher l'état de démarrage
+    // Function to display the startup status
     function showStartState(panel) {
         panel.querySelector('.search-state').style.display = 'block';
         panel.querySelector('.loading-spinner').style.display = 'none';
         panel.querySelector('.search-results').style.display = 'none';
     }
 
-    // Fonction pour afficher les résultats
+    // Function to display results
     function displayResults(panel, materials) {
         hideLoading(panel);
 
@@ -462,14 +464,14 @@ document.addEventListener('DOMContentLoaded', function() {
         resultsContainer.style.display = 'block';
         panel.querySelector('.search-state').style.display = 'none';
 
-        // Ajouter les gestionnaires d'événements aux checkboxes
+        // Add event handlers to checkboxes
         attachCheckboxListeners(panel);
 
-        // Mettre à jour la checkbox "Tout sélectionner"
+        // Update the "Select all" checkbox
         updateSelectAllCheckbox(panel);
     }
 
-    // Fonction pour attacher les gestionnaires aux checkboxes
+    // Function to attach handlers to checkboxes
     function attachCheckboxListeners(panel) {
         const checkboxes = panel.querySelectorAll('.material-checkbox');
         checkboxes.forEach(checkbox => {
@@ -489,7 +491,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Fonction pour mettre à jour la checkbox "Tout sélectionner"
+    // Function to update the "Select All" checkbox
     function updateSelectAllCheckbox(panel) {
         const selectAllCheckbox = panel.querySelector('.select-all-checkbox');
         const materialCheckboxes = panel.querySelectorAll('.material-checkbox:not([disabled])');
@@ -510,7 +512,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Fonction pour mettre à jour la liste du matériel sélectionné
+    // Function to update the list of selected equipment
     function updateSelectedMaterialsList() {
         const panel = getCurrentPanel();
         const selectedContainer = panel.querySelector('.selected-materials');
@@ -543,7 +545,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 selectedList.appendChild(item);
             });
 
-            // Ajouter les gestionnaires pour les boutons de suppression
+            // Add handlers for the delete buttons
             selectedList.querySelectorAll('.remove-material-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const materialId = parseInt(this.dataset.materialId);
@@ -563,7 +565,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Fonction pour effectuer la recherche
+    // Function to perform the search
     function performSearch(panel, searchTerm) {
         const materialType = panel.dataset.materialType;
 
@@ -574,7 +576,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         showLoading(panel);
 
-        // Requête AJAX pour rechercher le matériel
+        // AJAX request to search for the hardware
         fetch(`{{ url_for('api_workflow_search_materials') }}?material_type=${materialType}&q=${encodeURIComponent(searchTerm)}`, {
             method: 'GET',
             headers: {
@@ -611,33 +613,33 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Initialiser les gestionnaires pour tous les panneaux
+    // Initialize the managers for all panels
     document.querySelectorAll('.material-search-panel').forEach(panel => {
         const materialType = panel.dataset.materialType;
         const searchInput = panel.querySelector('.material-search-input');
         const clearBtn = panel.querySelector('.clear-search-btn');
         const selectAllCheckbox = panel.querySelector('.select-all-checkbox');
 
-        // Gestionnaire pour la recherche en temps réel
+        // Manager for real-time search
         searchInput.addEventListener('input', function() {
             const searchTerm = this.value.trim();
 
-            // Annuler le timeout précédent pour ce type
+            // Cancel the previous timeout for this type
             clearTimeout(searchTimeouts[materialType]);
 
-            // Définir un nouveau timeout
+            // Set a new timeout
             searchTimeouts[materialType] = setTimeout(() => {
                 performSearch(panel, searchTerm);
             }, 400);
         });
 
-        // Gestionnaire pour le bouton d'effacement
+        // Delete button manager
         clearBtn.addEventListener('click', function() {
             searchInput.value = '';
             showStartState(panel);
         });
 
-        // Gestionnaire pour "Tout sélectionner"
+        // Manager for "Select All"
         selectAllCheckbox.addEventListener('change', function() {
             const materialCheckboxes = panel.querySelectorAll('.material-checkbox:not([disabled])');
 
@@ -658,30 +660,30 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Gestionnaire pour le changement d'onglet
+    // Tab switching manager
     document.querySelectorAll('#materialTab button[data-bs-toggle="tab"]').forEach(tabBtn => {
         tabBtn.addEventListener('shown.bs.tab', function(event) {
-            // Extraire le type de matériel depuis l'ID de l'onglet
+            // Extract the hardware type from the tab ID
             currentMaterialType = event.target.id.replace('-tab', '');
 
-            // Mettre à jour le champ caché
+            // Update the hidden field
             document.getElementById('current_material_type').value = currentMaterialType;
 
-            // Mettre à jour le compteur
+            // Update the counter
             updateSelectedCount();
 
-            // Mettre à jour la liste des éléments sélectionnés
+            // Update the list of selected items
             updateSelectedMaterialsList();
         });
     });
 
-    // Gestionnaire pour la soumission du formulaire
+    // Manager for form submission
     document.getElementById('materialSelectionForm').addEventListener('submit', function(e) {
         // Vider les champs cachés précédents
         const hiddenContainer = document.getElementById('hidden_material_ids');
         hiddenContainer.innerHTML = '';
 
-        // Ajouter tous les IDs sélectionnés pour le type actuel
+        // Add all selected IDs for the current type
         const selectedIds = Array.from(selectedMaterials[currentMaterialType].keys());
 
         if (selectedIds.length === 0) {
@@ -699,7 +701,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Initialiser l'état de démarrage pour tous les panneaux
+    // Initialize the startup state for all panels
     document.querySelectorAll('.material-search-panel').forEach(panel => {
         showStartState(panel);
     });

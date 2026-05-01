@@ -1,0 +1,277 @@
+<!--  templates/install/base_install.html -->
+
+<!--  Base layout shared by all installation wizard pages.
+   Uses Bootstrap 5 + Font Awesome (free).
+   No login is required to access these pages — the install blueprint is
+   only registered when installed.lock does NOT exist. -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UsersLinker — Installation{% block title_suffix %}{% endblock %}</title>
+
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+          crossorigin="anonymous">
+
+    <!-- Font Awesome 6 Free -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+          rel="stylesheet">
+
+    <style>
+        /* ----------------------------------------------------------------
+           Overall page layout
+        ---------------------------------------------------------------- */
+        body {
+            background-color: #f0f2f5;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ----------------------------------------------------------------
+           Top banner
+        ---------------------------------------------------------------- */
+        .install-header {
+            background: linear-gradient(135deg, #1a2e4a 0%, #2563eb 100%);
+            color: #fff;
+            padding: 1.25rem 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,.25);
+        }
+        .install-header .app-logo i {
+            font-size: 1.8rem;
+            vertical-align: middle;
+        }
+        .install-header .app-name {
+            font-size: 1.4rem;
+            font-weight: 700;
+            letter-spacing: .5px;
+            vertical-align: middle;
+            margin-left: .5rem;
+        }
+        .install-header .app-subtitle {
+            font-size: .8rem;
+            opacity: .75;
+            margin-top: .15rem;
+        }
+
+        /* ----------------------------------------------------------------
+           Progress stepper
+        ---------------------------------------------------------------- */
+        .stepper {
+            display: flex;
+            justify-content: center;
+            gap: 0;
+            margin: 2rem 0 1.5rem;
+        }
+        .stepper-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+            max-width: 160px;
+            position: relative;
+        }
+        /* Connector line between steps */
+        .stepper-item:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            top: 18px;
+            left: 50%;
+            width: 100%;
+            height: 3px;
+            background-color: #dee2e6;
+            z-index: 0;
+        }
+        .stepper-item.done::after,
+        .stepper-item.active::after {
+            background-color: #2563eb;
+        }
+        .stepper-circle {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: .95rem;
+            border: 3px solid #dee2e6;
+            background: #fff;
+            color: #6c757d;
+            position: relative;
+            z-index: 1;
+            transition: all .3s;
+        }
+        .stepper-item.done  .stepper-circle {
+            background: #2563eb;
+            border-color: #2563eb;
+            color: #fff;
+        }
+        .stepper-item.active .stepper-circle {
+            background: #fff;
+            border-color: #2563eb;
+            color: #2563eb;
+            box-shadow: 0 0 0 4px rgba(37,99,235,.15);
+        }
+        .stepper-label {
+            margin-top: .45rem;
+            font-size: .75rem;
+            color: #6c757d;
+            text-align: center;
+            font-weight: 500;
+        }
+        .stepper-item.active .stepper-label { color: #2563eb; font-weight: 700; }
+        .stepper-item.done  .stepper-label { color: #2563eb; }
+
+        /* ----------------------------------------------------------------
+           Card wrapper
+        ---------------------------------------------------------------- */
+        .install-card {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 24px rgba(0,0,0,.08);
+            padding: 2.5rem 2rem;
+            max-width: 640px;
+            margin: 0 auto 3rem;
+        }
+        .install-card h2 {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: #1a2e4a;
+            margin-bottom: .35rem;
+        }
+        .install-card .step-desc {
+            color: #6c757d;
+            font-size: .9rem;
+            margin-bottom: 1.75rem;
+        }
+        .section-label {
+            font-size: .75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #6c757d;
+            margin-bottom: .75rem;
+            padding-bottom: .35rem;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        /* ----------------------------------------------------------------
+           Footer
+        ---------------------------------------------------------------- */
+        .install-footer {
+            text-align: center;
+            font-size: .78rem;
+            color: #adb5bd;
+            padding: 1.25rem 0 1.5rem;
+            margin-top: auto;
+        }
+
+        /* ----------------------------------------------------------------
+           Misc helpers
+        ---------------------------------------------------------------- */
+        .btn-primary {
+            background: #2563eb;
+            border-color: #2563eb;
+        }
+        .btn-primary:hover { background: #1d4ed8; border-color: #1d4ed8; }
+        .form-control:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,.15); }
+        .alert { border-radius: 8px; }
+    </style>
+</head>
+<body>
+
+<!-- =========================================================
+     Top banner
+========================================================= -->
+<header class="install-header">
+    <div class="container">
+        <span class="app-logo"><i class="fa-solid fa-link-slash"></i></span>
+        <span class="app-name">UsersLinker</span>
+        <div class="app-subtitle">Installation Wizard</div>
+    </div>
+</header>
+
+<!-- =========================================================
+     Progress stepper
+     step variable is set by each child template (1 / 2 / 3 / 4)
+========================================================= -->
+{% set steps = [
+    (1, 'fa-database',    'Database'),
+    (2, 'fa-table',       'Tables'),
+    (3, 'fa-user-shield', 'Admin account'),
+    (4, 'fa-circle-check','Finish'),
+] %}
+
+<div class="container">
+    <nav class="stepper" aria-label="Installation progress">
+    {% for num, icon, label in steps %}
+        {% if num < step %}
+            <div class="stepper-item done">
+        {% elif num == step %}
+            <div class="stepper-item active" aria-current="step">
+        {% else %}
+            <div class="stepper-item">
+        {% endif %}
+            <div class="stepper-circle">
+                {% if num < step %}
+                    <i class="fa-solid fa-check"></i>
+                {% else %}
+                    {{ num }}
+                {% endif %}
+            </div>
+            <span class="stepper-label">{{ label }}</span>
+        </div>
+    {% endfor %}
+    </nav>
+</div>
+
+<!-- =========================================================
+     Flash messages
+========================================================= -->
+<div class="container">
+    <div style="max-width:640px; margin:0 auto;">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                <i class="fa-solid
+                    {% if category == 'success' %}fa-circle-check
+                    {% elif category == 'danger'  %}fa-circle-xmark
+                    {% elif category == 'warning' %}fa-triangle-exclamation
+                    {% else %}fa-circle-info{% endif %}
+                    me-2"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endwith %}
+    </div>
+</div>
+
+<!-- =========================================================
+     Main content (injected by child templates)
+========================================================= -->
+<main class="container">
+    {% block content %}{% endblock %}
+</main>
+
+<!-- =========================================================
+     Footer
+========================================================= -->
+<footer class="install-footer">
+    UsersLinker &mdash; Installation &mdash;
+    <a href="https://github.com" target="_blank" class="text-decoration-none text-muted">GitHub</a>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc4s9bIOgUxi8T/jzmkhDVB7PxJQy0iD9Ec4d7R8K50"
+        crossorigin="anonymous"></script>
+
+{% block scripts %}{% endblock %}
+</body>
+</html>

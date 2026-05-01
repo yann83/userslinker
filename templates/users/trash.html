@@ -1,22 +1,22 @@
 <!-- templates/users/trash.html -->
 {% extends "base.html" %}
 
-{% block title %}Corbeille - Utilisateurs{% endblock %}
+{% block title %}{{ _('Recycle Bin - Users') }}{% endblock %}
 
 {% block content %}
 <div class="container">
     <div class="d-flex justify-content-between align-items-center mt-4 mb-4">
-        <h2><i class="fas fa-trash"></i> Corbeille - Utilisateurs</h2>
+        <h2><i class="fas fa-trash"></i> {{ _('Recycle Bin - Users') }}</h2>
         <div>
             <a href="{{ url_for('users_list') }}" class="btn btn-primary">
-                <i class="fas fa-list"></i> Liste des utilisateurs
+                <i class="fas fa-list"></i> {{ _('Users list') }}
             </a>
         </div>
     </div>
 
     <div class="alert alert-warning">
         <i class="fas fa-exclamation-triangle"></i> 
-        Attention : Les utilisateurs supprimés définitivement ne pourront pas être récupérés.
+        {{ _('Warning: Users who have been permanently deleted cannot be recovered.') }}
     </div>
 
     <div class="card">
@@ -26,13 +26,13 @@
                 <table class="table table-striped table-hover" id="usersTrashTable">
                     <thead>
                         <tr>
-                            <th>Nom</th>
-                            <th>Prénom</th>
-                            <th>Identifiant</th>
-                            <th>Fonction</th>
-                            <th>Service</th>
-                            <th>Date de suppression</th>
-                            <th>Actions</th>
+                            <th>{{ _('Name') }}</th>
+                            <th>{{ _('First Name') }}</th>
+                            <th>{{ _('Username') }}</th>
+                            <th>{{ _('Job title') }}</th>
+                            <th>{{ _('Department') }}</th>
+                            <th>{{ _('Deletion date') }}</th>
+                            <th>{{ _('Actions') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -47,13 +47,17 @@
                             <td>
                                 {% if current_user.has_role('gestionnaire') %}
                                 <form action="{{ url_for('user_restore', user_id=user.id) }}" method="POST" style="display: inline;">
-                                    <button type="submit" class="btn btn-sm btn-success" title="Restaurer">
+                                    <!-- CSRF token for security -->
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                    <button type="submit" class="btn btn-sm btn-success" title="{{ _('Restore') }}">
                                         <i class="fas fa-trash-restore"></i>
                                     </button>
                                 </form>
                                 <form action="{{ url_for('user_purge', user_id=user.id) }}" method="POST" style="display: inline;"
-                                      onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer définitivement cet utilisateur ? Cette action est irréversible.');">
-                                    <button type="submit" class="btn btn-sm btn-danger" title="Supprimer définitivement">
+                                      onsubmit="return confirm('{{ _('Are you sure you want to permanently delete this user? This action is irreversible.') }}');">
+                                    <!-- CSRF token for security -->
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                    <button type="submit" class="btn btn-sm btn-danger" title="{{ _('Delete permanently') }}">
                                         <i class="fas fa-times-circle"></i>
                                     </button>
                                 </form>
@@ -66,7 +70,7 @@
             </div>
             {% else %}
             <div class="alert alert-info">
-                <i class="fas fa-info-circle"></i> Aucun utilisateur dans la corbeille.
+                <i class="fas fa-info-circle"></i> {{ _('No users in the recycle bin') }}
             </div>
             {% endif %}
         </div>
@@ -74,7 +78,7 @@
 
     <div class="mt-4">
         <a href="{{ url_for('users_list') }}" class="btn btn-secondary">
-            <i class="fas fa-arrow-left"></i> Retour à la liste
+            <i class="fas fa-arrow-left"></i> {{ _('Back to list') }}
         </a>
     </div>
 </div>

@@ -1,41 +1,41 @@
 <!-- templates/profile.html -->
 {% extends "base.html" %}
 
-{% block title %}Mon profil{% endblock %}
+{% block title %}{{ _('My Profile.') }}{% endblock %}
 
 {% block content %}
 <div class="container">
     <h2 class="mt-4 mb-4">
-        <i class="fas fa-user-edit"></i> Mon profil
+        <i class="fas fa-user-edit"></i> {{ _('My Profile.') }}
     </h2>
 
     <div class="row">
-        <!-- Informations personnelles (lecture seule) -->
+        <!-- Personal information (read-only) -->
         <div class="col-md-6">
             <div class="card mb-4">
                 <div class="card-header">
-                    <h5><i class="fas fa-id-card text-primary"></i> Informations personnelles</h5>
+                    <h5><i class="fas fa-id-card text-primary"></i> {{ _('Personal information.') }}</h5>
                 </div>
                 <div class="card-body">
                     <table class="table table-borderless">
                         <tr>
-                            <td><strong>Nom :</strong></td>
+                            <td><strong>{{ _('Name :') }}</strong></td>
                             <td>{{ current_user.Surname }}</td>
                         </tr>
                         <tr>
-                            <td><strong>Prénom :</strong></td>
+                            <td><strong>{{ _('Fist name :') }}</strong></td>
                             <td>{{ current_user.GivenName }}</td>
                         </tr>
                         <tr>
-                            <td><strong>Email :</strong></td>
+                            <td><strong>{{ _('Email :') }}</strong></td>
                             <td>{{ current_user.email }}</td>
                         </tr>
                         <tr>
-                            <td><strong>Nom d'utilisateur :</strong></td>
+                            <td><strong>{{ _('Username :') }}</strong></td>
                             <td>{{ current_user.user }}</td>
                         </tr>
                         <tr>
-                            <td><strong>Rôles actuels :</strong></td>
+                            <td><strong>{{ _('Role :') }}</strong></td>
                             <td>
                                 {% for role in current_user.roles %}
                                     {% if role.name == 'administrateur' %}
@@ -53,28 +53,27 @@
                     <div class="alert alert-info mt-3">
                         <i class="fas fa-info-circle"></i>
                         <small>
-                            Ces informations ne peuvent être modifiées que par un administrateur.
-                            Contactez votre administrateur système si des modifications sont nécessaires.
+                            {{ _('This information can only be modified by an administrator. Contact your system administrator if any changes are needed. :') }}
                         </small>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Changement de mot de passe -->
+        <!-- Change your password -->
         <div class="col-md-6">
             <div class="card mb-4">
                 <div class="card-header">
-                    <h5><i class="fas fa-key text-warning"></i> Changer mon mot de passe</h5>
+                    <h5><i class="fas fa-key text-warning"></i> {{ _('Change your password') }}</h5>
                 </div>
                 <div class="card-body">
                     <form method="POST" action="{{ url_for('change_password') }}" id="passwordForm">
-                        <!-- Token CSRF pour la sécurité -->
+                        <!-- CSRF token for security -->
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
 
                         <div class="mb-3">
                             <label for="current_password" class="form-label">
-                                Mot de passe actuel <span class="text-danger">*</span>
+                                {{ _('Current password :') }} <span class="text-danger">*</span>
                             </label>
                             <div class="input-group">
                                 <input type="password" class="form-control" id="current_password"
@@ -87,7 +86,7 @@
 
                         <div class="mb-3">
                             <label for="new_password" class="form-label">
-                                Nouveau mot de passe <span class="text-danger">*</span>
+                                {{ _('New password :') }} <span class="text-danger">*</span>
                             </label>
                             <div class="input-group">
                                 <input type="password" class="form-control" id="new_password"
@@ -97,13 +96,13 @@
                                 </button>
                             </div>
                             <small class="form-text text-muted">
-                                Le mot de passe doit contenir au moins 6 caractères
+                                {{ _('The password must contain at least 6 characters.') }}
                             </small>
                         </div>
 
                         <div class="mb-3">
                             <label for="confirm_password" class="form-label">
-                                Confirmer le nouveau mot de passe <span class="text-danger">*</span>
+                                {{ _('Confirm the new password') }} <span class="text-danger">*</span>
                             </label>
                             <div class="input-group">
                                 <input type="password" class="form-control" id="confirm_password"
@@ -114,43 +113,43 @@
                             </div>
                         </div>
 
-                        <!-- Indicateur de force du mot de passe -->
+                        <!-- Password strength indicator -->
                         <div class="mb-3">
-                            <label class="form-label">Force du mot de passe :</label>
+                            <label class="form-label">{{ _('Password strength :') }}</label>
                             <div class="progress" style="height: 10px;">
                                 <div id="passwordStrength" class="progress-bar" role="progressbar"
                                      style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
                                 </div>
                             </div>
                             <small id="passwordStrengthText" class="form-text text-muted">
-                                Tapez votre nouveau mot de passe pour voir sa force
+                                {{ _('Type your new password to see its strength') }}
                             </small>
                         </div>
 
                         <div class="mt-4">
                             <button type="submit" class="btn btn-warning">
-                                <i class="fas fa-key"></i> Changer le mot de passe
+                                <i class="fas fa-key"></i> {{ _('Change password') }}
                             </button>
                             <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
-                                <i class="fas fa-arrow-left"></i> Retour
+                                <i class="fas fa-arrow-left"></i> {{ _('Go back') }}
                             </a>
                         </div>
                     </form>
                 </div>
             </div>
 
-            <!-- Conseils de sécurité -->
+            <!-- Safety tips -->
             <div class="card bg-light">
                 <div class="card-header">
-                    <h6><i class="fas fa-shield-alt text-success"></i> Conseils de sécurité</h6>
+                    <h6><i class="fas fa-shield-alt text-success"></i> {{ _('Safety tips :') }}</h6>
                 </div>
                 <div class="card-body">
                     <ul class="small mb-0">
-                        <li>Utilisez un mot de passe d'au moins 8 caractères</li>
-                        <li>Mélangez lettres majuscules, minuscules, chiffres et symboles</li>
-                        <li>Évitez les mots du dictionnaire ou les informations personnelles</li>
-                        <li>Ne réutilisez pas ce mot de passe sur d'autres sites</li>
-                        <li>Changez votre mot de passe régulièrement</li>
+                        <li>{{ _('Use a password of at least 8 characters') }}</li>
+                        <li>{{ _('Mix uppercase letters, lowercase letters, numbers, and symbols') }}</li>
+                        <li>{{ _('Avoid dictionary words or personal information') }}</li>
+                        <li>{{ _('Do not reuse this password on other websites') }}</li>
+                        <li>{{ _('Change your password regularly') }}</li>
                     </ul>
                 </div>
             </div>
@@ -183,12 +182,12 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Configuration des boutons d'affichage des mots de passe
+    // Configuring password display buttons
     setupPasswordToggle('toggleCurrent', 'current_password');
     setupPasswordToggle('toggleNew', 'new_password');
     setupPasswordToggle('toggleConfirm', 'confirm_password');
 
-    // Vérification de la force du mot de passe
+    // Password strength check
     const newPasswordInput = document.getElementById('new_password');
     const strengthBar = document.getElementById('passwordStrength');
     const strengthText = document.getElementById('passwordStrengthText');
@@ -197,17 +196,17 @@ document.addEventListener('DOMContentLoaded', function() {
         const password = this.value;
         const strength = calculatePasswordStrength(password);
 
-        // Mettre à jour la barre de progression
+        // Update the progress bar
         strengthBar.style.width = strength.percentage + '%';
         strengthBar.setAttribute('aria-valuenow', strength.percentage);
 
-        // Mettre à jour la couleur et le texte
+        // Update the color and text
         strengthBar.className = 'progress-bar ' + strength.colorClass;
         strengthText.textContent = strength.text;
         strengthText.className = 'form-text ' + strength.textClass;
     });
 
-    // Fonction pour calculer la force du mot de passe
+    // Function to calculate password strength
     function calculatePasswordStrength(password) {
         let score = 0;
         let feedback = [];
@@ -221,24 +220,24 @@ document.addEventListener('DOMContentLoaded', function() {
             };
         }
 
-        // Longueur
+        // Length
         if (password.length >= 8) score += 25;
         else feedback.push('au moins 8 caractères');
 
-        // Lettres minuscules
+        // Lowercase letters
         if (/[a-z]/.test(password)) score += 25;
         else feedback.push('lettres minuscules');
 
-        // Lettres majuscules
+        // Capital letters
         if (/[A-Z]/.test(password)) score += 25;
         else feedback.push('lettres majuscules');
 
-        // Chiffres et caractères spéciaux
+        // Numbers and special characters
         if (/[0-9]/.test(password) && /[^A-Za-z0-9]/.test(password)) score += 25;
         else if (/[0-9]/.test(password) || /[^A-Za-z0-9]/.test(password)) score += 12;
         else feedback.push('chiffres et symboles');
 
-        // Déterminer la couleur et le message
+        // Determine the color and the message
         let result = {};
 
         if (score < 25) {
@@ -274,7 +273,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return result;
     }
 
-    // Validation de la confirmation du mot de passe
+    // Password confirmation validation
     const confirmInput = document.getElementById('confirm_password');
 
     function validatePasswordMatch() {
@@ -296,7 +295,7 @@ document.addEventListener('DOMContentLoaded', function() {
     newPasswordInput.addEventListener('input', validatePasswordMatch);
     confirmInput.addEventListener('input', validatePasswordMatch);
 
-    // Validation du formulaire
+    // Form validation
     document.getElementById('passwordForm').addEventListener('submit', function(e) {
         const newPassword = newPasswordInput.value;
         const confirmPassword = confirmInput.value;

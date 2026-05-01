@@ -1,56 +1,56 @@
 <!-- templates/events/select_material_to_unlink.html - Version avec recherche dynamique -->
 {% extends "base.html" %}
 
-{% block title %}Sélectionner le matériel à délier{% endblock %}
+{% block title %}{{ _('Select the material to unlink') }}{% endblock %}
 
 {% block content %}
 <div class="container">
     <h2 class="mt-4 mb-4">
-        <i class="fas fa-unlink"></i> Sélectionner le matériel à délier
+        <i class="fas fa-unlink"></i> {{ _('Select the material to unlink') }}
     </h2>
 
     <div class="progress mb-4">
         <div class="progress-bar bg-primary" role="progressbar" style="width: 50%;" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100">
-            Étape 2/4
+            {{ _('Step') }} 2/4
         </div>
     </div>
 
     <div class="alert alert-info">
-        <i class="fas fa-info-circle"></i> Utilisateur sélectionné : <strong>{{ user.GivenName }} {{ user.Surname }}</strong> ({{ user.Username }})
+        <i class="fas fa-info-circle"></i> {{ _('Selected user :') }} <strong>{{ user.GivenName }} {{ user.Surname }}</strong> ({{ user.Username }})
     </div>
 
     <div class="card">
         <div class="card-header">
-            <h5>Rechercher le matériel actuellement lié à cet utilisateur</h5>
+            <h5>{{ _('Search for material currently linked to this user') }}</h5>
         </div>
         <div class="card-body">
-            <!-- Onglets pour les types de matériel -->
+            <!-- Tabs for equipment types -->
             <ul class="nav nav-tabs" id="materialTab" role="tablist">
                 <li class="nav-item" role="presentation">
                     <button class="nav-link active" id="computers-tab" data-bs-toggle="tab" data-bs-target="#computers" type="button" role="tab">
-                        <i class="fas fa-laptop"></i> Ordinateurs
+                        <i class="fas fa-laptop"></i> {{ _('Computers') }}
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
                     <button class="nav-link" id="monitors-tab" data-bs-toggle="tab" data-bs-target="#monitors" type="button" role="tab">
-                        <i class="fas fa-desktop"></i> Moniteurs
+                        <i class="fas fa-desktop"></i> {{ _('Monitors') }}
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
                     <button class="nav-link" id="peripherals-tab" data-bs-toggle="tab" data-bs-target="#peripherals" type="button" role="tab">
-                        <i class="fas fa-keyboard"></i> Périphériques
+                        <i class="fas fa-keyboard"></i> {{ _('Peripherals') }}
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
                     <button class="nav-link" id="phones-tab" data-bs-toggle="tab" data-bs-target="#phones" type="button" role="tab">
-                        <i class="fas fa-mobile-alt"></i> Téléphones
+                        <i class="fas fa-mobile-alt"></i> {{ _('Phones') }}
                     </button>
                 </li>
             </ul>
 
-            <!-- Contenu des onglets -->
+            <!-- Tab contents -->
             <div class="tab-content" id="materialTabContent">
-                <!-- Onglet Ordinateurs -->
+                <!-- Computers tab -->
                 <div class="tab-pane fade show active" id="computers" role="tabpanel">
                     <div class="material-unlink-panel" data-material-type="computers">
                         <div class="row mt-3">
@@ -64,38 +64,38 @@
                                     </button>
                                 </div>
                                 <small class="form-text text-muted">
-                                    Filtre optionnel pour rechercher dans le matériel déjà lié
+                                    {{ _('Optional filter to search within already linked material') }}
                                 </small>
                             </div>
                             <div class="col-md-4">
-                                <span class="badge bg-danger selected-count">0 sélectionné(s)</span>
+                                <span class="badge bg-danger selected-count">{{ _('0 selected') }}</span>
                             </div>
                         </div>
 
-                        <!-- Zone de matériel lié -->
+                        <!-- Related material area -->
                         <div class="linked-materials mt-3">
                             <div class="d-flex justify-content-between align-items-center mb-2">
-                                <h6><i class="fas fa-laptop text-primary me-2"></i>Ordinateurs liés à cet utilisateur</h6>
+                                <h6><i class="fas fa-laptop text-primary me-2"></i>{{ _('Computers linked to this user') }}</h6>
                                 <button type="button" class="btn btn-sm btn-outline-primary load-linked-btn">
-                                    <i class="fas fa-sync-alt"></i> Charger
+                                    <i class="fas fa-sync-alt"></i> {{ _('Load') }}
                                 </button>
                             </div>
 
-                            <!-- Zone de chargement -->
+                            <!-- Loading Zone -->
                             <div class="loading-spinner text-center py-3" style="display: none;">
                                 <div class="spinner-border text-primary" role="status">
-                                    <span class="visually-hidden">Chargement...</span>
+                                    <span class="visually-hidden">{{ _('Loading...') }}</span>
                                 </div>
-                                <p class="mt-2 text-muted">Chargement du matériel lié...</p>
+                                <p class="mt-2 text-muted">{{ _('Loading related material...') }}</p>
                             </div>
 
-                            <!-- Zone d'état initial -->
+                            <!-- Initial state area-->
                             <div class="initial-state text-center py-4">
                                 <i class="fas fa-laptop fa-2x text-muted mb-2"></i>
-                                <p class="text-muted">Cliquez sur "Charger" pour voir les ordinateurs liés à cet utilisateur</p>
+                                <p class="text-muted">{{ _('Click Load to see the computers linked to this user') }}</p>
                             </div>
 
-                            <!-- Résultats -->
+                            <!-- Results -->
                             <div class="linked-results" style="display: none;">
                                 <div class="table-responsive">
                                     <table class="table table-striped table-hover">
@@ -104,43 +104,43 @@
                                                 <th width="50px">
                                                     <input type="checkbox" class="form-check-input select-all-checkbox">
                                                 </th>
-                                                <th>Nom</th>
-                                                <th>N° de série</th>
-                                                <th>N° inventaire</th>
-                                                <th>Date liaison</th>
+                                                <th>{{ _('Name') }}</th>
+                                                <th>{{ _('Serial number') }}</th>
+                                                <th>{{ _('Inventory number') }}</th>
+                                                <th>{{ _('Date of connection') }}</th>
                                             </tr>
                                         </thead>
                                         <tbody class="results-tbody">
-                                            <!-- Les résultats apparaîtront ici -->
+                                            <!-- The results will appear here. -->
                                         </tbody>
                                     </table>
                                 </div>
                             </div>
 
-                            <!-- Message si aucun matériel lié -->
+                            <!-- Message if no related material -->
                             <div class="no-linked-materials alert alert-info" style="display: none;">
-                                <i class="fas fa-info-circle"></i> Cet utilisateur n'a aucun ordinateur lié.
+                                <i class="fas fa-info-circle"></i> {{ _('This user has no linked computers.') }}
                             </div>
                         </div>
 
-                        <!-- Matériel sélectionné pour délier -->
+                        <!-- Materials selected for unlink -->
                         <div class="selected-materials mt-3" style="display: none;">
-                            <h6><i class="fas fa-check-circle text-danger"></i> Matériel sélectionné pour délier :</h6>
+                            <h6><i class="fas fa-check-circle text-danger"></i> {{ _('Materials selected for unlinking :') }}</h6>
                             <div class="selected-items-list">
-                                <!-- Les éléments sélectionnés apparaîtront ici -->
+                                <!-- The selected items will appear here -->
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Onglets similaires pour monitors, peripherals, phones -->
+                <!-- Similar tabs for monitors, peripherals, phones -->
                 <div class="tab-pane fade" id="monitors" role="tabpanel">
                     <div class="material-unlink-panel" data-material-type="monitors">
                         <div class="row mt-3">
                             <div class="col-md-8">
                                 <div class="input-group">
                                     <input type="text" class="form-control material-search-input"
-                                           placeholder="Rechercher parmi le matériel lié (optionnel)..."
+                                           placeholder="{{ _('Search among related material optional...') }}"
                                            autocomplete="off">
                                     <button class="btn btn-outline-secondary clear-search-btn" type="button">
                                         <i class="fas fa-times"></i>
@@ -148,27 +148,27 @@
                                 </div>
                             </div>
                             <div class="col-md-4">
-                                <span class="badge bg-danger selected-count">0 sélectionné(s)</span>
+                                <span class="badge bg-danger selected-count">{{ _('0 selected') }}</span>
                             </div>
                         </div>
 
                         <div class="linked-materials mt-3">
                             <div class="d-flex justify-content-between align-items-center mb-2">
-                                <h6><i class="fas fa-desktop text-primary me-2"></i>Moniteurs liés à cet utilisateur</h6>
+                                <h6><i class="fas fa-desktop text-primary me-2"></i>{{ _('Monitors linked to this user') }}</h6>
                                 <button type="button" class="btn btn-sm btn-outline-primary load-linked-btn">
-                                    <i class="fas fa-sync-alt"></i> Charger
+                                    <i class="fas fa-sync-alt"></i> {{ _('Load') }}
                                 </button>
                             </div>
 
                             <div class="loading-spinner text-center py-3" style="display: none;">
                                 <div class="spinner-border text-primary" role="status">
-                                    <span class="visually-hidden">Chargement...</span>
+                                    <span class="visually-hidden">{{ _('Loading...') }}</span>
                                 </div>
                             </div>
 
                             <div class="initial-state text-center py-4">
                                 <i class="fas fa-desktop fa-2x text-muted mb-2"></i>
-                                <p class="text-muted">Cliquez sur "Charger" pour voir les moniteurs liés à cet utilisateur</p>
+                                <p class="text-muted">{{ _('Click Load to see the monitors linked to this user.') }}</p>
                             </div>
 
                             <div class="linked-results" style="display: none;">
@@ -179,10 +179,10 @@
                                                 <th width="50px">
                                                     <input type="checkbox" class="form-check-input select-all-checkbox">
                                                 </th>
-                                                <th>Nom</th>
-                                                <th>N° de série</th>
-                                                <th>N° inventaire</th>
-                                                <th>Date liaison</th>
+                                                <th>{{ _('Name') }}</th>
+                                                <th>{{ _('Serial number') }}</th>
+                                                <th>{{ _('Inventory number') }}</th>
+                                                <th>{{ _('Date of connection') }}</th>
                                             </tr>
                                         </thead>
                                         <tbody class="results-tbody">
@@ -192,12 +192,12 @@
                             </div>
 
                             <div class="no-linked-materials alert alert-info" style="display: none;">
-                                <i class="fas fa-info-circle"></i> Cet utilisateur n'a aucun moniteur lié.
+                                <i class="fas fa-info-circle"></i> {{ _('This user has no linked monitors.') }}
                             </div>
                         </div>
 
                         <div class="selected-materials mt-3" style="display: none;">
-                            <h6><i class="fas fa-check-circle text-danger"></i> Matériel sélectionné pour délier :</h6>
+                            <h6><i class="fas fa-check-circle text-danger"></i> {{ _('Materials selected for unlinking :') }}</h6>
                             <div class="selected-items-list">
                             </div>
                         </div>
@@ -210,7 +210,7 @@
                             <div class="col-md-8">
                                 <div class="input-group">
                                     <input type="text" class="form-control material-search-input"
-                                           placeholder="Rechercher parmi le matériel lié (optionnel)..."
+                                           placeholder="{{ _('Search among related material optional...') }}"
                                            autocomplete="off">
                                     <button class="btn btn-outline-secondary clear-search-btn" type="button">
                                         <i class="fas fa-times"></i>
@@ -218,27 +218,27 @@
                                 </div>
                             </div>
                             <div class="col-md-4">
-                                <span class="badge bg-danger selected-count">0 sélectionné(s)</span>
+                                <span class="badge bg-danger selected-count">{{ _('0 selected') }}</span>
                             </div>
                         </div>
 
                         <div class="linked-materials mt-3">
                             <div class="d-flex justify-content-between align-items-center mb-2">
-                                <h6><i class="fas fa-keyboard text-primary me-2"></i>Périphériques liés à cet utilisateur</h6>
+                                <h6><i class="fas fa-keyboard text-primary me-2"></i>{{ _('Peripherals linked to this user') }}</h6>
                                 <button type="button" class="btn btn-sm btn-outline-primary load-linked-btn">
-                                    <i class="fas fa-sync-alt"></i> Charger
+                                    <i class="fas fa-sync-alt"></i> {{ _('Load') }}
                                 </button>
                             </div>
 
                             <div class="loading-spinner text-center py-3" style="display: none;">
                                 <div class="spinner-border text-primary" role="status">
-                                    <span class="visually-hidden">Chargement...</span>
+                                    <span class="visually-hidden">{{ _('Loading...') }}</span>
                                 </div>
                             </div>
 
                             <div class="initial-state text-center py-4">
                                 <i class="fas fa-keyboard fa-2x text-muted mb-2"></i>
-                                <p class="text-muted">Cliquez sur "Charger" pour voir les périphériques liés à cet utilisateur</p>
+                                <p class="text-muted">{{ _('Click Load to see the peripherals linked to this user') }}</p>
                             </div>
 
                             <div class="linked-results" style="display: none;">
@@ -249,10 +249,10 @@
                                                 <th width="50px">
                                                     <input type="checkbox" class="form-check-input select-all-checkbox">
                                                 </th>
-                                                <th>Nom</th>
-                                                <th>N° de série</th>
-                                                <th>N° inventaire</th>
-                                                <th>Date liaison</th>
+                                                <th>{{ _('Name') }}</th>
+                                                <th>{{ _('Serial number') }}</th>
+                                                <th>{{ _('Inventory number') }}</th>
+                                                <th>{{ _('Date of connection') }}</th>
                                             </tr>
                                         </thead>
                                         <tbody class="results-tbody">
@@ -262,12 +262,12 @@
                             </div>
 
                             <div class="no-linked-materials alert alert-info" style="display: none;">
-                                <i class="fas fa-info-circle"></i> Cet utilisateur n'a aucun périphérique lié.
+                                <i class="fas fa-info-circle"></i> {{ _('This user has no linked peripherals.') }}
                             </div>
                         </div>
 
                         <div class="selected-materials mt-3" style="display: none;">
-                            <h6><i class="fas fa-check-circle text-danger"></i> Matériel sélectionné pour délier :</h6>
+                            <h6><i class="fas fa-check-circle text-danger"></i> {{ _('Materials selected for unlinking :') }}</h6>
                             <div class="selected-items-list">
                             </div>
                         </div>
@@ -280,7 +280,7 @@
                             <div class="col-md-8">
                                 <div class="input-group">
                                     <input type="text" class="form-control material-search-input"
-                                           placeholder="Rechercher parmi le matériel lié (optionnel)..."
+                                           placeholder="{{ _('Search among related material optional...') }}"
                                            autocomplete="off">
                                     <button class="btn btn-outline-secondary clear-search-btn" type="button">
                                         <i class="fas fa-times"></i>
@@ -288,27 +288,27 @@
                                 </div>
                             </div>
                             <div class="col-md-4">
-                                <span class="badge bg-danger selected-count">0 sélectionné(s)</span>
+                                <span class="badge bg-danger selected-count">{{ _('0 selected') }}</span>
                             </div>
                         </div>
 
                         <div class="linked-materials mt-3">
                             <div class="d-flex justify-content-between align-items-center mb-2">
-                                <h6><i class="fas fa-mobile-alt text-primary me-2"></i>Téléphones liés à cet utilisateur</h6>
+                                <h6><i class="fas fa-mobile-alt text-primary me-2"></i>{{ _('Phones linked to this user') }}</h6>
                                 <button type="button" class="btn btn-sm btn-outline-primary load-linked-btn">
-                                    <i class="fas fa-sync-alt"></i> Charger
+                                    <i class="fas fa-sync-alt"></i> {{ _('Load') }}
                                 </button>
                             </div>
 
                             <div class="loading-spinner text-center py-3" style="display: none;">
                                 <div class="spinner-border text-primary" role="status">
-                                    <span class="visually-hidden">Chargement...</span>
+                                    <span class="visually-hidden">{{ _('Loading...') }}</span>
                                 </div>
                             </div>
 
                             <div class="initial-state text-center py-4">
                                 <i class="fas fa-mobile-alt fa-2x text-muted mb-2"></i>
-                                <p class="text-muted">Cliquez sur "Charger" pour voir les téléphones liés à cet utilisateur</p>
+                                <p class="text-muted">{{ _('Click Load to see the phones linked to this user.') }}</p>
                             </div>
 
                             <div class="linked-results" style="display: none;">
@@ -319,10 +319,10 @@
                                                 <th width="50px">
                                                     <input type="checkbox" class="form-check-input select-all-checkbox">
                                                 </th>
-                                                <th>Nom</th>
-                                                <th>N° de série</th>
-                                                <th>N° inventaire</th>
-                                                <th>Date liaison</th>
+                                                <th>{{ _('Name') }}</th>
+                                                <th>{{ _('Serial number') }}</th>
+                                                <th>{{ _('Inventory number') }}</th>
+                                                <th>{{ _('Date of connection') }}</th>
                                             </tr>
                                         </thead>
                                         <tbody class="results-tbody">
@@ -332,12 +332,12 @@
                             </div>
 
                             <div class="no-linked-materials alert alert-info" style="display: none;">
-                                <i class="fas fa-info-circle"></i> Cet utilisateur n'a aucun téléphone lié.
+                                <i class="fas fa-info-circle"></i> {{ _('This user has no linked phones.') }}
                             </div>
                         </div>
 
                         <div class="selected-materials mt-3" style="display: none;">
-                            <h6><i class="fas fa-check-circle text-danger"></i> Matériel sélectionné pour délier :</h6>
+                            <h6><i class="fas fa-check-circle text-danger"></i> {{ _('Materials selected for unlinking :') }}</h6>
                             <div class="selected-items-list">
                             </div>
                         </div>
@@ -347,18 +347,20 @@
         </div>
     </div>
 
-    <!-- Formulaire pour l'envoi des données -->
+    <!-- Data submission form -->
     <form method="POST" action="{{ url_for('select_material_to_unlink', user_id=user.id) }}" id="unlinkMaterialForm">
+        <!-- CSRF token for security -->
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
         <input type="hidden" name="material_type" id="current_material_type" value="computers">
-        <!-- Les IDs du matériel sélectionné seront ajoutés ici dynamiquement -->
+        <!-- The IDs of the selected hardware will be added here dynamically. -->
         <div id="hidden_material_ids"></div>
 
         <div class="mt-4">
             <button type="submit" class="btn btn-danger" id="submit_btn" disabled>
-                <i class="fas fa-unlink"></i> Délier le matériel sélectionné
+                <i class="fas fa-unlink"></i> {{ _('Unlink the selected material') }}
             </button>
             <a href="{{ url_for('select_user') }}" class="btn btn-secondary">
-                <i class="fas fa-arrow-left"></i> Retour à la sélection d'utilisateur
+                <i class="fas fa-arrow-left"></i> {{ _('Return to user selection') }}
             </a>
         </div>
     </form>
@@ -368,18 +370,18 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Variables globales
+    // Global variables
     let selectedMaterials = {}; // Matériel sélectionné par type
     let currentMaterialType = 'computers';
     let loadedMaterials = {}; // Cache des matériels chargés par type
 
-    // Initialiser les structures de données pour chaque type
+    // Initialize the data structures for each type
     ['computers', 'monitors', 'peripherals', 'phones'].forEach(type => {
         selectedMaterials[type] = new Map();
         loadedMaterials[type] = [];
     });
 
-    // Fonction pour échapper le HTML (sécurité)
+    // Function to escape HTML (security)
     function escapeHtml(unsafe) {
         if (typeof unsafe !== 'string') return '';
         return unsafe
@@ -390,12 +392,12 @@ document.addEventListener('DOMContentLoaded', function() {
             .replace(/'/g, "&#039;");
     }
 
-    // Fonction pour obtenir le panneau actif
+    // Function to get the active panel
     function getCurrentPanel() {
         return document.querySelector('.material-unlink-panel[data-material-type="' + currentMaterialType + '"]');
     }
 
-    // Fonction pour formater une date
+    // Function to format a date
     function formatDate(dateString) {
         if (!dateString) return 'N/A';
         try {
@@ -406,7 +408,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Fonction pour mettre à jour le compteur d'éléments sélectionnés
+    // Function to update the selected item counter
     function updateSelectedCount() {
         const panel = getCurrentPanel();
         const countBadge = panel.querySelector('.selected-count');
@@ -418,7 +420,7 @@ document.addEventListener('DOMContentLoaded', function() {
         updateSubmitButton();
     }
 
-    // Fonction pour mettre à jour le bouton de soumission
+    // Function to update the submit button
     function updateSubmitButton() {
         const submitBtn = document.getElementById('submit_btn');
         let totalSelected = 0;
@@ -428,7 +430,7 @@ document.addEventListener('DOMContentLoaded', function() {
         submitBtn.disabled = totalSelected === 0;
     }
 
-    // Fonction pour afficher l'état de chargement
+    // Function to display the loading status
     function showLoading(panel) {
         panel.querySelector('.initial-state').style.display = 'none';
         panel.querySelector('.loading-spinner').style.display = 'block';
@@ -436,7 +438,7 @@ document.addEventListener('DOMContentLoaded', function() {
         panel.querySelector('.no-linked-materials').style.display = 'none';
     }
 
-    // Fonction pour charger le matériel lié à l'utilisateur
+    // Function to load user-related hardware
     function loadLinkedMaterials(panel) {
         const materialType = panel.dataset.materialType;
 
@@ -470,7 +472,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Fonction pour afficher le matériel lié
+    // Function to display linked hardware
     function displayLinkedMaterials(panel, materials) {
         panel.querySelector('.loading-spinner').style.display = 'none';
 
@@ -515,7 +517,7 @@ document.addEventListener('DOMContentLoaded', function() {
             resultsContainer.style.display = 'block';
             noMaterialsDiv.style.display = 'none';
 
-            // Attacher les gestionnaires d'événements
+            // Attach event handlers
             attachCheckboxListeners(panel);
             updateSelectAllCheckbox(panel);
         }
@@ -523,7 +525,7 @@ document.addEventListener('DOMContentLoaded', function() {
         panel.querySelector('.initial-state').style.display = 'none';
     }
 
-    // Fonction pour filtrer les résultats selon la recherche
+    // Function to filter results according to the search
     function filterResults(panel, searchTerm) {
         const materialType = panel.dataset.materialType;
         const materials = loadedMaterials[materialType] || [];
@@ -542,7 +544,7 @@ document.addEventListener('DOMContentLoaded', function() {
         displayLinkedMaterials(panel, filteredMaterials);
     }
 
-    // Fonction pour attacher les gestionnaires aux checkboxes
+    // Function to attach handlers to checkboxes
     function attachCheckboxListeners(panel) {
         const checkboxes = panel.querySelectorAll('.material-checkbox');
         checkboxes.forEach(checkbox => {
@@ -562,7 +564,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Fonction pour mettre à jour la checkbox "Tout sélectionner"
+    // Function to update the "Select All" checkbox
     function updateSelectAllCheckbox(panel) {
         const selectAllCheckbox = panel.querySelector('.select-all-checkbox');
         const materialCheckboxes = panel.querySelectorAll('.material-checkbox');
@@ -583,7 +585,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Fonction pour mettre à jour la liste du matériel sélectionné
+    // Function to update the list of selected equipment
     function updateSelectedMaterialsList() {
         const panel = getCurrentPanel();
         const selectedContainer = panel.querySelector('.selected-materials');
@@ -616,7 +618,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 selectedList.appendChild(item);
             });
 
-            // Ajouter les gestionnaires pour les boutons de suppression
+            // Add handlers for the delete buttons
             selectedList.querySelectorAll('.remove-material-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const materialId = parseInt(this.dataset.materialId);
@@ -636,7 +638,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Initialiser les gestionnaires pour tous les panneaux
+    // Initialize the managers for all panels
     document.querySelectorAll('.material-unlink-panel').forEach(panel => {
         const materialType = panel.dataset.materialType;
         const searchInput = panel.querySelector('.material-search-input');
@@ -644,24 +646,24 @@ document.addEventListener('DOMContentLoaded', function() {
         const loadBtn = panel.querySelector('.load-linked-btn');
         const selectAllCheckbox = panel.querySelector('.select-all-checkbox');
 
-        // Gestionnaire pour charger le matériel
+        // Manager for loading hardware
         loadBtn.addEventListener('click', function() {
             loadLinkedMaterials(panel);
         });
 
-        // Gestionnaire pour la recherche/filtrage
+        // Search/filter manager
         searchInput.addEventListener('input', function() {
             const searchTerm = this.value.trim();
             filterResults(panel, searchTerm);
         });
 
-        // Gestionnaire pour le bouton d'effacement
+        // Delete button manager
         clearBtn.addEventListener('click', function() {
             searchInput.value = '';
             filterResults(panel, '');
         });
 
-        // Gestionnaire pour "Tout sélectionner"
+        // Manager for "Select All"
         selectAllCheckbox.addEventListener('change', function() {
             const materialCheckboxes = panel.querySelectorAll('.material-checkbox');
 
@@ -682,30 +684,30 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Gestionnaire pour le changement d'onglet
+    // Tab switching manager
     document.querySelectorAll('#materialTab button[data-bs-toggle="tab"]').forEach(tabBtn => {
         tabBtn.addEventListener('shown.bs.tab', function(event) {
-            // Extraire le type de matériel depuis l'ID de l'onglet
+            // Extract the hardware type from the tab ID
             currentMaterialType = event.target.id.replace('-tab', '');
 
-            // Mettre à jour le champ caché
+            // Update the hidden field
             document.getElementById('current_material_type').value = currentMaterialType;
 
-            // Mettre à jour le compteur
+            // Update the counter
             updateSelectedCount();
 
-            // Mettre à jour la liste des éléments sélectionnés
+            // Update the list of selected items
             updateSelectedMaterialsList();
         });
     });
 
-    // Gestionnaire pour la soumission du formulaire
+    // Manager for form submission
     document.getElementById('unlinkMaterialForm').addEventListener('submit', function(e) {
-        // Vider les champs cachés précédents
+        // Clear previous hidden fields
         const hiddenContainer = document.getElementById('hidden_material_ids');
         hiddenContainer.innerHTML = '';
 
-        // Ajouter tous les IDs sélectionnés pour le type actuel
+        // Add all selected IDs for the current type
         const selectedIds = Array.from(selectedMaterials[currentMaterialType].keys());
 
         if (selectedIds.length === 0) {
@@ -723,7 +725,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Initialisation
+    // Initialization
     updateSelectedCount();
 });
 </script>
