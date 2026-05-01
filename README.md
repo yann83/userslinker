@@ -15,9 +15,10 @@
 - [Project Structure](#project-structure)
 - [Installation](#installation)
   - [Step 1 : PostgreSQL Setup](#step-1-postgresql-setup)
-  - [Step 2 : Python Environment](#step-2-Installation)
-  - [Step 3 : Production](#step-3-Production)
+  - [SStep 2 Local installation](#step-2-local-installation)
+  - [Step 3 : Production](#step-3-production)
   - [Step 4 : Web Installer](#step-4-web-installer)
+  - [Step 5 : Language](#step-5-language)
 - [Configuration](#configuration)
   - [Environment File (.env)](#environment-file-env)
 - [Roles and Permissions](#roles-and-permissions)
@@ -452,6 +453,22 @@ These steps are important before making the application accessible on the networ
 |The application has difficulty connecting to PostgreSQL from production.| Verify that the `.env` file is present and contains the correct parameters. The `WorkingDirectory` path in systemd must point to the directory containing `.env`.|
 
 ---
+
+### Step 5 Language
+
+In `config.py`, a single line is sufficient:
+
+```python
+BABEL_DEFAULT_LOCALE = 'en' # English
+# BABEL_DEFAULT_LOCALE = 'fr' # French
+```
+
+Restart Flask — the entire interface switches.
+
+Currently French and English languages are supported.
+
+---
+
 
 ## Configuration
 
