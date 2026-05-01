@@ -4,7 +4,7 @@
 
 [!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/yann83)
 
-[![Project demo](github/video_presentation.jpg)]([https://github.com/votre-utilisateur/votre-repo/blob/main/videos/presentation.mp4](https://app.videas.fr/5cb35540-efbf-4306-b837-42aba1b72937/))
+[![Project demo](github/video_presentation.jpg)](https://app.videas.fr/5cb35540-efbf-4306-b837-42aba1b72937/)
 
 ---
 
