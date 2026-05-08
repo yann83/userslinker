@@ -1,8 +1,14 @@
 # UsersLinker - Asset and User Management System
 
-**UsersLinker** is a Flask-based web application designed to manage hardware assets assigned to remote workers in a company. It tracks the link between staff users and their equipment (computers, monitors, peripherals, phones) and provides a full audit trail of movements.
+<p align="center">
+  <img src="github/banner.png" width="720px" border="0" alt="banner">
+  <br>
+  <a href="https://github.com/yann83/userslinker/releases/latest"><img src="https://img.shields.io/github/v/release/yann83/userslinker" alt="Version"></a>
+  <img src="https://img.shields.io/badge/Python-3.11-blue">
+  <img src="https://img.shields.io/badge/Postgresql-14-blue">
+</p>
 
-[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/yann83)
+**UsersLinker** is a Flask-based web application designed to manage hardware assets assigned to remote workers in a company. It tracks the link between staff users and their equipment (computers, monitors, peripherals, phones) and provides a full audit trail of movements.
 
 [![Project demo](github/video_presentation.jpg)](https://app.videas.fr/5cb35540-efbf-4306-b837-42aba1b72937/)
 
@@ -50,10 +56,11 @@ Key capabilities:
 
 ## Requirements
 
+> [!WARNING]  
 > **⚠️ Python 3.11 is required.**
-> Python 3.12 and above remove `pkg_resources` from the standard library, which breaks several dependencies used by this application. Use exactly **Python 3.11**.
 
-- Python 3.11
+Python 3.12 and above remove `pkg_resources` from the standard library, which breaks several dependencies used by this application. Use exactly **Python 3.11**.
+
 - PostgreSQL 14 or later
 
 ---
@@ -572,6 +579,8 @@ Accessible to **Managers** and **Readers**.
 - **Single administrator account at first install** — Additional administrator accounts can be created after the first login.
 
 ---
+
+[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/yann83)
 
 ## License
 
